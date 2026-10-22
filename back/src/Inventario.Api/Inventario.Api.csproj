@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Punto de entrada HTTP: recibe, delega en Application y responde. Sin lógica de negocio. -->
+  <PropertyGroup>
+    <RootNamespace>Inventario.Api</RootNamespace>
+    <UserSecretsId>inventario-tic-api</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Inventario.Application\Inventario.Application.csproj" />
+    <ProjectReference Include="..\Inventario.Infrastructure\Inventario.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

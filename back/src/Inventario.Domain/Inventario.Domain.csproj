@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Núcleo del negocio: sin referencias a otros proyectos ni a librerías externas. -->
+  <PropertyGroup>
+    <RootNamespace>Inventario.Domain</RootNamespace>
+  </PropertyGroup>
+
+</Project>

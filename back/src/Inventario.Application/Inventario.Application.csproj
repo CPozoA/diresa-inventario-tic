@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Casos de uso. Solo conoce el dominio; nunca SQL Server, HTTP ni Identity. -->
+  <PropertyGroup>
+    <RootNamespace>Inventario.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Inventario.Domain\Inventario.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

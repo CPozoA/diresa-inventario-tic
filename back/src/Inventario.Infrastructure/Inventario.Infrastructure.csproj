@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Detalles técnicos: persistencia, Identity, correo. Implementa las interfaces de Application. -->
+  <PropertyGroup>
+    <RootNamespace>Inventario.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Identity (Microsoft.Extensions.Identity.*) y la configuración vienen en el framework de ASP.NET Core. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Inventario.Application\Inventario.Application.csproj" />
+  </ItemGroup>
+
+</Project>

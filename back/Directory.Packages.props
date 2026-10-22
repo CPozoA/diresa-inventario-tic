@@ -1,0 +1,12 @@
+<Project>
+  <!--
+    Gestión centralizada de versiones de paquetes NuGet.
+    Los proyectos declaran <PackageReference Include="..." /> sin versión; la versión se fija aquí, una sola vez.
+    Los paquetes se agregan a partir del Paso 2 (EF Core, Identity, FluentValidation, pruebas).
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+  </ItemGroup>
+</Project>
