@@ -6,6 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- EF Core (sin proveedor de base de datos): los handlers consultan con LINQ sobre IAppDbContext. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Inventario.Domain\Inventario.Domain.csproj" />
   </ItemGroup>
 

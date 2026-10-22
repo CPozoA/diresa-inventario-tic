@@ -7,6 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+    <!-- Solo para la herramienta dotnet-ef (migraciones). No se publica con la aplicación. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Inventario.Application\Inventario.Application.csproj" />
     <ProjectReference Include="..\Inventario.Infrastructure\Inventario.Infrastructure.csproj" />
   </ItemGroup>

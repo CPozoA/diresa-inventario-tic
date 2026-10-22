@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.3 · 22/10/2026 · Cambios: D16 (varios roles por usuario), D17 (bloqueo tras 3 intentos), D18 (sedes iniciales).
+> Versión 0.4 · 22/10/2026 · Cambios: D19 (usuario y credenciales separados), D20 (datos iniciales al arrancar).
 
 ---
 
@@ -56,6 +56,8 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D16 | Roles por usuario | **Varios roles por usuario**; sus permisos son la **suma** de los de todos sus roles | En las sedes una persona suele cumplir varias funciones; evita crear roles combinados y que un cambio en un rol llegue a todos sus usuarios. |
 | D17 | Valores de seguridad | Contraseña de mínimo **10 caracteres**; **bloqueo de 15 min tras 3 intentos fallidos**; sesión que vence a los **30 min sin actividad** | Definidos por el responsable del proyecto. |
 | D18 | Sedes iniciales | Las **7 redes de salud** listadas en §1.1 | Datos iniciales del sistema. |
+| D19 | Usuario y credenciales | `Usuario` (dominio: sede, nombres, roles) y `CuentaUsuario` (Identity: usuario, correo, contraseña, bloqueo) son tablas distintas con la **misma clave** | El negocio no depende de Identity; Identity puede cambiar sin tocar el dominio. |
+| D20 | Datos iniciales | Un **inicializador idempotente** los carga al arrancar la API (no `HasData` en migraciones) | Los roles iniciales de cada sede y, en el Paso 3, el superadministrador necesitan lógica del dominio y una contraseña; así tampoco se generan migraciones de datos. |
 
 ### Decisiones pendientes de confirmar
 

@@ -2,11 +2,27 @@
   <!--
     Gestión centralizada de versiones de paquetes NuGet.
     Los proyectos declaran <PackageReference Include="..." /> sin versión; la versión se fija aquí, una sola vez.
-    Los paquetes se agregan a partir del Paso 2 (EF Core, Identity, FluentValidation, pruebas).
+    Los paquetes de Microsoft van alineados con el runtime de .NET 10 (mismo número de parche).
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <MicrosoftVersion>10.0.13</MicrosoftVersion>
   </PropertyGroup>
-  <ItemGroup>
+  <ItemGroup Label="Persistencia">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="$(MicrosoftVersion)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(MicrosoftVersion)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(MicrosoftVersion)" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+  <ItemGroup Label="Identidad y seguridad">
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="$(MicrosoftVersion)" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="$(MicrosoftVersion)" />
+  </ItemGroup>
+  <ItemGroup Label="Infraestructura común">
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(MicrosoftVersion)" />
+  </ItemGroup>
+  <ItemGroup Label="Documentación de la API">
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="$(MicrosoftVersion)" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.18.2" />
   </ItemGroup>
 </Project>

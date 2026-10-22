@@ -1,0 +1,4 @@
+# Las migraciones las genera EF Core (dotnet ef migrations add) y no se editan a mano.
+# Se marcan como código generado para que los analizadores de estilo y calidad no las revisen.
+[*.cs]
+generated_code = true
