@@ -4,6 +4,7 @@ using System.Text.Json;
 using Inventario.Api.IntegrationTests.Infraestructura;
 using Inventario.Application.Cuenta;
 using Inventario.Application.Sedes.Listar;
+using Inventario.Domain.Sedes;
 using Inventario.Domain.Seguridad;
 
 namespace Inventario.Api.IntegrationTests;
@@ -80,8 +81,11 @@ public sealed class AutorizacionTests(FabricaApi api)
 
         var sedes = await cliente.GetFromJsonAsync<List<SedeDto>>("/api/sedes", Ct);
 
+        // Al menos las 7 sedes iniciales (otras pruebas pueden crear sedes nuevas).
         Assert.NotNull(sedes);
-        Assert.Equal(7, sedes.Count);
+        Assert.Superset(
+            SedesIniciales.Crear().Select(s => s.Codigo).ToHashSet(),
+            sedes.Select(s => s.Codigo).ToHashSet());
     }
 
     [Fact]

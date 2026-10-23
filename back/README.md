@@ -20,17 +20,21 @@ back/
    │  └─ Usuarios/               Usuario, UsuarioRol
    ├─ Inventario.Application/    casos de uso por funcionalidad
    │  ├─ Common/                 Result, ErrorAplicacion, ICommand/IQuery, IUsuarioActual, IAppDbContext,
-   │  │                          IServicioIdentidad, IServicioCorreo, IEnlacesAplicacion
+   │  │                          IServicioIdentidad, IServicioCorreo, IEnlacesAplicacion,
+   │  │                          ReglasDeGestion (anti-escalamiento), GeneradorContrasenaTemporal
    │  ├─ Cuenta/                 iniciar/cerrar sesión, sesión actual, cambiar y recuperar contraseña
-   │  └─ Sedes/Listar/           consulta de sedes
+   │  ├─ Sedes/                  listar, crear, editar, activar/desactivar
+   │  ├─ Roles/                  listar roles y permisos, crear, editar, eliminar
+   │  └─ Usuarios/               listar, obtener, crear, editar, asignar roles, activar/desactivar,
+   │                             restablecer contraseña, desbloquear
    ├─ Inventario.Infrastructure/ persistencia, Identity, correo
    │  ├─ Identidad/              CuentaUsuario, ServicioIdentidad, FabricaPrincipal (claims), errores en español
    │  ├─ Correo/                 CorreoEnCarpeta (desarrollo), CorreoSmtp (producción)
    │  ├─ Enlaces/                enlaces hacia el frontend (restablecer contraseña)
    │  └─ Persistencia/           AppDbContext, Configuraciones/, Interceptores/, Inicializacion/, Migraciones/
    └─ Inventario.Api/            endpoints (Minimal APIs), seguridad, errores
-      ├─ Common/                 traducción de resultados a respuestas HTTP
-      ├─ Endpoints/              /api/salud, /api/cuenta/*, /api/sedes
+      ├─ Common/                 traducción de resultados a respuestas HTTP; DominioException → 400
+      ├─ Endpoints/              /api/salud, /api/cuenta/*, /api/sedes/*, /api/roles/*, /api/usuarios/*
       └─ Seguridad/              cookie de sesión, permisos por endpoint, límite de intentos, cambio obligatorio de contraseña
 ```
 
@@ -140,6 +144,33 @@ dotnet run --project src/Inventario.Api --launch-profile https
 | 8 | `POST /api/cuenta/olvide-contrasena` con `{"correo": "tu.correo@..."}` | 204 y un archivo nuevo en `src/Inventario.Api/correos-dev/` |
 | 9 | Abre ese archivo: el enlace trae `usuario=...&token=...`. Llama a `POST /api/cuenta/restablecer-contrasena` con `{"usuarioId": "...", "token": "...", "contrasenaNueva": "..."}` | 204: contraseña nueva y cuenta desbloqueada |
 
+## Paso 4B: gestión de sedes, roles y usuarios
+
+No cambia el modelo de datos: **no hay migración nueva**.
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `GET/POST /api/sedes`, `PUT /api/sedes/{id}`, `POST /api/sedes/{id}/activar\|desactivar` | `Sedes.Gestionar` (solo superadmin) | Una sede nueva nace con los roles Editor y Consulta |
+| `GET /api/roles?sedeId=` y `GET /api/roles/permisos` | `Roles.Ver` | El superadmin indica la sede; los demás ven la suya |
+| `POST /api/roles`, `PUT/DELETE /api/roles/{id}` | `Roles.Gestionar` | Solo con permisos que uno tiene; no se borra un rol asignado |
+| `GET /api/usuarios?sedeId=&buscar=` y `GET /api/usuarios/{id}` | `Usuarios.Ver` | Nunca muestra al superadmin |
+| `POST /api/usuarios` | `Usuarios.Gestionar` | Devuelve la **contraseña temporal una sola vez** |
+| `PUT /api/usuarios/{id}`, `PUT /api/usuarios/{id}/roles` | `Usuarios.Gestionar` | Datos y correo; reemplazo de roles |
+| `POST /api/usuarios/{id}/activar\|desactivar\|restablecer-contrasena\|desbloquear` | `Usuarios.Gestionar` | Desactivar y restablecer cierran sus sesiones |
+
+Reglas contra el escalamiento: [ARQUITECTURA.md §6.3](../docs/ARQUITECTURA.md#63-roles) (reglas 1 a 11).
+
+**Prueba manual en Scalar** (con tu sesión de superadmin):
+
+| # | Petición | Resultado esperado |
+|---|----------|--------------------|
+| 1 | `GET /api/sedes` y copia el `id` de Huanta | 200 |
+| 2 | `GET /api/roles?sedeId=<id de Huanta>` y copia el `id` de "Administrador de sede" | 200: Administrador de sede, Consulta y Editor |
+| 3 | `POST /api/usuarios` con `{"sedeId": "<id de Huanta>", "nombreUsuario": "admin.huanta", "correo": "...", "nombres": "...", "apellidos": "...", "rolIds": ["<id de Administrador de sede>"]}` | 201 con `contrasenaTemporal` (anótala: no se vuelve a mostrar) |
+| 4 | En otra ventana privada, inicia sesión como `admin.huanta` y cambia la contraseña | 200 y 204 |
+| 5 | Como `admin.huanta`: `GET /api/usuarios` | 200, solo usuarios de Huanta |
+| 6 | Como `admin.huanta`: `POST /api/roles` con `{"nombre": "X", "permisos": ["Sedes.Gestionar"]}` | 403, `Gestion.PermisosQueNoTiene` |
+
 ### Correo en producción
 
 En el servidor se configura `Correo:Modo = Smtp` y los datos del SMTP (`Servidor`, `Puerto`, `Remitente`, `Usuario`,
@@ -164,7 +195,7 @@ dotnet test
 |---|---|
 | `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles |
 | `ArchitectureTests` | Que el dominio no dependa de nada, que Application no dependa de Infrastructure ni de la Api, que los handlers sean internos |
-| `Api.IntegrationTests` | Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada |
+| `Api.IntegrationTests` | Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan |
 
 Para ejecutar solo un proyecto: `dotnet test --project tests/Inventario.Domain.Tests`.
 
@@ -190,7 +221,7 @@ Para producción no se aplican migraciones al arrancar: se genera un script revi
   desde el catálogo, así que un permiso nuevo les llega sin migraciones.
 - **Reglas en el dominio** (lanzan `DominioException`): un usuario tiene al menos un rol; nunca el de superadmin;
   solo roles de su sede; los roles del sistema no se editan; un rol de sede no puede tener permisos exclusivos.
-  Las reglas que dependen de quién hace la acción irán en Application.
+  Las reglas que dependen de quién hace la acción están en Application (`Common/Seguridad/ReglasDeGestion.cs`).
 - **Solo raíces de agregado en `IAppDbContext`**: los permisos de un rol se cambian a través del rol y los roles de un
   usuario a través del usuario.
 - **Identificadores GUID v7**: únicos y ordenados por fecha, eficientes como clave en SQL Server.

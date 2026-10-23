@@ -19,7 +19,7 @@ public sealed record VerificacionCredenciales(ResultadoVerificacion Resultado, G
 public sealed record SolicitudRestablecimiento(Guid UsuarioId, string Correo, string Token);
 
 /// <summary>Datos de la cuenta (credenciales) que la interfaz necesita mostrar.</summary>
-public sealed record DatosCuenta(string NombreUsuario, string? Correo, bool DebeCambiarContrasena);
+public sealed record DatosCuenta(string NombreUsuario, string? Correo, bool DebeCambiarContrasena, bool Bloqueada);
 
 /// <summary>
 /// Operaciones sobre credenciales y sesión. Lo implementa la infraestructura con ASP.NET Core Identity;
@@ -45,4 +45,33 @@ public interface IServicioIdentidad
     Task<Result> RestablecerContrasenaAsync(Guid usuarioId, string token, string contrasenaNueva);
 
     Task<DatosCuenta?> ObtenerDatosCuentaAsync(Guid usuarioId);
+
+    // ---- Gestión de cuentas por un administrador (Paso 4B) ----
+
+    Task<IReadOnlyDictionary<Guid, DatosCuenta>> ObtenerDatosCuentasAsync(IReadOnlyCollection<Guid> usuarioIds, CancellationToken cancellationToken);
+
+    Task<bool> ExisteNombreUsuarioAsync(string nombreUsuario);
+
+    /// <summary>Verdadero si otra cuenta (distinta de <paramref name="excluirUsuarioId"/>) ya usa ese correo.</summary>
+    Task<bool> ExisteCorreoAsync(string correo, Guid? excluirUsuarioId);
+
+    /// <summary>
+    /// Crea la cuenta (credenciales) de un usuario ya agregado al contexto, con una contraseña temporal que deberá cambiar.
+    /// Guarda en una sola operación el usuario, sus roles y su cuenta.
+    /// </summary>
+    Task<Result> CrearCuentaAsync(Guid usuarioId, string nombreUsuario, string correo, string contrasenaTemporal);
+
+    /// <summary>Cambia el correo y guarda también los demás cambios pendientes del usuario.</summary>
+    Task<Result> CambiarCorreoAsync(Guid usuarioId, string correo);
+
+    /// <summary>
+    /// Pone una contraseña temporal (restablecimiento por el administrador): quita el bloqueo, exige cambiarla
+    /// al entrar y cierra las sesiones abiertas del usuario.
+    /// </summary>
+    Task<Result> EstablecerContrasenaTemporalAsync(Guid usuarioId, string contrasenaTemporal);
+
+    Task DesbloquearAsync(Guid usuarioId);
+
+    /// <summary>Cierra todas las sesiones abiertas del usuario (en menos de un minuto).</summary>
+    Task InvalidarSesionesAsync(Guid usuarioId);
 }

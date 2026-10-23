@@ -34,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<Cuenta.ConstructorSesion>();
         services.AddScoped<Common.Seguridad.CalculadoraPermisos>();
         services.AddScoped<Common.Seguridad.IPermisosUsuarioActual, Common.Seguridad.PermisosUsuarioActual>();
+        services.AddScoped<Common.Seguridad.ReglasDeGestion>();
 
         return services;
     }

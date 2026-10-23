@@ -16,6 +16,18 @@ public static class DatosPrueba
     /// <summary>Usuario de Huanta con contraseña temporal (debe cambiarla).</summary>
     public const string TemporalHuanta = "temporal.huanta";
 
+    /// <summary>Administrador de la Red de Salud Huanta (rol del sistema Administrador de sede).</summary>
+    public const string AdminHuanta = "admin.huanta";
+
+    /// <summary>
+    /// Usuario de Huanta con un rol propio que gestiona usuarios y roles, pero del inventario solo ve activos.
+    /// Sirve para probar que nadie otorga ni gestiona permisos que no tiene.
+    /// </summary>
+    public const string GestorHuanta = "gestor.huanta";
+
+    /// <summary>Nombre del rol propio de <see cref="GestorHuanta"/>.</summary>
+    public const string RolGestor = "Gestor de pruebas";
+
     public const string CodigoHuanta = "HUANTA";
 
     public const string CodigoPuquio = "PUQUIO";

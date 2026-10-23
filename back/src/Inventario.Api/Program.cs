@@ -1,3 +1,4 @@
+using Inventario.Api.Common;
 using Inventario.Api.Endpoints;
 using Inventario.Api.Seguridad;
 using Inventario.Application;
@@ -10,6 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Errores con formato estándar ProblemDetails (RFC 9457).
 builder.Services.AddProblemDetails();
+
+// Una regla del dominio incumplida (dato inválido) responde 400 con su mensaje; lo demás, 500 genérico.
+builder.Services.AddExceptionHandler<ManejadorExcepcionDominio>();
 
 // Contrato OpenAPI: lo usan Scalar (documentación) y, más adelante, el generador del cliente de Angular.
 builder.Services.AddOpenApi();
@@ -35,7 +39,11 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+
+// Después de identificar al usuario y ANTES de autorizar: con una contraseña temporal la respuesta debe ser
+// "cambie su contraseña" (Cuenta.DebeCambiarContrasena), no "no tiene permiso".
 app.UseMiddleware<ExigirCambioContrasenaMiddleware>();
+
 app.UseAuthorization();
 app.UseRateLimiter();
 
@@ -53,6 +61,8 @@ var api = app.MapGroup("/api").RequireAuthorization();
 api.MapSaludEndpoints();
 api.MapCuentaEndpoints();
 api.MapSedesEndpoints();
+api.MapRolesEndpoints();
+api.MapUsuariosEndpoints();
 
 await app.Services.InicializarBaseDatosAsync();
 

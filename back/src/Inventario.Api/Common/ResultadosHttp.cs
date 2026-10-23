@@ -28,6 +28,17 @@ internal static class ResultadosHttp
             : ToProblem(resultado.Error!);
     }
 
+    /// <summary>Para comandos que crean un registro: éxito = 201 Created con la ubicación del nuevo recurso.</summary>
+    public static Results<Created<T>, ProblemHttpResult> ToCreatedResult<T>(this Result<T> resultado, Func<T, string> ubicacion)
+    {
+        ArgumentNullException.ThrowIfNull(resultado);
+        ArgumentNullException.ThrowIfNull(ubicacion);
+
+        return resultado.EsExito
+            ? TypedResults.Created(ubicacion(resultado.Valor), resultado.Valor)
+            : ToProblem(resultado.Error!);
+    }
+
     public static ProblemHttpResult ToProblem(this ErrorAplicacion error)
     {
         ArgumentNullException.ThrowIfNull(error);

@@ -23,6 +23,22 @@ public sealed class FabricaApi : WebApplicationFactory<MarcadorApi>, IAsyncLifet
 
     public Guid SedePuquioId { get; private set; }
 
+    /// <summary>Rol propio "Técnico de pruebas" de Puquio.</summary>
+    public Guid RolTecnicoPuquioId { get; private set; }
+
+    /// <summary>Rol propio "Técnico de pruebas" de Huanta (solo Activos.Ver).</summary>
+    public Guid RolTecnicoHuantaId { get; private set; }
+
+    /// <summary>Identificador del usuario con ese nombre de usuario.</summary>
+    public async Task<Guid> ObtenerUsuarioIdAsync(string nombreUsuario)
+    {
+        await using var alcance = Services.CreateAsyncScope();
+        var cuentas = alcance.ServiceProvider.GetRequiredService<UserManager<CuentaUsuario>>();
+        var cuenta = await cuentas.FindByNameAsync(nombreUsuario)
+            ?? throw new InvalidOperationException($"No existe el usuario de pruebas {nombreUsuario}.");
+        return cuenta.Id;
+    }
+
     public async ValueTask InitializeAsync()
     {
         await using (var contexto = CrearContexto(UsuarioFalso.ProcesoInterno()))
@@ -108,14 +124,29 @@ public sealed class FabricaApi : WebApplicationFactory<MarcadorApi>, IAsyncLifet
         superAdmin.DebeCambiarContrasena = false;
         await cuentas.UpdateAsync(superAdmin);
 
-        // Un rol propio en cada sede.
-        db.Roles.Add(Rol.CrearDeSede(SedeHuantaId, DatosPrueba.RolTecnico, null, [Permisos.Activos.Ver]));
-        db.Roles.Add(Rol.CrearDeSede(SedePuquioId, DatosPrueba.RolTecnico, null, [Permisos.Activos.Ver]));
+        // Un rol propio en cada sede, y en Huanta el rol del gestor.
+        var tecnicoHuanta = Rol.CrearDeSede(SedeHuantaId, DatosPrueba.RolTecnico, null, [Permisos.Activos.Ver]);
+        var tecnicoPuquio = Rol.CrearDeSede(SedePuquioId, DatosPrueba.RolTecnico, null, [Permisos.Activos.Ver]);
+        var gestor = Rol.CrearDeSede(
+            SedeHuantaId,
+            DatosPrueba.RolGestor,
+            null,
+            [Permisos.Activos.Ver, Permisos.Usuarios.Ver, Permisos.Usuarios.Gestionar, Permisos.Roles.Ver, Permisos.Roles.Gestionar]);
+        db.Roles.AddRange(tecnicoHuanta, tecnicoPuquio, gestor);
         await db.SaveChangesAsync(ct);
 
-        await CrearUsuarioAsync(db, cuentas, SedeHuantaId, DatosPrueba.EditorHuanta, debeCambiar: false, ct);
-        await CrearUsuarioAsync(db, cuentas, SedePuquioId, DatosPrueba.EditorPuquio, debeCambiar: false, ct);
-        await CrearUsuarioAsync(db, cuentas, SedeHuantaId, DatosPrueba.TemporalHuanta, debeCambiar: true, ct);
+        RolTecnicoHuantaId = tecnicoHuanta.Id;
+        RolTecnicoPuquioId = tecnicoPuquio.Id;
+
+        var editorHuanta = await db.Roles.SingleAsync(r => r.SedeId == SedeHuantaId && r.Nombre == "Editor", ct);
+        var editorPuquio = await db.Roles.SingleAsync(r => r.SedeId == SedePuquioId && r.Nombre == "Editor", ct);
+        var administrador = await db.Roles.SingleAsync(r => r.Id == RolesDelSistema.AdministradorSedeId, ct);
+
+        await CrearUsuarioAsync(db, cuentas, SedeHuantaId, DatosPrueba.EditorHuanta, editorHuanta, debeCambiar: false, ct);
+        await CrearUsuarioAsync(db, cuentas, SedePuquioId, DatosPrueba.EditorPuquio, editorPuquio, debeCambiar: false, ct);
+        await CrearUsuarioAsync(db, cuentas, SedeHuantaId, DatosPrueba.TemporalHuanta, editorHuanta, debeCambiar: true, ct);
+        await CrearUsuarioAsync(db, cuentas, SedeHuantaId, DatosPrueba.AdminHuanta, administrador, debeCambiar: false, ct);
+        await CrearUsuarioAsync(db, cuentas, SedeHuantaId, DatosPrueba.GestorHuanta, gestor, debeCambiar: false, ct);
     }
 
     private static async Task CrearUsuarioAsync(
@@ -123,13 +154,12 @@ public sealed class FabricaApi : WebApplicationFactory<MarcadorApi>, IAsyncLifet
         UserManager<CuentaUsuario> cuentas,
         Guid sedeId,
         string nombreUsuario,
+        Rol rol,
         bool debeCambiar,
         CancellationToken ct)
     {
-        var editor = await db.Roles.SingleAsync(r => r.SedeId == sedeId && r.Nombre == "Editor", ct);
-
         var usuario = Usuario.CrearDeSede(sedeId, "Usuario", nombreUsuario, "Pruebas");
-        usuario.AsignarRoles([editor]);
+        usuario.AsignarRoles([rol]);
         db.Usuarios.Add(usuario);
 
         var cuenta = new CuentaUsuario

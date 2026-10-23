@@ -20,7 +20,16 @@ internal sealed class CalculadoraPermisos(IAppDbContext db)
 {
     private static readonly IReadOnlySet<string> Ninguno = new HashSet<string>();
 
-    public async Task<IReadOnlySet<string>> CalcularAsync(Guid usuarioId, CancellationToken cancellationToken)
+    public Task<IReadOnlySet<string>> CalcularAsync(Guid usuarioId, CancellationToken cancellationToken) =>
+        CalcularAsync(usuarioId, aunqueEsteInactivo: false, cancellationToken);
+
+    /// <param name="usuarioId">Usuario.</param>
+    /// <param name="aunqueEsteInactivo">
+    /// Verdadero para saber qué permisos tendría al reactivarse (lo usan las reglas de gestión:
+    /// nadie puede reactivar a quien tiene más permisos que él).
+    /// </param>
+    /// <param name="cancellationToken">Cancelación.</param>
+    public async Task<IReadOnlySet<string>> CalcularAsync(Guid usuarioId, bool aunqueEsteInactivo, CancellationToken cancellationToken)
     {
         // Excepción revisada al filtro de sede: se busca por el identificador de la sesión, para cualquier usuario.
         var usuario = await db.Usuarios
@@ -29,7 +38,7 @@ internal sealed class CalculadoraPermisos(IAppDbContext db)
             .Include(u => u.Roles)
             .FirstOrDefaultAsync(u => u.Id == usuarioId, cancellationToken);
 
-        if (usuario is null || !usuario.Activo)
+        if (usuario is null || (!usuario.Activo && !aunqueEsteInactivo))
         {
             return Ninguno;
         }

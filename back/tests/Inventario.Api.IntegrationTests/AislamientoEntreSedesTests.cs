@@ -1,4 +1,5 @@
 using Inventario.Api.IntegrationTests.Infraestructura;
+using Inventario.Domain.Sedes;
 using Inventario.Domain.Seguridad;
 using Inventario.Infrastructure.Persistencia.Interceptores;
 using Microsoft.EntityFrameworkCore;
@@ -116,7 +117,9 @@ public sealed class AislamientoEntreSedesTests(FabricaApi api)
     {
         await using var db = FabricaApi.CrearContexto(UsuarioFalso.SuperAdministrador());
 
-        Assert.Equal(7, await db.Sedes.CountAsync(Ct));
+        // Al menos las 7 sedes iniciales (otras pruebas pueden crear sedes nuevas).
+        var codigos = await db.Sedes.Select(s => s.Codigo).ToListAsync(Ct);
+        Assert.Superset(SedesIniciales.Crear().Select(s => s.Codigo).ToHashSet(), codigos.ToHashSet());
         Assert.True(await db.Usuarios.AnyAsync(u => u.SedeId == api.SedeHuantaId, Ct));
         Assert.True(await db.Usuarios.AnyAsync(u => u.SedeId == api.SedePuquioId, Ct));
     }

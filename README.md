@@ -17,7 +17,7 @@ Sistema web para el registro y control del inventario de Tecnologías de la Info
 
 ## Estado
 
-Paso 4A terminado: permisos por petición, aislamiento entre sedes y pruebas automáticas. Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
+Paso 4B terminado: API de gestión de sedes, roles y usuarios con reglas contra el escalamiento de privilegios, y sus pruebas. Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
 
 ## Control de versiones
 
