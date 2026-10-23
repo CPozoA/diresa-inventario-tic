@@ -17,7 +17,7 @@ Sistema web para el registro y control del inventario de Tecnologías de la Info
 
 ## Estado
 
-Paso 2 terminado: base de datos SQL Server con EF Core, datos iniciales y documentación de la API con Scalar. Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
+Paso 3 terminado: inicio de sesión, contraseñas, bloqueo, recuperación por correo y superadministrador inicial. Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
 
 ## Control de versiones
 

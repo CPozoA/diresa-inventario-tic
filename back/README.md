@@ -19,15 +19,19 @@ back/
    │  ├─ Seguridad/              Permisos (catálogo), Rol, RolPermiso, TipoRol, RolesDelSistema
    │  └─ Usuarios/               Usuario, UsuarioRol
    ├─ Inventario.Application/    casos de uso por funcionalidad
-   │  ├─ Common/                 Result, ErrorAplicacion, ICommand/IQuery, IUsuarioActual, IAppDbContext
-   │  └─ Sedes/Listar/           primera consulta de ejemplo (ListarSedes)
+   │  ├─ Common/                 Result, ErrorAplicacion, ICommand/IQuery, IUsuarioActual, IAppDbContext,
+   │  │                          IServicioIdentidad, IServicioCorreo, IEnlacesAplicacion
+   │  ├─ Cuenta/                 iniciar/cerrar sesión, sesión actual, cambiar y recuperar contraseña
+   │  └─ Sedes/Listar/           consulta de sedes
    ├─ Inventario.Infrastructure/ persistencia, Identity, correo
-   │  ├─ Identidad/              CuentaUsuario (credenciales de Identity)
+   │  ├─ Identidad/              CuentaUsuario, ServicioIdentidad, FabricaPrincipal (claims), errores en español
+   │  ├─ Correo/                 CorreoEnCarpeta (desarrollo), CorreoSmtp (producción)
+   │  ├─ Enlaces/                enlaces hacia el frontend (restablecer contraseña)
    │  └─ Persistencia/           AppDbContext, Configuraciones/, Interceptores/, Inicializacion/, Migraciones/
    └─ Inventario.Api/            endpoints (Minimal APIs), seguridad, errores
       ├─ Common/                 traducción de resultados a respuestas HTTP
-      ├─ Endpoints/              /api/salud, /api/sedes
-      └─ Seguridad/              usuario actual leído de la sesión
+      ├─ Endpoints/              /api/salud, /api/cuenta/*, /api/sedes
+      └─ Seguridad/              cookie de sesión, límite de intentos, cambio obligatorio de contraseña
 ```
 
 Los proyectos de pruebas (`tests/`) se agregan en el Paso 4.
@@ -75,6 +79,67 @@ Luego abre:
 - <https://localhost:7180/api/salud>: comprobación rápida.
 
 Si el navegador advierte por el certificado de desarrollo, ejecuta una vez `dotnet dev-certs https --trust`.
+
+## Paso 3: superadministrador e inicio de sesión
+
+### 1. Configurar tu cuenta de superadministrador (una sola vez)
+
+Los datos van en los *user secrets* de tu computadora (fuera del repositorio). La contraseña inicial se genera al azar
+y es **temporal**: el sistema te obligará a cambiarla al entrar. Desde la carpeta `back`, en PowerShell:
+
+```powershell
+# Genera una contraseña temporal aleatoria que cumple la política (mayúscula, minúscula, número, 10+ caracteres)
+$car = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'.ToCharArray()
+$clave = 'Tmp-' + (-join (1..12 | ForEach-Object { $car | Get-Random })) + '7'
+
+dotnet user-secrets set "Inicializacion:SuperAdmin:NombreUsuario" "tu.usuario" --project src/Inventario.Api
+dotnet user-secrets set "Inicializacion:SuperAdmin:Correo" "tu.correo@institucion.gob.pe" --project src/Inventario.Api
+dotnet user-secrets set "Inicializacion:SuperAdmin:ContrasenaInicial" $clave --project src/Inventario.Api
+
+Write-Host "Contraseña temporal: $clave"
+```
+
+Anota la contraseña temporal que muestra el último comando. Para ver lo guardado: `dotnet user-secrets list --project src/Inventario.Api`.
+
+Recomendación: usa un nombre de usuario personal y poco obvio (no `admin` ni `superadmin`), porque con el bloqueo
+tras 3 intentos alguien podría bloquear a propósito una cuenta de nombre predecible.
+
+### 2. Compilar, verificar el modelo y arrancar
+
+```powershell
+dotnet build
+dotnet ef migrations has-pending-model-changes --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+dotnet run --project src/Inventario.Api --launch-profile https
+```
+
+- El segundo comando debe decir que **no hay cambios pendientes** en el modelo. Si dice que los hay, crea una migración
+  (`dotnet ef migrations add Paso3 ...`) y aplícala (`dotnet ef database update ...`) antes de arrancar.
+- Al arrancar, el registro debe mostrar: `Superadministrador 'tu.usuario' creado. Deberá cambiar la contraseña temporal...`
+
+### 3. Probar en Scalar (<https://localhost:7180/scalar>)
+
+| # | Petición | Resultado esperado |
+|---|----------|--------------------|
+| 1 | `POST /api/cuenta/iniciar-sesion` con `{"usuario": "tu.usuario", "contrasena": "<temporal>"}` | 200, `debeCambiarContrasena: true` |
+| 2 | `GET /api/sedes` | 403, código `Cuenta.DebeCambiarContrasena` |
+| 3 | `POST /api/cuenta/cambiar-contrasena` con `{"contrasenaActual": "...", "contrasenaNueva": "..."}` | 204 |
+| 4 | `GET /api/cuenta/sesion` | 200, `debeCambiarContrasena: false`, `esSuperAdmin: true`, todos los permisos |
+| 5 | `GET /api/sedes` | 200, las 7 sedes |
+| 6 | `POST /api/cuenta/cerrar-sesion` y luego `GET /api/sedes` | 204 y luego 401 |
+
+**Bloqueo y recuperación** (opcional; bloquea tu cuenta 15 minutos):
+
+| # | Petición | Resultado esperado |
+|---|----------|--------------------|
+| 7 | `iniciar-sesion` con contraseña incorrecta, 3 veces | 401, 401 y al tercero 422 `Cuenta.Bloqueada` |
+| 8 | `POST /api/cuenta/olvide-contrasena` con `{"correo": "tu.correo@..."}` | 204 y un archivo nuevo en `src/Inventario.Api/correos-dev/` |
+| 9 | Abre ese archivo: el enlace trae `usuario=...&token=...`. Llama a `POST /api/cuenta/restablecer-contrasena` con `{"usuarioId": "...", "token": "...", "contrasenaNueva": "..."}` | 204: contraseña nueva y cuenta desbloqueada |
+
+### Correo en producción
+
+En el servidor se configura `Correo:Modo = Smtp` y los datos del SMTP (`Servidor`, `Puerto`, `Remitente`, `Usuario`,
+`Contrasena`) como variables de entorno o en `appsettings.Production.json` (no versionado). También `Aplicacion:UrlFrontend`
+con la dirección pública del sistema.
 
 ## Cambios en el modelo (migraciones siguientes)
 

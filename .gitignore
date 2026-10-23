@@ -27,6 +27,9 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
+# ---------- Correos de desarrollo (pueden contener enlaces de restablecimiento) ----------
+correos-dev/
+
 # ---------- Secretos ----------
 *.pfx
 *.key

@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.4 · 22/10/2026 · Cambios: D19 (usuario y credenciales separados), D20 (datos iniciales al arrancar).
+> Versión 0.5 · 22/10/2026 · Cambios: D21 a D24 (Paso 3: sesión, correo, superadministrador, autorización por grupo).
 
 ---
 
@@ -58,6 +58,10 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D18 | Sedes iniciales | Las **7 redes de salud** listadas en §1.1 | Datos iniciales del sistema. |
 | D19 | Usuario y credenciales | `Usuario` (dominio: sede, nombres, roles) y `CuentaUsuario` (Identity: usuario, correo, contraseña, bloqueo) son tablas distintas con la **misma clave** | El negocio no depende de Identity; Identity puede cambiar sin tocar el dominio. |
 | D20 | Datos iniciales | Un **inicializador idempotente** los carga al arrancar la API (no `HasData` en migraciones) | Los roles iniciales de cada sede y, en el Paso 3, el superadministrador necesitan lógica del dominio y una contraseña; así tampoco se generan migraciones de datos. |
+| D21 | Correo | Interfaz `IServicioCorreo`: en desarrollo guarda cada correo como archivo HTML (`correos-dev/`); en producción envía por SMTP con el cliente de .NET | Permite probar la recuperación de contraseña sin servidor de correo; cambiar a MailKit no toca los casos de uso. |
+| D22 | Superadministrador inicial | Lo crea el inicializador con datos de `Inicializacion:SuperAdmin`; la contraseña inicial va en *user secrets* (desarrollo) o variable de entorno (servidor), es temporal y se exige cambiarla | Ninguna contraseña queda en el código, el repositorio ni la documentación. |
+| D23 | Exigencia de sesión | Se aplica al grupo `/api` (`RequireAuthorization`); los endpoints públicos se marcan con `AllowAnonymous()` | Seguro por defecto para la API sin bloquear la documentación (Scalar). |
+| D24 | Protección CSRF | Hasta el Paso 5 la protege la cookie `SameSite=Strict`; en el Paso 5 se agrega el token antifalsificación (cookie `XSRF-TOKEN` + cabecera `X-XSRF-TOKEN`), que Angular envía automáticamente | Probar la API desde Scalar sin copiar tokens a mano; la defensa completa llega junto con el frontend. |
 
 ### Decisiones pendientes de confirmar
 
@@ -214,8 +218,10 @@ Los catálogos por sede usan el mismo mecanismo de §5.6. Los catálogos no se b
 ### 6.1 Autenticación
 
 - **ASP.NET Core Identity** con usuario y contraseña propios. Las contraseñas se guardan con hash PBKDF2 (nunca en texto plano).
-- **Cookie de sesión**: `HttpOnly`, `Secure`, `SameSite=Strict`, vencimiento por inactividad (propuesta: 30 minutos, renovable mientras haya actividad).
-- **Protección CSRF**: token antifalsificación en cada petición que modifica datos.
+- **Cookie de sesión** `InventarioTIC.Sesion`: `HttpOnly`, `Secure`, `SameSite=Strict`, vence a los 30 minutos sin actividad y se renueva con cada petición. La cookie lleva el identificador, la sede, la marca de superadministrador y la de cambio obligatorio; **no** lleva permisos.
+- **Validación periódica de la sesión** (cada minuto): si cambia la contraseña de un usuario, sus otras sesiones abiertas se cierran.
+- **Límite de peticiones**: 10 por minuto por dirección IP en iniciar sesión y recuperación de contraseña (HTTP 429 al superarlo).
+- **Protección CSRF**: cookie `SameSite=Strict` desde el Paso 3 y, desde el Paso 5, token antifalsificación en cada petición que modifica datos (D24).
 - **Política de contraseñas**: mínimo 10 caracteres, con mayúscula, minúscula y número.
 - **Bloqueo** tras **3 intentos fallidos** durante 15 minutos (D17). El desbloqueo es automático al vencer el plazo, y el administrador de sede (o el superadmin) puede desbloquear antes. Como un umbral bajo facilita que alguien bloquee cuentas ajenas a propósito, el inicio de sesión tiene además límite de peticiones por dirección IP (§6.4) y los bloqueos quedan registrados.
 - **Cuentas nuevas y restablecidas** llevan contraseña temporal y **cambio obligatorio** en el primer ingreso.

@@ -6,6 +6,9 @@ public enum TipoError
     /// <summary>Datos de entrada inválidos (HTTP 400).</summary>
     Validacion,
 
+    /// <summary>Falta iniciar sesión o las credenciales son incorrectas (HTTP 401).</summary>
+    NoAutenticado,
+
     /// <summary>El registro no existe o no es visible para el usuario (HTTP 404).</summary>
     NoEncontrado,
 
@@ -26,6 +29,8 @@ public enum TipoError
 public sealed record ErrorAplicacion(string Codigo, string Mensaje, TipoError Tipo)
 {
     public static ErrorAplicacion Validacion(string codigo, string mensaje) => new(codigo, mensaje, TipoError.Validacion);
+
+    public static ErrorAplicacion NoAutenticado(string codigo, string mensaje) => new(codigo, mensaje, TipoError.NoAutenticado);
 
     public static ErrorAplicacion NoEncontrado(string codigo, string mensaje) => new(codigo, mensaje, TipoError.NoEncontrado);
 

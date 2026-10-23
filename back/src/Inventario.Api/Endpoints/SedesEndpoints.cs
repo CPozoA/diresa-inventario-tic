@@ -9,9 +9,9 @@ internal static class SedesEndpoints
 {
     public static IEndpointRouteBuilder MapSedesEndpoints(this IEndpointRouteBuilder app)
     {
-        var grupo = app.MapGroup("/api/sedes").WithTags("Sedes");
+        var grupo = app.MapGroup("/sedes").WithTags("Sedes");
 
-        // En el Paso 3 se exige sesión iniciada y en el Paso 4, el permiso Sedes.Gestionar.
+        // Exige sesión iniciada (heredado del grupo /api). En el Paso 4 se exige además el permiso Sedes.Gestionar.
         grupo.MapGet("/", ListarAsync)
             .WithName("ListarSedes")
             .WithSummary("Lista las sedes ordenadas por nombre.");

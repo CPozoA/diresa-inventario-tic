@@ -30,6 +30,9 @@ public static class DependencyInjection
             }
         }
 
+        // Servicios internos compartidos por varios handlers.
+        services.AddScoped<Cuenta.ConstructorSesion>();
+
         return services;
     }
 }

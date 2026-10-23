@@ -5,11 +5,12 @@ internal static class SaludEndpoints
 {
     public static IEndpointRouteBuilder MapSaludEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/salud", (IHostEnvironment entorno, TimeProvider reloj) => TypedResults.Ok(new RespuestaSalud(
+        app.MapGet("/salud", (IHostEnvironment entorno, TimeProvider reloj) => TypedResults.Ok(new RespuestaSalud(
                 Estado: "ok",
                 Entorno: entorno.EnvironmentName,
                 Version: typeof(SaludEndpoints).Assembly.GetName().Version?.ToString() ?? "desconocida",
                 FechaServidor: reloj.GetUtcNow())))
+            .AllowAnonymous()
             .WithName("ObtenerSalud")
             .WithTags("Salud");
 

@@ -1,5 +1,8 @@
 using Inventario.Domain.Sedes;
 using Inventario.Domain.Seguridad;
+using Inventario.Domain.Usuarios;
+using Inventario.Infrastructure.Identidad;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -7,13 +10,15 @@ using Microsoft.Extensions.Options;
 namespace Inventario.Infrastructure.Persistencia.Inicializacion;
 
 /// <summary>
-/// Carga los datos con los que arranca el sistema: las sedes, los roles del sistema y los roles iniciales
-/// (Editor y Consulta) de cada sede nueva. Es idempotente: solo agrega lo que falta, así que se puede
-/// ejecutar en cada arranque sin duplicar nada.
+/// Carga los datos con los que arranca el sistema: las sedes, los roles del sistema, los roles iniciales
+/// (Editor y Consulta) de cada sede nueva y la cuenta del superadministrador. Es idempotente: solo agrega
+/// lo que falta, así que se puede ejecutar en cada arranque sin duplicar nada.
 /// </summary>
 internal sealed partial class InicializadorDatos(
     AppDbContext db,
-    IOptions<OpcionesBaseDatos> opciones,
+    UserManager<CuentaUsuario> cuentas,
+    IOptions<OpcionesBaseDatos> opcionesBaseDatos,
+    IOptions<OpcionesInicializacion> opcionesInicializacion,
     ILogger<InicializadorDatos> logger)
 {
     public async Task EjecutarAsync(CancellationToken cancellationToken)
@@ -24,7 +29,7 @@ internal sealed partial class InicializadorDatos(
             return;
         }
 
-        if (opciones.Value.AplicarMigracionesAlIniciar)
+        if (opcionesBaseDatos.Value.AplicarMigracionesAlIniciar)
         {
             LogAplicandoMigraciones(logger);
             await db.Database.MigrateAsync(cancellationToken);
@@ -37,37 +42,70 @@ internal sealed partial class InicializadorDatos(
             return;
         }
 
-        var sedesNuevas = await AgregarSedesFaltantesAsync(cancellationToken);
-        var rolesSistemaNuevos = await AgregarRolesDelSistemaFaltantesAsync(cancellationToken);
+        await CrearSedesYRolesAsync(cancellationToken);
+        await CrearSuperAdminSiFaltaAsync(cancellationToken);
+    }
+
+    private async Task CrearSedesYRolesAsync(CancellationToken cancellationToken)
+    {
+        var sedesExistentes = await db.Sedes.Select(s => s.Id).ToListAsync(cancellationToken);
+        var sedesNuevas = SedesIniciales.Crear().Where(s => !sedesExistentes.Contains(s.Id)).ToList();
+        db.Sedes.AddRange(sedesNuevas);
+
+        var rolesExistentes = await db.Roles.Where(r => r.SedeId == null).Select(r => r.Id).ToListAsync(cancellationToken);
+        var rolesSistemaNuevos = RolesDelSistema.Crear().Where(r => !rolesExistentes.Contains(r.Id)).ToList();
+        db.Roles.AddRange(rolesSistemaNuevos);
 
         foreach (var sede in sedesNuevas)
         {
             db.Roles.AddRange(RolesDelSistema.CrearInicialesDeSede(sede.Id));
         }
 
-        if (sedesNuevas.Count > 0 || rolesSistemaNuevos > 0)
+        if (sedesNuevas.Count > 0 || rolesSistemaNuevos.Count > 0)
         {
             await db.SaveChangesAsync(cancellationToken);
-            LogDatosCreados(logger, sedesNuevas.Count, rolesSistemaNuevos);
+            LogDatosCreados(logger, sedesNuevas.Count, rolesSistemaNuevos.Count);
         }
     }
 
-    private async Task<List<Sede>> AgregarSedesFaltantesAsync(CancellationToken cancellationToken)
+    private async Task CrearSuperAdminSiFaltaAsync(CancellationToken cancellationToken)
     {
-        var existentes = await db.Sedes.Select(s => s.Id).ToListAsync(cancellationToken);
-        var nuevas = SedesIniciales.Crear().Where(s => !existentes.Contains(s.Id)).ToList();
+        if (await db.Usuarios.AnyAsync(u => u.SedeId == null, cancellationToken))
+        {
+            return;
+        }
 
-        db.Sedes.AddRange(nuevas);
-        return nuevas;
-    }
+        var datos = opcionesInicializacion.Value.SuperAdmin;
+        if (!datos.EstaCompleto)
+        {
+            LogSuperAdminSinConfigurar(logger);
+            return;
+        }
 
-    private async Task<int> AgregarRolesDelSistemaFaltantesAsync(CancellationToken cancellationToken)
-    {
-        var existentes = await db.Roles.Where(r => r.SedeId == null).Select(r => r.Id).ToListAsync(cancellationToken);
-        var nuevos = RolesDelSistema.Crear().Where(r => !existentes.Contains(r.Id)).ToList();
+        var usuario = Usuario.CrearSuperAdmin(datos.Nombres, datos.Apellidos);
+        db.Usuarios.Add(usuario);
 
-        db.Roles.AddRange(nuevos);
-        return nuevos.Count;
+        var cuenta = new CuentaUsuario
+        {
+            Id = usuario.Id,
+            UserName = datos.NombreUsuario.Trim(),
+            Email = datos.Correo.Trim(),
+            EmailConfirmed = true,
+            DebeCambiarContrasena = true,
+        };
+
+        // CreateAsync valida la contraseña con la política (mínimo 10, mayúscula, minúscula y número)
+        // y guarda en una sola operación el usuario, su rol y su cuenta.
+        var resultado = await cuentas.CreateAsync(cuenta, datos.ContrasenaInicial);
+        if (!resultado.Succeeded)
+        {
+            db.Entry(usuario).State = EntityState.Detached;
+            var errores = string.Join(" ", resultado.Errors.Select(e => e.Description));
+            LogSuperAdminNoCreado(logger, errores);
+            return;
+        }
+
+        LogSuperAdminCreado(logger, cuenta.UserName);
     }
 
     [LoggerMessage(EventId = 1000, Level = LogLevel.Warning,
@@ -84,4 +122,15 @@ internal sealed partial class InicializadorDatos(
     [LoggerMessage(EventId = 1003, Level = LogLevel.Information,
         Message = "Datos iniciales cargados: {Sedes} sedes nuevas y {Roles} roles del sistema nuevos.")]
     private static partial void LogDatosCreados(ILogger logger, int sedes, int roles);
+
+    [LoggerMessage(EventId = 1004, Level = LogLevel.Warning,
+        Message = "No existe el superadministrador y faltan sus datos en 'Inicializacion:SuperAdmin' (usuario, correo y contraseña inicial). Ver back/README.md.")]
+    private static partial void LogSuperAdminSinConfigurar(ILogger logger);
+
+    [LoggerMessage(EventId = 1005, Level = LogLevel.Error, Message = "No se pudo crear el superadministrador: {Errores}")]
+    private static partial void LogSuperAdminNoCreado(ILogger logger, string errores);
+
+    [LoggerMessage(EventId = 1006, Level = LogLevel.Information,
+        Message = "Superadministrador '{NombreUsuario}' creado. Deberá cambiar la contraseña temporal al iniciar sesión.")]
+    private static partial void LogSuperAdminCreado(ILogger logger, string nombreUsuario);
 }

@@ -18,6 +18,16 @@ internal static class ResultadosHttp
             : ToProblem(resultado.Error!);
     }
 
+    /// <summary>Para comandos sin valor de retorno: éxito = 204 No Content.</summary>
+    public static Results<NoContent, ProblemHttpResult> ToNoContentResult(this Result<Vacio> resultado)
+    {
+        ArgumentNullException.ThrowIfNull(resultado);
+
+        return resultado.EsExito
+            ? TypedResults.NoContent()
+            : ToProblem(resultado.Error!);
+    }
+
     public static ProblemHttpResult ToProblem(this ErrorAplicacion error)
     {
         ArgumentNullException.ThrowIfNull(error);
@@ -25,6 +35,7 @@ internal static class ResultadosHttp
         var estado = error.Tipo switch
         {
             TipoError.Validacion => StatusCodes.Status400BadRequest,
+            TipoError.NoAutenticado => StatusCodes.Status401Unauthorized,
             TipoError.NoEncontrado => StatusCodes.Status404NotFound,
             TipoError.Conflicto => StatusCodes.Status409Conflict,
             TipoError.Prohibido => StatusCodes.Status403Forbidden,

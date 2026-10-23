@@ -17,6 +17,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUsuarioActual, UsuarioActualHttp>();
 
+builder.Services.AddSeguridadHttp();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -26,21 +27,32 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-if (app.Environment.IsDevelopment())
-{
-    // Documentación interactiva solo en desarrollo: /openapi/v1.json y /scalar.
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
-else
+if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 
-app.MapSaludEndpoints();
-app.MapSedesEndpoints();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseRateLimiter();
+app.UseMiddleware<ExigirCambioContrasenaMiddleware>();
+
+if (app.Environment.IsDevelopment())
+{
+    // Documentación interactiva solo en desarrollo: /openapi/v1.json y /scalar.
+    app.MapOpenApi().AllowAnonymous();
+    app.MapScalarApiReference().AllowAnonymous();
+}
+
+// Toda la API exige sesión iniciada, salvo los endpoints marcados con AllowAnonymous()
+// (salud, iniciar sesión y recuperación de contraseña).
+var api = app.MapGroup("/api").RequireAuthorization();
+
+api.MapSaludEndpoints();
+api.MapCuentaEndpoints();
+api.MapSedesEndpoints();
 
 await app.Services.InicializarBaseDatosAsync();
 
