@@ -17,7 +17,7 @@ Sistema web para el registro y control del inventario de Tecnologías de la Info
 
 ## Estado
 
-Paso 3 terminado: inicio de sesión, contraseñas, bloqueo, recuperación por correo y superadministrador inicial. Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
+Paso 4A terminado: permisos por petición, aislamiento entre sedes y pruebas automáticas. Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
 
 ## Control de versiones
 

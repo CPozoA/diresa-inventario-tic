@@ -8,21 +8,30 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <MicrosoftVersion>10.0.13</MicrosoftVersion>
   </PropertyGroup>
+
   <ItemGroup Label="Persistencia">
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="$(MicrosoftVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="$(MicrosoftVersion)" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(MicrosoftVersion)" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
+
   <ItemGroup Label="Identidad y seguridad">
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="$(MicrosoftVersion)" />
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="$(MicrosoftVersion)" />
   </ItemGroup>
+
   <ItemGroup Label="Infraestructura común">
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(MicrosoftVersion)" />
   </ItemGroup>
+
   <ItemGroup Label="Documentación de la API">
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="$(MicrosoftVersion)" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.18.2" />
+  </ItemGroup>
+
+  <ItemGroup Label="Pruebas">
+    <!-- xUnit v3 4.x usa Microsoft Testing Platform; global.json lo activa para "dotnet test". -->
+    <PackageVersion Include="xunit.v3" Version="4.0.2" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="$(MicrosoftVersion)" />
   </ItemGroup>
 </Project>

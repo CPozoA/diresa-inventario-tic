@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Verifica que las capas respeten sus dependencias (docs/ARQUITECTURA.md §5.1). -->
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Inventario.Api\Inventario.Api.csproj" />
+  </ItemGroup>
+
+</Project>

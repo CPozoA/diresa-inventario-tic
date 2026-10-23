@@ -1,0 +1,7 @@
+<Project>
+  <!-- "using Xunit;" para todos los archivos de prueba, una sola vez (evita duplicados si el paquete también lo agrega). -->
+  <ItemGroup>
+    <Using Remove="Xunit" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

@@ -5,4 +5,9 @@
     <Project Path="src/Inventario.Domain/Inventario.Domain.csproj" />
     <Project Path="src/Inventario.Infrastructure/Inventario.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Inventario.Api.IntegrationTests/Inventario.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Inventario.ArchitectureTests/Inventario.ArchitectureTests.csproj" />
+    <Project Path="tests/Inventario.Domain.Tests/Inventario.Domain.Tests.csproj" />
+  </Folder>
 </Solution>

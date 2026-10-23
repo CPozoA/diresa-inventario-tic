@@ -25,7 +25,9 @@ internal sealed class FabricaPrincipal(
 
         var identidad = await base.GenerateClaimsAsync(user);
 
+        // Excepción revisada al filtro de sede: se arma la sesión del propio usuario, a veces durante una petición aún anónima.
         var usuario = await db.Usuarios
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(u => u.Id == user.Id)
             .Select(u => new { u.SedeId })

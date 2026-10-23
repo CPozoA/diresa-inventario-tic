@@ -31,10 +31,15 @@ back/
    └─ Inventario.Api/            endpoints (Minimal APIs), seguridad, errores
       ├─ Common/                 traducción de resultados a respuestas HTTP
       ├─ Endpoints/              /api/salud, /api/cuenta/*, /api/sedes
-      └─ Seguridad/              cookie de sesión, límite de intentos, cambio obligatorio de contraseña
+      └─ Seguridad/              cookie de sesión, permisos por endpoint, límite de intentos, cambio obligatorio de contraseña
 ```
 
-Los proyectos de pruebas (`tests/`) se agregan en el Paso 4.
+```
+tests/
+├─ Inventario.Domain.Tests/          reglas del dominio (sedes, roles, permisos, usuarios); sin base de datos
+├─ Inventario.ArchitectureTests/     dependencias entre capas, handlers internos, constructores para EF Core
+└─ Inventario.Api.IntegrationTests/  API en memoria contra SQL Server: sesión, permisos y aislamiento entre sedes
+```
 
 ## Base de datos
 
@@ -140,6 +145,28 @@ dotnet run --project src/Inventario.Api --launch-profile https
 En el servidor se configura `Correo:Modo = Smtp` y los datos del SMTP (`Servidor`, `Puerto`, `Remitente`, `Usuario`,
 `Contrasena`) como variables de entorno o en `appsettings.Production.json` (no versionado). También `Aplicacion:UrlFrontend`
 con la dirección pública del sistema.
+
+## Pruebas automáticas
+
+Desde la carpeta `back`:
+
+```powershell
+dotnet test
+```
+
+- `global.json` activa **Microsoft Testing Platform**, que es la que usa xUnit v3 4.x con el SDK de .NET 10.
+- Las **pruebas de integración** crean y borran la base **`InventarioTIC_Pruebas`** en `.\SQLEXPRESS` en cada ejecución.
+  Tu base de desarrollo `InventarioTIC` no se toca. Si tu SQL Server tiene otro nombre, define antes la variable de entorno:
+  `$env:INVENTARIO_PRUEBAS_SQL = "Server=...;Database=InventarioTIC_Pruebas;Trusted_Connection=True;TrustServerCertificate=True"`.
+- Las pruebas usan sus propios usuarios y contraseñas (solo existen en la base de pruebas) y no leen tus *user secrets*.
+
+| Proyecto | Qué comprueba |
+|---|---|
+| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles |
+| `ArchitectureTests` | Que el dominio no dependa de nada, que Application no dependa de Infrastructure ni de la Api, que los handlers sean internos |
+| `Api.IntegrationTests` | Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada |
+
+Para ejecutar solo un proyecto: `dotnet test --project tests/Inventario.Domain.Tests`.
 
 ## Cambios en el modelo (migraciones siguientes)
 

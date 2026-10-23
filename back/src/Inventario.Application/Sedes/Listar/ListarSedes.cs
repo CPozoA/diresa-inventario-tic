@@ -9,7 +9,7 @@ namespace Inventario.Application.Sedes.Listar;
 public sealed record SedeDto(Guid Id, string Codigo, string Nombre, bool Activa);
 
 /// <summary>Lista las sedes ordenadas por nombre.</summary>
-/// <remarks>En el Paso 4 se restringe al superadministrador.</remarks>
+/// <remarks>Requiere el permiso Sedes.Gestionar (solo el superadministrador).</remarks>
 public sealed record ListarSedesQuery : IQuery<IReadOnlyList<SedeDto>>;
 
 internal sealed class ListarSedesHandler(IAppDbContext db) : IQueryHandler<ListarSedesQuery, IReadOnlyList<SedeDto>>

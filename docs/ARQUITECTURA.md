@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.5 · 22/10/2026 · Cambios: D21 a D24 (Paso 3: sesión, correo, superadministrador, autorización por grupo).
+> Versión 0.6 · 23/10/2026 · Cambios: D25 a D27 (Paso 4A: permisos por petición, aislamiento, pruebas).
 
 ---
 
@@ -62,6 +62,9 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D22 | Superadministrador inicial | Lo crea el inicializador con datos de `Inicializacion:SuperAdmin`; la contraseña inicial va en *user secrets* (desarrollo) o variable de entorno (servidor), es temporal y se exige cambiarla | Ninguna contraseña queda en el código, el repositorio ni la documentación. |
 | D23 | Exigencia de sesión | Se aplica al grupo `/api` (`RequireAuthorization`); los endpoints públicos se marcan con `AllowAnonymous()` | Seguro por defecto para la API sin bloquear la documentación (Scalar). |
 | D24 | Protección CSRF | Hasta el Paso 5 la protege la cookie `SameSite=Strict`; en el Paso 5 se agrega el token antifalsificación (cookie `XSRF-TOKEN` + cabecera `X-XSRF-TOKEN`), que Angular envía automáticamente | Probar la API desde Scalar sin copiar tokens a mano; la defensa completa llega junto con el frontend. |
+| D25 | Cálculo de permisos | En **cada petición**, con una consulta (roles del usuario → permisos), una sola vez por petición; sin caché entre peticiones | Quitar un rol o un permiso tiene efecto inmediato; la consulta es pequeña. Si el volumen lo exige, se agrega caché después. |
+| D26 | Pruebas | **xUnit v3 (4.x)** sobre Microsoft Testing Platform (activado en `global.json`); integración con `WebApplicationFactory` contra una base de pruebas real en SQL Server (`InventarioTIC_Pruebas`), que se recrea en cada ejecución | Las pruebas de aislamiento deben ejercitar el filtro y la protección reales de EF Core sobre SQL Server. |
+| D27 | Paso 4 en dos partes | **4A**: permisos, aislamiento y pruebas. **4B**: API de gestión de usuarios, roles y sedes con las reglas contra el escalamiento | Cada parte compila y se prueba por separado; los errores quedan acotados. |
 
 ### Decisiones pendientes de confirmar
 
@@ -193,14 +196,20 @@ public interface IQueryHandler<TQuery, TResult>   { Task<Result<TResult>> Handle
 
 Es la pieza de seguridad más importante del sistema.
 
-1. **`IUsuarioActual`** expone `UsuarioId`, `SedeId` (nulo para el superadmin), `EsSuperAdmin` y los permisos. Se lee **siempre de la sesión** del servidor, nunca de datos enviados por el navegador.
+1. **`IUsuarioActual`** expone `UsuarioId`, `SedeId` (nulo para el superadmin), `EsSuperAdmin` y `EsProcesoInterno` (sin petición HTTP: datos iniciales, migraciones). Se lee **siempre de la sesión** del servidor, nunca de datos enviados por el navegador. Los permisos se consultan con `IPermisosUsuarioActual`.
 2. Toda entidad de una sede implementa `IPerteneceASede { Guid SedeId }`.
-3. **Filtro global de EF Core** sobre cada `IPerteneceASede`: `e => usuarioActual.EsSuperAdmin || e.SedeId == usuarioActual.SedeId`.
-4. **Interceptor de guardado** (`SaveChangesInterceptor`):
-   - Al crear: asigna `SedeId` desde la sesión. Solo el superadmin puede indicar la sede explícitamente.
-   - Al modificar: **impide cambiar** `SedeId` (no hay transferencias).
-   - Rellena los campos de auditoría (`CreadoPor`, `CreadoEn`, `ModificadoPor`, `ModificadoEn`).
-5. Cualquier excepción al filtro (`IgnoreQueryFilters`) solo se permite en código revisado y marcado.
+3. **Filtro global de EF Core** (`AppDbContext`), evaluado en cada consulta:
+
+   | Entidad | Un usuario de sede ve | Superadmin y procesos internos | Petición anónima |
+   |---|---|---|---|
+   | `IPerteneceASede` (activos, licencias…) | Solo los de su sede | Todo | Nada |
+   | `Sede` | Solo la suya | Todas | Nada |
+   | `Usuario` | Solo los de su sede (nunca al superadmin) | Todos | Nada |
+   | `Rol` | Los de su sede y los del sistema | Todos | Nada |
+4. **Interceptores de guardado**:
+   - `ProteccionSedeInterceptor` (última barrera): un usuario de sede no puede crear, modificar ni borrar registros de otra sede ni registros sin sede (como los roles del sistema), y **nadie** puede cambiar la sede de un registro (no hay transferencias). Ante una violación cancela todo el guardado con `ViolacionAislamientoException` (error 500 genérico, queda en el log). La sede de un registro nuevo la fija el caso de uso desde la sesión; el interceptor lo verifica.
+   - `AuditoriaInterceptor`: rellena `CreadoPor`, `CreadoEn`, `ModificadoPor` y `ModificadoEn`.
+5. Cualquier excepción al filtro (`IgnoreQueryFilters()`) lleva un comentario `// Excepción revisada al filtro de sede: ...`. Hoy existen solo en el inicio de sesión, la recuperación de contraseña, el armado de la sesión y el cálculo de permisos, siempre buscando por el identificador del propio usuario.
 6. **Pruebas de aislamiento** obligatorias (ver §8).
 
 ### 5.7 Catálogos
@@ -236,7 +245,8 @@ Los catálogos por sede usan el mismo mecanismo de §5.6. Los catálogos no se b
   `Activos.Ver`, `Activos.Crear`, `Activos.Editar`, `Activos.Eliminar`, `Licencias.Ver`, `Licencias.Gestionar`, `Mantenimiento.Ver`, `Mantenimiento.Gestionar`, `Asignaciones.Ver`, `Asignaciones.Gestionar`, `Catalogos.GestionarSede`, `Usuarios.Ver`, `Usuarios.Gestionar`, `Roles.Gestionar`, y los exclusivos del superadmin: `Sedes.Gestionar`, `Catalogos.GestionarGlobales`, `Administradores.Gestionar`.
 - Un usuario puede tener **varios roles** (D16). Sus permisos efectivos son la **unión** de los permisos de todos sus roles. La pantalla del usuario muestra ese resumen para que se entienda qué puede hacer sin sumar roles a mano.
 - Cada endpoint declara el permiso que exige (`.RequirePermiso(Permisos.Activos.Crear)`).
-- Los permisos del usuario se resuelven en el servidor en cada petición (con caché corta que se invalida al cambiar un rol). Así, quitar un permiso tiene efecto inmediato.
+- Los permisos del usuario se calculan en el servidor en cada petición (una consulta por petición, D25). Así, quitar un permiso o un rol tiene efecto inmediato. Un usuario desactivado no tiene ningún permiso.
+- Sin sesión el endpoint responde **401**; con sesión pero sin el permiso, **403**.
 - Los roles **no** usan la tabla de roles de Identity (exige nombres únicos globales y "Editor" existirá en cada sede); se usan tablas propias.
 
 ### 6.3 Roles
@@ -319,7 +329,7 @@ Angular Material, con un tema propio basado en los bosquejos (barra lateral oscu
 |----------|-----------|
 | `Domain.Tests` | Reglas puras (vida útil, garantía, suma de capacidades). |
 | `Application.Tests` | Handlers y validadores. |
-| `Api.IntegrationTests` | Endpoints reales contra SQL Server de pruebas. |
+| `Api.IntegrationTests` | Endpoints reales y filtro/protección de EF Core contra la base `InventarioTIC_Pruebas` en SQL Server (se recrea en cada ejecución). |
 | `ArchitectureTests` | Que las capas respeten sus dependencias. |
 | Frontend | Pruebas unitarias de stores y componentes; pruebas de punta a punta de los flujos principales. |
 
@@ -368,7 +378,8 @@ Consideraciones del hosting compartido:
 | **1** | Solución .NET con las 4 capas y entidades base (sede, usuario, rol, permiso) | `dotnet build` |
 | **2** | Base de datos y primera migración | Migración aplicada en SQL Server |
 | **3** | Inicio de sesión, contraseñas, bloqueo y recuperación | Prueba manual (Postman o navegador) |
-| **4** | Permisos, roles por sede y aislamiento, con pruebas automáticas | `dotnet test` |
+| **4A** | Permisos por petición, aislamiento entre sedes y proyectos de pruebas | `dotnet test` |
+| **4B** | API de gestión de usuarios, roles y sedes con reglas contra el escalamiento | `dotnet test` |
 | **5** | Angular 22 + Material: diseño base e inicio de sesión | `ng serve` |
 | **6** | Pantallas de sedes, usuarios, roles y catálogos | Prueba manual |
 | **7** | Módulo de activos básico (con discos y RAM) | Prueba de punta a punta |

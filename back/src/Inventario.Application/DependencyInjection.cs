@@ -32,6 +32,8 @@ public static class DependencyInjection
 
         // Servicios internos compartidos por varios handlers.
         services.AddScoped<Cuenta.ConstructorSesion>();
+        services.AddScoped<Common.Seguridad.CalculadoraPermisos>();
+        services.AddScoped<Common.Seguridad.IPermisosUsuarioActual, Common.Seguridad.PermisosUsuarioActual>();
 
         return services;
     }

@@ -4,7 +4,8 @@ using Inventario.Application.Common.Seguridad;
 namespace Inventario.Api.Seguridad;
 
 /// <summary>
-/// Lee el usuario de la sesión HTTP (cookie). Fuera de una petición (por ejemplo, al cargar datos iniciales) no hay usuario.
+/// Lee el usuario de la sesión HTTP (cookie). Fuera de una petición HTTP (datos iniciales, herramientas)
+/// se considera un proceso interno del sistema.
 /// </summary>
 internal sealed class UsuarioActualHttp(IHttpContextAccessor accesor) : IUsuarioActual
 {
@@ -19,11 +20,7 @@ internal sealed class UsuarioActualHttp(IHttpContextAccessor accesor) : IUsuario
     // Se exige un dato explícito: nunca se deduce "superadmin" por la ausencia de sede.
     public bool EsSuperAdmin => EstaAutenticado && Principal!.HasClaim(TiposClaim.SuperAdmin, bool.TrueString);
 
-    /// <summary>
-    /// Por ahora solo el superadministrador tiene permisos. En el Paso 4 los permisos de cada usuario
-    /// se calculan en el servidor a partir de sus roles, en cada petición.
-    /// </summary>
-    public bool TienePermiso(string codigoPermiso) => EsSuperAdmin;
+    public bool EsProcesoInterno => accesor.HttpContext is null;
 
     private Guid? LeerGuid(string tipoClaim)
     {

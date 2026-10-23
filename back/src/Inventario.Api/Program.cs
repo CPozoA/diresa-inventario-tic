@@ -17,7 +17,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUsuarioActual, UsuarioActualHttp>();
 
-builder.Services.AddSeguridadHttp();
+builder.Services.AddSeguridadHttp(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -35,9 +35,9 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+app.UseMiddleware<ExigirCambioContrasenaMiddleware>();
 app.UseAuthorization();
 app.UseRateLimiter();
-app.UseMiddleware<ExigirCambioContrasenaMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

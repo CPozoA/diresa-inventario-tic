@@ -36,7 +36,9 @@ internal sealed class IniciarSesionHandler(
         }
 
         // 2. Estado: usuario activo y, si pertenece a una sede, sede activa.
+        // Excepción revisada al filtro de sede: la petición aún es anónima y el usuario ya fue verificado por sus credenciales.
         var usuario = await db.Usuarios
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(u => u.Id == usuarioId)
             .Select(u => new { u.Activo, u.SedeId })
@@ -48,7 +50,7 @@ internal sealed class IniciarSesionHandler(
         }
 
         if (usuario.SedeId is Guid sedeId
-            && !await db.Sedes.AnyAsync(s => s.Id == sedeId && s.Activa, cancellationToken))
+            && !await db.Sedes.IgnoreQueryFilters().AnyAsync(s => s.Id == sedeId && s.Activa, cancellationToken))
         {
             return ErroresCuenta.SedeInactiva;
         }

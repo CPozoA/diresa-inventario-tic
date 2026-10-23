@@ -22,13 +22,17 @@ public sealed record SesionDto(
     IReadOnlyList<string> Permisos);
 
 /// <summary>Arma el <see cref="SesionDto"/> de un usuario. Lo usan iniciar sesión y consultar la sesión.</summary>
-internal sealed class ConstructorSesion(IAppDbContext db, IServicioIdentidad identidad)
+/// <remarks>
+/// Excepción revisada al filtro de sede: se consulta por el identificador que ya verificó la sesión o el inicio
+/// de sesión. Durante el inicio de sesión la petición todavía es anónima y el filtro ocultaría al propio usuario.
+/// </remarks>
+internal sealed class ConstructorSesion(IAppDbContext db, IServicioIdentidad identidad, CalculadoraPermisos calculadora)
 {
     public async Task<SesionDto?> ConstruirAsync(Guid usuarioId, CancellationToken cancellationToken)
     {
         var usuario = await db.Usuarios
+            .IgnoreQueryFilters()
             .AsNoTracking()
-            .Include(u => u.Roles)
             .FirstOrDefaultAsync(u => u.Id == usuarioId, cancellationToken);
 
         var cuenta = await identidad.ObtenerDatosCuentaAsync(usuarioId);
@@ -38,16 +42,7 @@ internal sealed class ConstructorSesion(IAppDbContext db, IServicioIdentidad ide
             return null;
         }
 
-        var rolIds = usuario.Roles.Select(r => r.RolId).ToList();
-        var roles = await db.Roles
-            .AsNoTracking()
-            .Include(r => r.PermisosAsignados)
-            .Where(r => rolIds.Contains(r.Id))
-            .ToListAsync(cancellationToken);
-
-        var permisos = roles
-            .SelectMany(r => r.PermisosEfectivos())
-            .Distinct(StringComparer.Ordinal)
+        var permisos = (await calculadora.CalcularAsync(usuarioId, cancellationToken))
             .Order(StringComparer.Ordinal)
             .ToList();
 
@@ -55,6 +50,7 @@ internal sealed class ConstructorSesion(IAppDbContext db, IServicioIdentidad ide
         if (usuario.SedeId is Guid sedeId)
         {
             sede = await db.Sedes
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Where(s => s.Id == sedeId)
                 .Select(s => new SedeSesionDto(s.Id, s.Codigo, s.Nombre))

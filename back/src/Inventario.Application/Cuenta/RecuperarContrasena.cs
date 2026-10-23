@@ -36,7 +36,9 @@ internal sealed class SolicitarRestablecimientoHandler(
             return Result.Exito(Vacio.Valor);
         }
 
+        // Excepción revisada al filtro de sede: petición anónima; el usuario sale del correo registrado en su cuenta.
         var usuario = await db.Usuarios
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(u => u.Id == solicitud.UsuarioId)
             .Select(u => new { u.Activo, u.Nombres })

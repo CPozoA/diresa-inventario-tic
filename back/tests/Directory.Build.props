@@ -1,0 +1,19 @@
+<Project>
+  <!-- Hereda la configuración común de back/Directory.Build.props y la ajusta para proyectos de pruebas. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!-- xUnit v3: cada proyecto de pruebas es un ejecutable. -->
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+
+    <!--
+      Reglas que no aplican a pruebas:
+      CA1707: los nombres de prueba usan guiones bajos (Metodo_Condicion_Resultado).
+      CA1515: xUnit exige clases de prueba públicas.
+      CA1861 / CA2234: arreglos y URLs en texto son más legibles en una prueba.
+    -->
+    <NoWarn>$(NoWarn);CA1707;CA1515;CA1861;CA2234</NoWarn>
+  </PropertyGroup>
+</Project>

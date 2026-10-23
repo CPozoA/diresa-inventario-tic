@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 
 namespace Inventario.Api.Seguridad;
@@ -11,8 +12,10 @@ internal static class ConfiguracionSeguridad
     /// <summary>
     /// Cookie de sesión, autorización y límite de intentos. Detalle en docs/ARQUITECTURA.md §6.
     /// </summary>
-    public static IServiceCollection AddSeguridadHttp(this IServiceCollection services)
+    public static IServiceCollection AddSeguridadHttp(this IServiceCollection services, IConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(configuration);
+
         services
             .AddAuthentication(IdentityConstants.ApplicationScheme)
             .AddIdentityCookies();
@@ -45,7 +48,13 @@ internal static class ConfiguracionSeguridad
         // exige sesión salvo que se marque explícitamente con AllowAnonymous().
         services.AddAuthorization();
 
-        // Máximo 10 intentos por minuto por dirección IP en los endpoints de autenticación.
+        // Autorización por permiso: cada endpoint declara el permiso que exige con RequirePermiso(...).
+        services.AddScoped<IAuthorizationHandler, PermisoHandler>();
+
+        // Máximo de intentos por minuto por dirección IP en los endpoints de autenticación (10 por defecto;
+        // las pruebas automáticas lo amplían con Seguridad:IntentosAutenticacionPorMinuto).
+        var intentosPorMinuto = configuration.GetValue("Seguridad:IntentosAutenticacionPorMinuto", 10);
+
         services.AddRateLimiter(opciones =>
         {
             opciones.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -53,7 +62,7 @@ internal static class ConfiguracionSeguridad
                 contexto.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
                 _ => new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 10,
+                    PermitLimit = intentosPorMinuto,
                     Window = TimeSpan.FromMinutes(1),
                     QueueLimit = 0,
                 }));

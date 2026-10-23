@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Pruebas de integración: levantan la API en memoria contra una base de pruebas en SQL Server
+    (InventarioTIC_Pruebas, se borra y se recrea en cada ejecución). Incluyen las pruebas de aislamiento entre sedes.
+  -->
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Inventario.Api\Inventario.Api.csproj" />
+    <ProjectReference Include="..\..\src\Inventario.Infrastructure\Inventario.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

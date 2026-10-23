@@ -29,6 +29,7 @@ Desktop.ini
 
 # ---------- Correos de desarrollo (pueden contener enlaces de restablecimiento) ----------
 correos-dev/
+correos-pruebas/
 
 # ---------- Secretos ----------
 *.pfx

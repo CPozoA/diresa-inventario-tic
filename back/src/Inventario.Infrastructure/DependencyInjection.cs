@@ -10,6 +10,7 @@ using Inventario.Infrastructure.Persistencia.Interceptores;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -53,11 +54,20 @@ public static class DependencyInjection
 
         services.Configure<OpcionesBaseDatos>(configuration.GetSection(OpcionesBaseDatos.Seccion));
 
+        services.AddScoped<ProteccionSedeInterceptor>();
         services.AddScoped<AuditoriaInterceptor>();
 
         services.AddDbContext<AppDbContext>((proveedor, opciones) => opciones
             .UseSqlServer(cadenaConexion)
-            .AddInterceptors(proveedor.GetRequiredService<AuditoriaInterceptor>()));
+            // Primero la protección de sede (si detecta una violación, no se audita ni se guarda nada); luego la auditoría.
+            .AddInterceptors(
+                proveedor.GetRequiredService<ProteccionSedeInterceptor>(),
+                proveedor.GetRequiredService<AuditoriaInterceptor>())
+            // EF Core advierte que Usuario y Rol tienen filtro de sede y son el lado obligatorio de relaciones
+            // (cuentas, roles asignados, permisos). Es intencional: esas tablas solo se consultan a través de su
+            // agregado o por la cuenta del propio usuario (docs/ARQUITECTURA.md §5.6).
+            .ConfigureWarnings(advertencias => advertencias.Ignore(
+                CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning)));
 
         services.AddScoped<IAppDbContext>(proveedor => proveedor.GetRequiredService<AppDbContext>());
 
