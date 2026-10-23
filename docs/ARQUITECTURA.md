@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.7 · 23/10/2026 · Cambios: D28 a D30 y reglas 8 a 11 de §6.3 (Paso 4B: gestión de usuarios, roles y sedes).
+> Versión 0.8 · 23/10/2026 · Cambios: D24 implementada y D31 a D34 (Paso 5A: base del frontend y protección CSRF).
 
 ---
 
@@ -61,13 +61,17 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D21 | Correo | Interfaz `IServicioCorreo`: en desarrollo guarda cada correo como archivo HTML (`correos-dev/`); en producción envía por SMTP con el cliente de .NET | Permite probar la recuperación de contraseña sin servidor de correo; cambiar a MailKit no toca los casos de uso. |
 | D22 | Superadministrador inicial | Lo crea el inicializador con datos de `Inicializacion:SuperAdmin`; la contraseña inicial va en *user secrets* (desarrollo) o variable de entorno (servidor), es temporal y se exige cambiarla | Ninguna contraseña queda en el código, el repositorio ni la documentación. |
 | D23 | Exigencia de sesión | Se aplica al grupo `/api` (`RequireAuthorization`); los endpoints públicos se marcan con `AllowAnonymous()` | Seguro por defecto para la API sin bloquear la documentación (Scalar). |
-| D24 | Protección CSRF | Hasta el Paso 5 la protege la cookie `SameSite=Strict`; en el Paso 5 se agrega el token antifalsificación (cookie `XSRF-TOKEN` + cabecera `X-XSRF-TOKEN`), que Angular envía automáticamente | Probar la API desde Scalar sin copiar tokens a mano; la defensa completa llega junto con el frontend. |
+| D24 | Protección CSRF | Cookie `SameSite=Strict` y, desde el Paso 5A, **token antifalsificación** en todo POST/PUT/PATCH/DELETE a `/api` (incluidos iniciar sesión y recuperar contraseña): `GET /api/cuenta/csrf` lo entrega en la cookie `XSRF-TOKEN` y en el cuerpo; vuelve en la cabecera `X-XSRF-TOKEN`. Sin él, 400 `Seguridad.TokenCsrfInvalido`. Está ligado al usuario: el frontend pide otro al iniciar o cerrar sesión y, si la API lo rechaza, renueva y reintenta una vez | Dos defensas independientes; el reintento cubre la sesión vencida sin molestar al usuario. |
 | D25 | Cálculo de permisos | En **cada petición**, con una consulta (roles del usuario → permisos), una sola vez por petición; sin caché entre peticiones | Quitar un rol o un permiso tiene efecto inmediato; la consulta es pequeña. Si el volumen lo exige, se agrega caché después. |
 | D26 | Pruebas | **xUnit v3 (4.x)** sobre Microsoft Testing Platform (activado en `global.json`); integración con `WebApplicationFactory` contra una base de pruebas real en SQL Server (`InventarioTIC_Pruebas`), que se recrea en cada ejecución | Las pruebas de aislamiento deben ejercitar el filtro y la protección reales de EF Core sobre SQL Server. |
 | D27 | Paso 4 en dos partes | **4A**: permisos, aislamiento y pruebas. **4B**: API de gestión de usuarios, roles y sedes con las reglas contra el escalamiento | Cada parte compila y se prueba por separado; los errores quedan acotados. |
 | D28 | Validación de datos | Las reglas de formato (obligatorio, longitud, caracteres) viven **en el dominio**; si se incumplen, el dominio lanza `DominioException` y la Api responde **400** con su mensaje y el código `Dominio.ReglaIncumplida`. Lo que depende de la base o de quién actúa (duplicados, permisos) lo valida Application con `Result` | Una sola fuente de verdad para cada regla; no se repiten validaciones en dos capas. |
 | D29 | Contraseña temporal | Al crear un usuario o restablecer su contraseña, el **sistema genera** una contraseña aleatoria de 14 caracteres y la devuelve **una sola vez** al administrador, que se la entrega a la persona. El usuario debe cambiarla al ingresar | El administrador nunca elige ni conoce la contraseña definitiva; no depende de que el correo esté configurado. |
 | D30 | Gestión según permisos | **Nadie gestiona a quien tiene más permisos que él**: para editar, cambiar roles, activar/desactivar, restablecer contraseña o desbloquear a un usuario, los permisos del usuario deben estar contenidos en los de quien actúa. Lo mismo para editar o eliminar un rol | Evita, por ejemplo, que alguien con `Usuarios.Gestionar` restablezca la contraseña de una cuenta con más privilegios y se apropie de ella. |
+| D31 | Cliente de la API | Generado con **ng-openapi-gen** desde el contrato OpenAPI (funciones por operación + servicio `Api`, con promesas). El contrato (`front/openapi/inventario-api.json`) y el código generado (`front/src/app/api/`) se versionan; se actualizan con `npm run api:actualizar` | Si la API cambia, el frontend no compila hasta ajustarse; los cambios del contrato se ven en cada commit. Sin dependencia de pago y pensado para Angular (usa `HttpClient`, así que pasan los interceptores). |
+| D32 | Fuentes e íconos | IBM Plex Sans/Mono y Material Icons **incluidos en la aplicación** (paquetes npm), no desde Google Fonts | Funciona en redes sin internet o con filtros; no se envían datos de los usuarios a terceros. |
+| D33 | Desarrollo local | `ng serve` en **https://localhost:4200** con el certificado de desarrollo de .NET exportado (`npm run certificado`) y un proxy de `/api` a `https://localhost:7180` | Mismo esquema que producción (HTTPS, un solo sitio, cookie `SameSite=Strict`); el enlace de "restablecer contraseña" ya apunta a esa dirección. |
+| D34 | Pruebas del frontend | **Vitest** (el ejecutor por defecto de Angular 22) con `HttpTestingController` para probar interceptores y stores sin API | Rápido y sin navegador. |
 
 ### Decisiones pendientes de confirmar
 
@@ -233,7 +237,7 @@ Los catálogos por sede usan el mismo mecanismo de §5.6. Los catálogos no se b
 - **Cookie de sesión** `InventarioTIC.Sesion`: `HttpOnly`, `Secure`, `SameSite=Strict`, vence a los 30 minutos sin actividad y se renueva con cada petición. La cookie lleva el identificador, la sede, la marca de superadministrador y la de cambio obligatorio; **no** lleva permisos.
 - **Validación periódica de la sesión** (cada minuto): si cambia la contraseña de un usuario, sus otras sesiones abiertas se cierran.
 - **Límite de peticiones**: 10 por minuto por dirección IP en iniciar sesión y recuperación de contraseña (HTTP 429 al superarlo).
-- **Protección CSRF**: cookie `SameSite=Strict` desde el Paso 3 y, desde el Paso 5, token antifalsificación en cada petición que modifica datos (D24).
+- **Protección CSRF**: cookie `SameSite=Strict` desde el Paso 3 y, desde el Paso 5A, token antifalsificación en cada petición que modifica datos (D24).
 - **Política de contraseñas**: mínimo 10 caracteres, con mayúscula, minúscula y número.
 - **Bloqueo** tras **3 intentos fallidos** durante 15 minutos (D17). El desbloqueo es automático al vencer el plazo, y el administrador de sede (o el superadmin) puede desbloquear antes. Como un umbral bajo facilita que alguien bloquee cuentas ajenas a propósito, el inicio de sesión tiene además límite de peticiones por dirección IP (§6.4) y los bloqueos quedan registrados.
 - **Cuentas nuevas y restablecidas** llevan contraseña temporal y **cambio obligatorio** en el primer ingreso.
@@ -384,7 +388,6 @@ Consideraciones del hosting compartido:
 | Pendiente | Detalle |
 |---|---|
 | Cifrar las claves de protección de datos | Hoy se guardan en `seguridad.ClavesProteccionDatos` sin una capa extra de cifrado (el registro avisa "No XML encryptor configured"). En producción: `ProtectKeysWithCertificate(...)` con un certificado instalado en el servidor. |
-| Token antifalsificación (CSRF) | Paso 5 (D24). |
 | Cabeceras de seguridad | HSTS, `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy` (§6.4). |
 | Registro de auditoría de cambios | Historial completo de quién cambió qué (§6.4). |
 | Correo SMTP real | Datos del servidor de SmarterASP.NET como variables de entorno (D21). |
@@ -401,7 +404,8 @@ Consideraciones del hosting compartido:
 | **3** | Inicio de sesión, contraseñas, bloqueo y recuperación | Prueba manual (Postman o navegador) |
 | **4A** | Permisos por petición, aislamiento entre sedes y proyectos de pruebas | `dotnet test` |
 | **4B** | API de gestión de usuarios, roles y sedes con reglas contra el escalamiento | `dotnet test` |
-| **5** | Angular 22 + Material: diseño base e inicio de sesión | `ng serve` |
+| **5A** | Proyecto Angular 22 + Material: tema, proxy, protección CSRF, cliente generado, sesión, guards e interceptores | `npm test` y página de comprobación en `ng serve` |
+| **5B** | Pantallas de inicio de sesión, cambio y recuperación de contraseña; estructura con menú según permisos | Prueba manual en el navegador |
 | **6** | Pantallas de sedes, usuarios, roles y catálogos | Prueba manual |
 | **7** | Módulo de activos básico (con discos y RAM) | Prueba de punta a punta |
 

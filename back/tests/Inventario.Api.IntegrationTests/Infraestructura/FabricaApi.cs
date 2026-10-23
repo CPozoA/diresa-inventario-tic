@@ -8,6 +8,7 @@ using Inventario.Infrastructure.Persistencia.Interceptores;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Mvc.Testing.Handlers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,6 +20,8 @@ namespace Inventario.Api.IntegrationTests.Infraestructura;
 /// </summary>
 public sealed class FabricaApi : WebApplicationFactory<MarcadorApi>, IAsyncLifetime
 {
+    private static readonly Uri DireccionBase = new("https://localhost");
+
     public Guid SedeHuantaId { get; private set; }
 
     public Guid SedePuquioId { get; private set; }
@@ -52,13 +55,18 @@ public sealed class FabricaApi : WebApplicationFactory<MarcadorApi>, IAsyncLifet
         await CrearDatosDePruebaAsync();
     }
 
-    /// <summary>Cliente HTTP con su propio "navegador" (cookies), sin sesión iniciada.</summary>
-    public HttpClient CrearCliente() => CreateClient(new WebApplicationFactoryClientOptions
+    /// <summary>
+    /// Cliente HTTP con su propio "navegador" (cookies), sin sesión iniciada. Maneja el token antifalsificación
+    /// como lo hará Angular (<see cref="ManejadorCsrf"/>).
+    /// </summary>
+    public HttpClient CrearCliente()
     {
-        BaseAddress = new Uri("https://localhost"),
-        HandleCookies = true,
-        AllowAutoRedirect = false,
-    });
+        var cookies = new CookieContainerHandler();
+        return CreateDefaultClient(DireccionBase, new ManejadorCsrf(cookies.Container), cookies);
+    }
+
+    /// <summary>Cliente con cookies pero SIN token antifalsificación automático, para probar la protección CSRF.</summary>
+    public HttpClient CrearClienteSinCsrf() => CreateDefaultClient(DireccionBase, new CookieContainerHandler());
 
     /// <summary>Cliente HTTP con la sesión del usuario indicado ya iniciada.</summary>
     public async Task<HttpClient> CrearClienteConSesionAsync(string usuario, string contrasena = DatosPrueba.Contrasena)

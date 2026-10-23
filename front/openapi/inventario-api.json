@@ -1,0 +1,1333 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Inventario.Api | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://localhost:7180/"
+    }
+  ],
+  "paths": {
+    "/api/salud": {
+      "get": {
+        "tags": [
+          "Salud"
+        ],
+        "operationId": "ObtenerSalud",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaSalud"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cuenta/csrf": {
+      "get": {
+        "tags": [
+          "Cuenta"
+        ],
+        "summary": "Entrega el token antifalsificación (cookie XSRF-TOKEN y en el cuerpo). Debe enviarse en la cabecera X-XSRF-TOKEN en todo POST, PUT o DELETE. Pedir uno nuevo al iniciar o cerrar sesión.",
+        "operationId": "ObtenerTokenCsrf",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenCsrfDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cuenta/iniciar-sesion": {
+      "post": {
+        "tags": [
+          "Cuenta"
+        ],
+        "summary": "Inicia sesión con usuario (o correo) y contraseña. Al tercer intento fallido bloquea la cuenta 15 minutos.",
+        "operationId": "IniciarSesion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IniciarSesionCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cuenta/cerrar-sesion": {
+      "post": {
+        "tags": [
+          "Cuenta"
+        ],
+        "summary": "Cierra la sesión actual.",
+        "operationId": "CerrarSesion",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/cuenta/sesion": {
+      "get": {
+        "tags": [
+          "Cuenta"
+        ],
+        "summary": "Datos del usuario conectado: sede, permisos y si debe cambiar la contraseña.",
+        "operationId": "ObtenerSesion",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cuenta/cambiar-contrasena": {
+      "post": {
+        "tags": [
+          "Cuenta"
+        ],
+        "summary": "Cambia la contraseña del usuario conectado.",
+        "operationId": "CambiarContrasena",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CambiarContrasenaCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/cuenta/olvide-contrasena": {
+      "post": {
+        "tags": [
+          "Cuenta"
+        ],
+        "summary": "Envía un enlace para restablecer la contraseña. Responde igual exista o no el correo.",
+        "operationId": "OlvideContrasena",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitarRestablecimientoCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/cuenta/restablecer-contrasena": {
+      "post": {
+        "tags": [
+          "Cuenta"
+        ],
+        "summary": "Define una contraseña nueva con el enlace recibido por correo.",
+        "operationId": "RestablecerContrasena",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestablecerContrasenaCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/sedes": {
+      "get": {
+        "tags": [
+          "Sedes"
+        ],
+        "summary": "Lista las sedes ordenadas por nombre.",
+        "operationId": "ListarSedes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SedeDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sedes"
+        ],
+        "summary": "Crea una sede activa, con los roles iniciales Editor y Consulta.",
+        "operationId": "CrearSede",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearSedeCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdCreado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sedes/{id}": {
+      "put": {
+        "tags": [
+          "Sedes"
+        ],
+        "summary": "Cambia el nombre de una sede. El código no cambia.",
+        "operationId": "EditarSede",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarSedeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/sedes/{id}/activar": {
+      "post": {
+        "tags": [
+          "Sedes"
+        ],
+        "summary": "Activa una sede: sus usuarios vuelven a poder ingresar.",
+        "operationId": "ActivarSede",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/sedes/{id}/desactivar": {
+      "post": {
+        "tags": [
+          "Sedes"
+        ],
+        "summary": "Desactiva una sede: conserva sus datos, pero sus usuarios no pueden ingresar y se cierran sus sesiones.",
+        "operationId": "DesactivarSede",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/roles": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Roles asignables en una sede. El superadministrador indica la sede con ?sedeId=.",
+        "operationId": "ListarRoles",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RolDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Crea un rol de sede. Solo con permisos que quien lo crea ya tiene.",
+        "operationId": "CrearRol",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearRolCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdCreado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/roles/permisos": {
+      "get": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Permisos que se pueden combinar en un rol, y si quien consulta puede otorgarlos.",
+        "operationId": "ListarPermisos",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermisoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/roles/{id}": {
+      "put": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Cambia nombre, descripción y permisos de un rol de sede.",
+        "operationId": "EditarRol",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarRolRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Roles"
+        ],
+        "summary": "Elimina un rol de sede que no esté asignado a nadie.",
+        "operationId": "EliminarRol",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/usuarios": {
+      "get": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Usuarios de la sede. El superadministrador puede filtrar con ?sedeId=. Búsqueda opcional con ?buscar=.",
+        "operationId": "ListarUsuarios",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UsuarioDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Crea un usuario con contraseña temporal (se devuelve una sola vez).",
+        "operationId": "CrearUsuario",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearUsuarioCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioCreadoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usuarios/{id}": {
+      "get": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Un usuario de la sede.",
+        "operationId": "ObtenerUsuario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsuarioDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Cambia nombres, apellidos, cargo y correo.",
+        "operationId": "EditarUsuario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarUsuarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/usuarios/{id}/roles": {
+      "put": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Reemplaza los roles del usuario.",
+        "operationId": "AsignarRolesUsuario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AsignarRolesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/usuarios/{id}/activar": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Activa un usuario.",
+        "operationId": "ActivarUsuario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/usuarios/{id}/desactivar": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Desactiva un usuario y cierra sus sesiones.",
+        "operationId": "DesactivarUsuario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/usuarios/{id}/restablecer-contrasena": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Genera una contraseña temporal (se devuelve una sola vez), quita el bloqueo y cierra sus sesiones.",
+        "operationId": "RestablecerContrasenaUsuario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContrasenaTemporalDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/usuarios/{id}/desbloquear": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Quita el bloqueo por intentos fallidos.",
+        "operationId": "DesbloquearUsuario",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AsignarRolesRequest": {
+        "required": [
+          "rolIds"
+        ],
+        "type": "object",
+        "properties": {
+          "rolIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "CambiarContrasenaCommand": {
+        "required": [
+          "contrasenaActual",
+          "contrasenaNueva"
+        ],
+        "type": "object",
+        "properties": {
+          "contrasenaActual": {
+            "type": "string"
+          },
+          "contrasenaNueva": {
+            "type": "string"
+          }
+        }
+      },
+      "ContrasenaTemporalDto": {
+        "required": [
+          "contrasenaTemporal"
+        ],
+        "type": "object",
+        "properties": {
+          "contrasenaTemporal": {
+            "type": "string"
+          }
+        }
+      },
+      "CrearRolCommand": {
+        "required": [
+          "sedeId",
+          "nombre",
+          "descripcion",
+          "permisos"
+        ],
+        "type": "object",
+        "properties": {
+          "sedeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "permisos": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CrearSedeCommand": {
+        "required": [
+          "codigo",
+          "nombre"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          }
+        }
+      },
+      "CrearUsuarioCommand": {
+        "required": [
+          "sedeId",
+          "nombreUsuario",
+          "correo",
+          "nombres",
+          "apellidos",
+          "cargo",
+          "rolIds"
+        ],
+        "type": "object",
+        "properties": {
+          "sedeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "nombreUsuario": {
+            "type": "string"
+          },
+          "correo": {
+            "type": "string"
+          },
+          "nombres": {
+            "type": "string"
+          },
+          "apellidos": {
+            "type": "string"
+          },
+          "cargo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "rolIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "EditarRolRequest": {
+        "required": [
+          "nombre",
+          "descripcion",
+          "permisos"
+        ],
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "permisos": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EditarSedeRequest": {
+        "required": [
+          "nombre"
+        ],
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string"
+          }
+        }
+      },
+      "EditarUsuarioRequest": {
+        "required": [
+          "nombres",
+          "apellidos",
+          "cargo",
+          "correo"
+        ],
+        "type": "object",
+        "properties": {
+          "nombres": {
+            "type": "string"
+          },
+          "apellidos": {
+            "type": "string"
+          },
+          "cargo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "correo": {
+            "type": "string"
+          }
+        }
+      },
+      "IdCreado": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "IniciarSesionCommand": {
+        "required": [
+          "usuario",
+          "contrasena"
+        ],
+        "type": "object",
+        "properties": {
+          "usuario": {
+            "type": "string"
+          },
+          "contrasena": {
+            "type": "string"
+          }
+        }
+      },
+      "PermisoDto": {
+        "required": [
+          "codigo",
+          "modulo",
+          "descripcion",
+          "puedeOtorgar"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "modulo": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": "string"
+          },
+          "puedeOtorgar": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RespuestaSalud": {
+        "required": [
+          "estado",
+          "entorno",
+          "version",
+          "fechaServidor"
+        ],
+        "type": "object",
+        "properties": {
+          "estado": {
+            "type": "string"
+          },
+          "entorno": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "fechaServidor": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RestablecerContrasenaCommand": {
+        "required": [
+          "usuarioId",
+          "token",
+          "contrasenaNueva"
+        ],
+        "type": "object",
+        "properties": {
+          "usuarioId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "token": {
+            "type": "string"
+          },
+          "contrasenaNueva": {
+            "type": "string"
+          }
+        }
+      },
+      "RolAsignadoDto": {
+        "required": [
+          "id",
+          "nombre"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          }
+        }
+      },
+      "RolDto": {
+        "required": [
+          "id",
+          "nombre",
+          "descripcion",
+          "esDelSistema",
+          "permisos",
+          "cantidadUsuarios"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "descripcion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "esDelSistema": {
+            "type": "boolean"
+          },
+          "permisos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cantidadUsuarios": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "SedeDto": {
+        "required": [
+          "id",
+          "codigo",
+          "nombre",
+          "activa"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "activa": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SedeSesionDto": {
+        "required": [
+          "id",
+          "codigo",
+          "nombre"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          }
+        }
+      },
+      "SesionDto": {
+        "required": [
+          "usuarioId",
+          "nombreUsuario",
+          "nombreCompleto",
+          "correo",
+          "sede",
+          "esSuperAdmin",
+          "debeCambiarContrasena",
+          "permisos"
+        ],
+        "type": "object",
+        "properties": {
+          "usuarioId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombreUsuario": {
+            "type": "string"
+          },
+          "nombreCompleto": {
+            "type": "string"
+          },
+          "correo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sede": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SedeSesionDto"
+              }
+            ]
+          },
+          "esSuperAdmin": {
+            "type": "boolean"
+          },
+          "debeCambiarContrasena": {
+            "type": "boolean"
+          },
+          "permisos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SolicitarRestablecimientoCommand": {
+        "required": [
+          "correo"
+        ],
+        "type": "object",
+        "properties": {
+          "correo": {
+            "type": "string"
+          }
+        }
+      },
+      "TokenCsrfDto": {
+        "required": [
+          "token"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "UsuarioCreadoDto": {
+        "required": [
+          "id",
+          "contrasenaTemporal"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contrasenaTemporal": {
+            "type": "string"
+          }
+        }
+      },
+      "UsuarioDto": {
+        "required": [
+          "id",
+          "sedeId",
+          "nombreUsuario",
+          "correo",
+          "nombres",
+          "apellidos",
+          "cargo",
+          "activo",
+          "bloqueado",
+          "debeCambiarContrasena",
+          "roles"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sedeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombreUsuario": {
+            "type": "string"
+          },
+          "correo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nombres": {
+            "type": "string"
+          },
+          "apellidos": {
+            "type": "string"
+          },
+          "cargo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "activo": {
+            "type": "boolean"
+          },
+          "bloqueado": {
+            "type": "boolean"
+          },
+          "debeCambiarContrasena": {
+            "type": "boolean"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RolAsignadoDto"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Salud"
+    },
+    {
+      "name": "Cuenta"
+    },
+    {
+      "name": "Sedes"
+    },
+    {
+      "name": "Roles"
+    },
+    {
+      "name": "Usuarios"
+    }
+  ]
+}

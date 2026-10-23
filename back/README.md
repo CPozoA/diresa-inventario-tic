@@ -35,7 +35,8 @@ back/
    └─ Inventario.Api/            endpoints (Minimal APIs), seguridad, errores
       ├─ Common/                 traducción de resultados a respuestas HTTP; DominioException → 400
       ├─ Endpoints/              /api/salud, /api/cuenta/*, /api/sedes/*, /api/roles/*, /api/usuarios/*
-      └─ Seguridad/              cookie de sesión, permisos por endpoint, límite de intentos, cambio obligatorio de contraseña
+      └─ Seguridad/              cookie de sesión, protección CSRF, permisos por endpoint, límite de intentos,
+                                 cambio obligatorio de contraseña
 ```
 
 ```
@@ -127,6 +128,11 @@ dotnet run --project src/Inventario.Api --launch-profile https
 
 ### 3. Probar en Scalar (<https://localhost:7180/scalar>)
 
+> **Desde el Paso 5A**, todo `POST`, `PUT` o `DELETE` exige el token antifalsificación (protección CSRF, D24).
+> En Scalar: llama a `GET /api/cuenta/csrf`, copia el valor de `token` y agrégalo en la pestaña **Headers** de cada
+> petición que cambia datos, como `X-XSRF-TOKEN: <token>`. Después de iniciar o cerrar sesión, pide un token nuevo
+> (está ligado al usuario). Sin token, la API responde 400 `Seguridad.TokenCsrfInvalido`. El frontend hace todo esto solo.
+
 | # | Petición | Resultado esperado |
 |---|----------|--------------------|
 | 1 | `POST /api/cuenta/iniciar-sesion` con `{"usuario": "tu.usuario", "contrasena": "<temporal>"}` | 200, `debeCambiarContrasena: true` |
@@ -195,7 +201,7 @@ dotnet test
 |---|---|
 | `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles |
 | `ArchitectureTests` | Que el dominio no dependa de nada, que Application no dependa de Infrastructure ni de la Api, que los handlers sean internos |
-| `Api.IntegrationTests` | Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan |
+| `Api.IntegrationTests` | Protección CSRF (sin token → 400; el token de antes de iniciar sesión no sirve después). Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan |
 
 Para ejecutar solo un proyecto: `dotnet test --project tests/Inventario.Domain.Tests`.
 

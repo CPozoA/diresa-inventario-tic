@@ -1,0 +1,57 @@
+.pagina {
+  max-width: 640px;
+  margin: 48px auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--inv-acento);
+  color: var(--inv-tinta);
+  font-family: var(--inv-fuente-mono);
+  font-weight: 500;
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+
+  &.ok { color: var(--inv-ok); }
+  &.mal { color: var(--inv-mal); }
+  &.neutro { color: var(--inv-atenuado); }
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 0;
+}
+
+dt { color: var(--inv-atenuado); }
+dd { margin: 0; }

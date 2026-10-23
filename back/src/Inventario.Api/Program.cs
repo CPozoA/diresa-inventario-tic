@@ -22,6 +22,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUsuarioActual, UsuarioActualHttp>();
 
 builder.Services.AddSeguridadHttp(builder.Configuration);
+builder.Services.AddProteccionCsrf();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -39,6 +40,9 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+
+// Después de identificar al usuario (el token está ligado a él): rechaza cambios sin token antifalsificación válido.
+app.UseMiddleware<ValidarCsrfMiddleware>();
 
 // Después de identificar al usuario y ANTES de autorizar: con una contraseña temporal la respuesta debe ser
 // "cambie su contraseña" (Cuenta.DebeCambiarContrasena), no "no tiene permiso".

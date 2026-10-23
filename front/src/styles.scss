@@ -1,0 +1,92 @@
+@use '@angular/material' as mat;
+
+// Tema de Inventario TIC (docs/ARQUITECTURA.md §7.3), tomado de los bosquejos:
+// barra lateral oscura, azul para acciones, verde/ámbar/rojo para estados y códigos en tipografía monoespaciada.
+
+:root {
+  --inv-fondo: #f4f5f2;
+  --inv-superficie: #ffffff;
+  --inv-borde: #e1e5e2;
+  --inv-tinta: #172026;
+  --inv-atenuado: #5b6770;
+  --inv-primario: #2447c8;
+  --inv-primario-oscuro: #1a3597;
+  --inv-acento: #e8b64a;
+  --inv-lateral: #172026;
+  --inv-lateral-texto: #b7c4cb;
+
+  --inv-ok: #1b6b43;
+  --inv-ok-fondo: #e1f2e8;
+  --inv-alerta: #8a5a00;
+  --inv-alerta-fondo: #fbefd3;
+  --inv-mal: #9b1c14;
+  --inv-mal-fondo: #f9dedb;
+
+  --inv-fuente: 'IBM Plex Sans', system-ui, sans-serif;
+  --inv-fuente-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+html {
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$blue-palette,
+        tertiary: mat.$orange-palette,
+        theme-type: light,
+      ),
+      typography: (
+        plain-family: 'IBM Plex Sans',
+        brand-family: 'IBM Plex Sans',
+      ),
+      density: 0,
+    )
+  );
+
+  // Colores exactos de los bosquejos sobre la paleta base de Material.
+  @include mat.theme-overrides(
+    (
+      primary: #2447c8,
+      on-primary: #ffffff,
+      background: #f4f5f2,
+      surface: #ffffff,
+      on-surface: #172026,
+      on-surface-variant: #5b6770,
+      outline-variant: #e1e5e2,
+      error: #9b1c14,
+      corner-small: 6px,
+      corner-medium: 10px,
+    )
+  );
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--inv-fondo);
+  color: var(--inv-tinta);
+  font-family: var(--inv-fuente);
+  font-size: 14px;
+}
+
+a {
+  color: var(--inv-primario);
+
+  &:hover {
+    color: var(--inv-primario-oscuro);
+  }
+}
+
+code,
+.mono {
+  font-family: var(--inv-fuente-mono);
+}
+
+.atenuado {
+  color: var(--inv-atenuado);
+}

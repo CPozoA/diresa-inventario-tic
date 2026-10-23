@@ -1,0 +1,64 @@
+<main class="pagina">
+  <header class="marca">
+    <span class="logo">TI</span>
+    <div>
+      <h1>Inventario TIC</h1>
+      <p class="atenuado">Paso 5A · Comprobación de la conexión con la API</p>
+    </div>
+  </header>
+
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-icon matCardAvatar>dns</mat-icon>
+      <mat-card-title>API</mat-card-title>
+      <mat-card-subtitle>GET /api/salud a través del proxy de desarrollo</mat-card-subtitle>
+    </mat-card-header>
+    @if (salud.isLoading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <mat-card-content>
+      @if (salud.hasValue()) {
+        <p class="estado ok"><mat-icon>check_circle</mat-icon> En línea</p>
+        <dl>
+          <dt>Entorno</dt>
+          <dd>{{ salud.value().entorno }}</dd>
+          <dt>Versión</dt>
+          <dd class="mono">{{ salud.value().version }}</dd>
+          <dt>Hora del servidor</dt>
+          <dd>{{ salud.value().fechaServidor | date: 'dd/MM/yyyy HH:mm:ss' }}</dd>
+        </dl>
+      } @else if (salud.error()) {
+        <p class="estado mal"><mat-icon>error</mat-icon> {{ mensajeError(salud.error()) }}</p>
+        <p class="atenuado">¿Está corriendo la API? En la carpeta <code>back</code>: <code>dotnet run --project src/Inventario.Api</code></p>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-icon matCardAvatar>badge</mat-icon>
+      <mat-card-title>Sesión</mat-card-title>
+      <mat-card-subtitle>GET /api/cuenta/sesion</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @switch (sesion.carga()) {
+        @case ('verificada') {
+          @if (sesion.autenticado()) {
+            <p class="estado ok"><mat-icon>person</mat-icon> {{ sesion.sesion()?.nombreCompleto }}</p>
+            <p class="atenuado">{{ sesion.esSuperAdmin() ? 'Superadministrador' : sesion.sesion()?.sede?.nombre }} · {{ sesion.permisos().size }} permisos</p>
+          } @else {
+            <p class="estado neutro"><mat-icon>person_off</mat-icon> Sin sesión iniciada</p>
+            <p class="atenuado">Correcto por ahora: la pantalla de inicio de sesión llega en el Paso 5B.</p>
+          }
+        }
+        @default {
+          <p class="atenuado">Consultando…</p>
+        }
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <div>
+    <button mat-flat-button type="button" (click)="reintentar()"><mat-icon>refresh</mat-icon> Volver a comprobar</button>
+  </div>
+</main>

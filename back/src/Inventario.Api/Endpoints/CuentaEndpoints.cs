@@ -3,6 +3,7 @@ using Inventario.Api.Seguridad;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Cuenta;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Inventario.Api.Endpoints;
@@ -13,6 +14,12 @@ internal static class CuentaEndpoints
     public static IEndpointRouteBuilder MapCuentaEndpoints(this IEndpointRouteBuilder app)
     {
         var grupo = app.MapGroup("/cuenta").WithTags("Cuenta");
+
+        grupo.MapGet("/csrf", ObtenerTokenCsrf)
+            .AllowAnonymous()
+            .WithName("ObtenerTokenCsrf")
+            .WithSummary("Entrega el token antifalsificación (cookie XSRF-TOKEN y en el cuerpo). "
+                + "Debe enviarse en la cabecera X-XSRF-TOKEN en todo POST, PUT o DELETE. Pedir uno nuevo al iniciar o cerrar sesión.");
 
         grupo.MapPost("/iniciar-sesion", IniciarSesionAsync)
             .AllowAnonymous()
@@ -46,6 +53,9 @@ internal static class CuentaEndpoints
 
         return app;
     }
+
+    private static Ok<TokenCsrfDto> ObtenerTokenCsrf(IAntiforgery antiforgery, HttpContext contexto) =>
+        TypedResults.Ok(new TokenCsrfDto(ProteccionCsrf.EmitirToken(antiforgery, contexto)));
 
     private static async Task<Results<Ok<SesionDto>, ProblemHttpResult>> IniciarSesionAsync(
         IniciarSesionCommand comando,
@@ -81,3 +91,6 @@ internal static class CuentaEndpoints
         CancellationToken cancellationToken) =>
         (await handler.Handle(comando, cancellationToken)).ToNoContentResult();
 }
+
+/// <summary>Token antifalsificación, para clientes que no leen cookies (por ejemplo, Scalar).</summary>
+internal sealed record TokenCsrfDto(string Token);
