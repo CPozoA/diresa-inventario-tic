@@ -1,4 +1,4 @@
-import { Route, Routes } from '@angular/router';
+import { LoadChildren, Route, Routes } from '@angular/router';
 
 import { autenticadoGuard, invitadoGuard, permisoGuard } from './core/auth/guards';
 import { Permisos } from './core/auth/permisos';
@@ -9,19 +9,29 @@ const titulo = (texto: string) => `${texto} · Inventario TIC`;
 
 const cargarPendiente = () => import('./features/pendiente/pendiente.page').then((m) => m.PendientePage);
 
+/** Funcionalidades ya construidas: cada una carga su propio archivo de rutas (features/<funcionalidad>). */
+const funcionalidades: Readonly<Record<string, LoadChildren>> = {
+  sedes: () => import('./features/sedes/sedes.routes').then((m) => m.SEDES_RUTAS),
+  usuarios: () => import('./features/usuarios/usuarios.routes').then((m) => m.USUARIOS_RUTAS),
+  roles: () => import('./features/roles/roles.routes').then((m) => m.ROLES_RUTAS),
+};
+
 /**
- * Funcionalidades del menú que aún no tienen pantalla: cada una con el guard de su permiso.
- * Al construir una funcionalidad, su ruta pasa a cargar su propio archivo de rutas (features/<funcionalidad>).
+ * Una ruta por opción del menú, con el guard de su permiso. Las que aún no tienen pantalla
+ * muestran "disponible en una próxima versión".
  */
 const rutasDelMenu: Route[] = MENU.flatMap((grupo) => grupo.opciones)
   .filter((opcion) => opcion.ruta !== '')
-  .map((opcion) => ({
-    path: opcion.ruta,
-    title: titulo(opcion.texto),
-    canActivate: opcion.permiso ? [permisoGuard(opcion.permiso)] : [],
-    data: { titulo: opcion.texto },
-    loadComponent: cargarPendiente,
-  }));
+  .map((opcion) => {
+    const ruta: Route = {
+      path: opcion.ruta,
+      title: titulo(opcion.texto),
+      canActivate: opcion.permiso ? [permisoGuard(opcion.permiso)] : [],
+      data: { titulo: opcion.texto },
+    };
+    const cargar = funcionalidades[opcion.ruta];
+    return cargar ? { ...ruta, loadChildren: cargar } : { ...ruta, loadComponent: cargarPendiente };
+  });
 
 export const routes: Routes = [
   {

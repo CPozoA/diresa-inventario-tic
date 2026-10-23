@@ -56,6 +56,9 @@ src/app/
 └─ features/       una carpeta por funcionalidad, con carga diferida
    ├─ cuenta/      iniciar sesión, olvidé mi contraseña, restablecer (enlace del correo), cambiar contraseña
    ├─ inicio/      resumen (por ahora, estado vacío) y página técnica /estado
+   ├─ sedes/       sedes (solo superadmin): crear, renombrar, activar y desactivar
+   ├─ usuarios/    usuarios: crear, editar, roles, activar/desactivar, restablecer contraseña, desbloquear
+   ├─ roles/       roles de la sede con sus permisos
    └─ pendiente/   lugar de las secciones del menú que aún no se construyen
 ```
 
@@ -67,7 +70,10 @@ src/app/
 | `/olvide-contrasena` | Cualquiera | Pide el enlace por correo. Responde igual exista o no la cuenta. |
 | `/restablecer-contrasena?usuario=…&token=…` | Cualquiera | Página del enlace del correo. |
 | `/cambiar-contrasena` | Con sesión | Obligatoria con contraseña temporal; voluntaria desde el menú de la cuenta. |
-| `/` y secciones del menú | Con sesión | Estructura con menú según permisos. Las secciones aún no construidas muestran "próxima versión". |
+| `/usuarios` | `Usuarios.Ver` (acciones con `Usuarios.Gestionar`) | Lista con búsqueda y filtro por estado. La contraseña temporal se muestra una sola vez. Los usuarios que no puede gestionar aparecen con un candado (mismas reglas que la API). |
+| `/roles` | `Roles.Ver` (cambios con `Roles.Gestionar`) | Roles de la sede; el superadmin elige la sede arriba. Los permisos que no puede otorgar aparecen deshabilitados. |
+| `/sedes` | `Sedes.Gestionar` | Solo el superadmin. |
+| `/` y demás secciones del menú | Con sesión | Estructura con menú según permisos. Las secciones aún no construidas muestran "próxima versión". |
 | `/estado` | Cualquiera | Comprobación técnica de la conexión con la API. |
 
 ## Cómo se conecta con la API

@@ -1,0 +1,135 @@
+<div class="pagina">
+  <header class="pagina-encabezado">
+    <div class="pagina-titulo">
+      <h1>Usuarios</h1>
+      <span class="atenuado">{{ ambito() }}</span>
+    </div>
+    <button *siTienePermiso="permisos.Usuarios.Gestionar" mat-flat-button type="button" (click)="nuevo()">
+      <mat-icon>person_add</mat-icon> Nuevo usuario
+    </button>
+  </header>
+
+  <div class="filtros">
+    <mat-form-field subscriptSizing="dynamic" class="buscador">
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-label>Buscar por nombre, usuario, correo o cargo</mat-label>
+      <input matInput [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" />
+    </mat-form-field>
+    <mat-button-toggle-group
+      [value]="filtroEstado()"
+      (change)="filtroEstado.set($event.value)"
+      aria-label="Filtrar por estado"
+      hideSingleSelectionIndicator
+    >
+      <mat-button-toggle value="activos">Activos</mat-button-toggle>
+      <mat-button-toggle value="inactivos">Inactivos</mat-button-toggle>
+      <mat-button-toggle value="todos">Todos</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  @if (store.error(); as e) {
+    <app-aviso>{{ e.mensaje }}</app-aviso>
+  }
+
+  <section class="tarjeta-tabla">
+    @if (store.cargando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <div class="tabla-contenedor">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th scope="col">Nombre</th>
+            <th scope="col">Usuario</th>
+            @if (muestraSede()) {
+              <th scope="col">Sede</th>
+            }
+            <th scope="col">Roles</th>
+            <th scope="col">Estado</th>
+            @if (puedeGestionar()) {
+              <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (fila of filas(); track fila.usuario.id) {
+            <tr [class.inactivo]="!fila.usuario.activo">
+              <td>
+                <div class="dos-lineas">
+                  <span class="principal">{{ fila.nombreCompleto }}</span>
+                  <span class="atenuado">{{ fila.usuario.cargo }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="dos-lineas">
+                  <span class="mono">{{ fila.usuario.nombreUsuario }}</span>
+                  <span class="atenuado">{{ fila.usuario.correo }}</span>
+                </div>
+              </td>
+              @if (muestraSede()) {
+                <td>{{ fila.sede }}</td>
+              }
+              <td>
+                <div class="chips">
+                  @for (rol of fila.usuario.roles; track rol.id) {
+                    <span class="chip">{{ rol.nombre }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <div class="chips">
+                  <span class="pastilla" [class.ok]="fila.usuario.activo" [class.neutra]="!fila.usuario.activo">
+                    {{ fila.usuario.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                  @if (fila.usuario.bloqueado) {
+                    <span class="pastilla mal">Bloqueado</span>
+                  }
+                  @if (fila.usuario.debeCambiarContrasena) {
+                    <span class="pastilla alerta">Contraseña temporal</span>
+                  }
+                </div>
+              </td>
+              @if (puedeGestionar()) {
+                <td class="celda-acciones">
+                  @if (fila.bloqueoGestion; as motivo) {
+                    <mat-icon class="candado" [matTooltip]="motivo" [attr.aria-label]="motivo" tabindex="0">lock</mat-icon>
+                  } @else {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      [matMenuTriggerFor]="acciones"
+                      [attr.aria-label]="'Acciones de ' + fila.nombreCompleto"
+                    >
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #acciones="matMenu" xPosition="before">
+                      <button mat-menu-item type="button" (click)="editar(fila.usuario)"><mat-icon>edit</mat-icon>Editar datos</button>
+                      <button mat-menu-item type="button" (click)="cambiarRoles(fila.usuario)"><mat-icon>badge</mat-icon>Cambiar roles</button>
+                      <button mat-menu-item type="button" (click)="restablecer(fila.usuario)"><mat-icon>key</mat-icon>Restablecer contraseña</button>
+                      @if (fila.usuario.bloqueado) {
+                        <button mat-menu-item type="button" (click)="desbloquear(fila.usuario)"><mat-icon>lock_open</mat-icon>Desbloquear</button>
+                      }
+                      <mat-divider />
+                      <button mat-menu-item type="button" (click)="cambiarEstado(fila.usuario)" [class.texto-peligro]="fila.usuario.activo">
+                        <mat-icon>{{ fila.usuario.activo ? 'person_off' : 'person' }}</mat-icon>
+                        {{ fila.usuario.activo ? 'Desactivar' : 'Activar' }}
+                      </button>
+                    </mat-menu>
+                  }
+                </td>
+              }
+            </tr>
+          } @empty {
+            @if (!store.cargando()) {
+              <tr>
+                <td colspan="6" class="vacio">
+                  {{ busqueda() ? 'Ningún usuario coincide con la búsqueda.' : 'No hay usuarios en esta vista.' }}
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

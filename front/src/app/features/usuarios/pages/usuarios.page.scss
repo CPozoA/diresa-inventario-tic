@@ -1,0 +1,50 @@
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.buscador {
+  flex: 1 1 320px;
+  max-width: 520px;
+}
+
+.dos-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .principal {
+    font-weight: 500;
+  }
+
+  .atenuado {
+    font-size: 12px;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--inv-fondo);
+  border: 1px solid var(--inv-borde);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+tr.inactivo td {
+  color: var(--inv-atenuado);
+}
+
+.candado {
+  color: var(--inv-atenuado);
+  margin: 0 12px;
+  cursor: help;
+}

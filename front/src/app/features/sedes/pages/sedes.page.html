@@ -1,0 +1,61 @@
+<div class="pagina">
+  <header class="pagina-encabezado">
+    <div class="pagina-titulo">
+      <h1>Sedes</h1>
+      <span class="atenuado">Redes de salud que registran su inventario</span>
+    </div>
+    <button mat-flat-button type="button" (click)="abrir(null)"><mat-icon>add</mat-icon> Nueva sede</button>
+  </header>
+
+  @if (store.error(); as e) {
+    <app-aviso>{{ e.mensaje }}</app-aviso>
+  }
+
+  <section class="tarjeta-tabla">
+    @if (store.cargando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <div class="tabla-contenedor">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th scope="col">Código</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Estado</th>
+            <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sede of store.sedes(); track sede.id) {
+            <tr>
+              <td class="mono">{{ sede.codigo }}</td>
+              <td>{{ sede.nombre }}</td>
+              <td>
+                <span class="pastilla" [class.ok]="sede.activa" [class.neutra]="!sede.activa">
+                  {{ sede.activa ? 'Activa' : 'Inactiva' }}
+                </span>
+              </td>
+              <td class="celda-acciones">
+                <button mat-icon-button type="button" [matMenuTriggerFor]="acciones" [attr.aria-label]="'Acciones de ' + sede.nombre">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #acciones="matMenu" xPosition="before">
+                  <button mat-menu-item type="button" (click)="abrir(sede)"><mat-icon>edit</mat-icon>Editar nombre</button>
+                  <button mat-menu-item type="button" (click)="cambiarEstado(sede)">
+                    <mat-icon>{{ sede.activa ? 'block' : 'check_circle' }}</mat-icon>{{ sede.activa ? 'Desactivar' : 'Activar' }}
+                  </button>
+                </mat-menu>
+              </td>
+            </tr>
+          } @empty {
+            @if (!store.cargando()) {
+              <tr>
+                <td colspan="4" class="vacio">No hay sedes registradas.</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

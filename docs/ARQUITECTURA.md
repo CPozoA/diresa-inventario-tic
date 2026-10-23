@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.9 · 23/10/2026 · Cambios: D35 y D36 (Paso 5B: pantallas de acceso y estructura con menú según permisos).
+> Versión 0.10 · 23/10/2026 · Cambios: Paso 6 dividido en 6A y 6B (6A: pantallas de sedes, usuarios y roles).
 
 ---
 
@@ -408,7 +408,8 @@ Consideraciones del hosting compartido:
 | **4B** | API de gestión de usuarios, roles y sedes con reglas contra el escalamiento | `dotnet test` |
 | **5A** | Proyecto Angular 22 + Material: tema, proxy, protección CSRF, cliente generado, sesión, guards e interceptores | `npm test` y página de comprobación en `ng serve` |
 | **5B** | Pantallas de inicio de sesión, cambio y recuperación de contraseña; estructura con menú según permisos | Prueba manual en el navegador |
-| **6** | Pantallas de sedes, usuarios, roles y catálogos | Prueba manual |
+| **6A** | Pantallas de sedes, usuarios y roles (sobre la API del 4B) | Prueba manual en el navegador |
+| **6B** | Áreas y ubicaciones (por sede) y catálogos generales: API, migración y pantallas | `dotnet test` y prueba manual |
 | **7** | Módulo de activos básico (con discos y RAM) | Prueba de punta a punta |
 
 Fases posteriores: licencias, mantenimiento, asignaciones, resumen, exportación a Excel, registro de auditoría y endurecimiento.

@@ -1,0 +1,83 @@
+<div class="pagina">
+  <header class="pagina-encabezado">
+    <div class="pagina-titulo">
+      <h1>Roles</h1>
+      <span class="atenuado">{{ ambito() || 'Elija una sede' }}</span>
+    </div>
+    @if (!faltaSede()) {
+      <button *siTienePermiso="permisos.Roles.Gestionar" mat-flat-button type="button" (click)="abrir(null)">
+        <mat-icon>add</mat-icon> Nuevo rol
+      </button>
+    }
+  </header>
+
+  @if (faltaSede()) {
+    <app-aviso tono="info">Los roles son de cada sede. Elija una sede en el selector de la parte superior.</app-aviso>
+  } @else {
+    @if (store.error(); as e) {
+      <app-aviso>{{ e.mensaje }}</app-aviso>
+    }
+
+    <section class="tarjeta-tabla">
+      @if (store.cargando()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+      <div class="tabla-contenedor">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Rol</th>
+              <th scope="col">Descripción</th>
+              <th scope="col" class="numero">Permisos</th>
+              <th scope="col" class="numero">Usuarios</th>
+              <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rol of store.roles(); track rol.id) {
+              <tr>
+                <td>
+                  <button type="button" class="enlace-celda" (click)="abrir(rol)">{{ rol.nombre }}</button>
+                  @if (rol.esDelSistema) {
+                    <span class="pastilla neutra">Sistema</span>
+                  }
+                </td>
+                <td class="atenuado">{{ rol.descripcion }}</td>
+                <td class="numero">{{ rol.permisos.length }}</td>
+                <td class="numero">{{ cantidadUsuarios(rol) }}</td>
+                <td class="celda-acciones">
+                  <button mat-icon-button type="button" [matMenuTriggerFor]="acciones" [attr.aria-label]="'Acciones del rol ' + rol.nombre">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #acciones="matMenu" xPosition="before">
+                    <button mat-menu-item type="button" (click)="abrir(rol)">
+                      <mat-icon>{{ puedeGestionar() && !rol.esDelSistema ? 'edit' : 'visibility' }}</mat-icon>
+                      {{ puedeGestionar() && !rol.esDelSistema ? 'Editar' : 'Ver permisos' }}
+                    </button>
+                    @if (puedeGestionar() && !rol.esDelSistema) {
+                      <button
+                        mat-menu-item
+                        type="button"
+                        (click)="eliminar(rol)"
+                        [disabled]="cantidadUsuarios(rol) > 0"
+                        [matTooltip]="cantidadUsuarios(rol) > 0 ? 'Quite el rol a sus usuarios antes de eliminarlo.' : ''"
+                      >
+                        <mat-icon>delete</mat-icon>Eliminar
+                      </button>
+                    }
+                  </mat-menu>
+                </td>
+              </tr>
+            } @empty {
+              @if (!store.cargando()) {
+                <tr>
+                  <td colspan="5" class="vacio">No hay roles en esta sede.</td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>

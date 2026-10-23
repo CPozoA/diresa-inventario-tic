@@ -1,0 +1,64 @@
+<h2 mat-dialog-title>{{ titulo }}</h2>
+<form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
+  <mat-dialog-content class="contenido">
+    @if (datos.rol?.esDelSistema) {
+      <app-aviso tono="info">
+        Rol del sistema: tiene todos los permisos de la sede, incluidos usuarios y roles. No se puede modificar.
+      </app-aviso>
+    } @else if (conPermisosAjenos) {
+      <app-aviso tono="alerta">Este rol tiene permisos que usted no tiene, así que no puede modificarlo.</app-aviso>
+    }
+    @if (error(); as e) {
+      <app-aviso>{{ e.mensaje }}</app-aviso>
+    }
+
+    @if (!datos.rol?.esDelSistema) {
+      <div class="datos">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombre" maxlength="60" />
+          @if (formulario.controls.nombre.hasError('required')) {
+            <mat-error>Escriba el nombre del rol.</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Descripción (opcional)</mat-label>
+          <input matInput formControlName="descripcion" maxlength="250" />
+        </mat-form-field>
+      </div>
+    }
+
+    <div class="permisos-encabezado">
+      <h3>Permisos</h3>
+      <span class="atenuado">{{ cantidad() }} seleccionados</span>
+    </div>
+
+    <div class="grupos">
+      @for (grupo of grupos; track grupo.modulo) {
+        <fieldset>
+          <legend>{{ grupo.modulo }}</legend>
+          @for (permiso of grupo.permisos; track permiso.codigo) {
+            <mat-checkbox
+              [checked]="datos.rol?.esDelSistema || seleccion().has(permiso.codigo)"
+              [disabled]="deshabilitado(permiso)"
+              (change)="alternar(permiso.codigo, $event.checked)"
+            >
+              {{ permiso.descripcion }}
+              @if (!permiso.puedeOtorgar && editable) {
+                <span class="nota">· usted no tiene este permiso</span>
+              }
+            </mat-checkbox>
+          }
+        </fieldset>
+      }
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    @if (editable) {
+      <button mat-button type="button" mat-dialog-close>Cancelar</button>
+      <button mat-flat-button type="submit" [disabled]="guardando()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+    } @else {
+      <button mat-flat-button type="button" mat-dialog-close>Cerrar</button>
+    }
+  </mat-dialog-actions>
+</form>

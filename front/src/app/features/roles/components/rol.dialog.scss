@@ -1,0 +1,53 @@
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.permisos-encabezado {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+
+  h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+}
+
+.grupos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+fieldset {
+  margin: 0;
+  padding: 8px 12px 10px;
+  border: 1px solid var(--inv-borde);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+legend {
+  padding: 0 4px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.nota {
+  color: var(--inv-atenuado);
+  font-size: 12px;
+}

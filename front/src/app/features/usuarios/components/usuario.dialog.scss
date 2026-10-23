@@ -1,0 +1,21 @@
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 12px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.nota {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}

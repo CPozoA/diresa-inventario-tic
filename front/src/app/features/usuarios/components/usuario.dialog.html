@@ -1,0 +1,83 @@
+<h2 mat-dialog-title>{{ creando ? 'Nuevo usuario' : 'Editar usuario' }}</h2>
+<form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
+  <mat-dialog-content class="contenido">
+    @if (error(); as e) {
+      <app-aviso>{{ e.mensaje }}</app-aviso>
+    }
+
+    <div class="rejilla">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Nombres</mat-label>
+        <input matInput formControlName="nombres" maxlength="100" />
+        @if (formulario.controls.nombres.hasError('required')) {
+          <mat-error>Escriba los nombres.</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Apellidos</mat-label>
+        <input matInput formControlName="apellidos" maxlength="100" />
+        @if (formulario.controls.apellidos.hasError('required')) {
+          <mat-error>Escriba los apellidos.</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Nombre de usuario</mat-label>
+        <input matInput formControlName="nombreUsuario" class="mono" maxlength="50" autocapitalize="none" spellcheck="false" />
+        @if (!creando) {
+          <mat-hint>El nombre de usuario no se puede cambiar.</mat-hint>
+        } @else if (formulario.controls.nombreUsuario.hasError('pattern')) {
+          <mat-error>De 3 a 50 caracteres: letras sin tilde, números y . _ - &#64;</mat-error>
+        } @else if (formulario.controls.nombreUsuario.hasError('required')) {
+          <mat-error>Escriba el nombre de usuario.</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Correo</mat-label>
+        <input matInput type="email" formControlName="correo" />
+        <mat-hint>Para recuperar la contraseña.</mat-hint>
+        @if (formulario.controls.correo.hasError('required')) {
+          <mat-error>Escriba el correo.</mat-error>
+        } @else if (formulario.controls.correo.hasError('email')) {
+          <mat-error>El correo no tiene un formato válido.</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Cargo (opcional)</mat-label>
+        <input matInput formControlName="cargo" maxlength="100" />
+      </mat-form-field>
+      @if (eligeSede) {
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Sede</mat-label>
+          <mat-select formControlName="sedeId" (selectionChange)="cambioDeSede()">
+            @for (sede of datos.sedes; track sede.id) {
+              <mat-option [value]="sede.id">{{ sede.nombre }}</mat-option>
+            }
+          </mat-select>
+          @if (formulario.controls.sedeId.hasError('required')) {
+            <mat-error>Elija la sede.</mat-error>
+          }
+        </mat-form-field>
+      }
+    </div>
+
+    @if (creando) {
+      @if (roles.isLoading()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+      @if (eligeSede && !formulario.controls.sedeId.value) {
+        <p class="atenuado">Elija la sede para ver sus roles.</p>
+      } @else {
+        <app-selector-roles [roles]="listaRoles()" [(seleccion)]="rolIds" />
+      }
+      <p class="atenuado nota">
+        El sistema generará una contraseña temporal que se mostrará una sola vez. La persona deberá cambiarla al ingresar.
+      </p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="guardando()">
+      {{ guardando() ? 'Guardando…' : creando ? 'Crear usuario' : 'Guardar' }}
+    </button>
+  </mat-dialog-actions>
+</form>
