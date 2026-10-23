@@ -1,0 +1,55 @@
+<header class="barra">
+  <app-logo />
+  <div class="usuario">
+    <span>{{ descripcionUsuario() }}</span>
+    <button mat-button type="button" class="salir" (click)="cerrarSesion()">Cerrar sesión</button>
+  </div>
+</header>
+
+<main class="contenido">
+  <form class="formulario tarjeta" [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
+    <header class="encabezado">
+      @if (obligatorio()) {
+        <span class="etiqueta">Contraseña temporal</span>
+        <h1>Cree su contraseña</h1>
+        <p class="atenuado">
+          Está usando la contraseña temporal que le entregó el administrador. Antes de continuar, reemplácela por una
+          que solo usted conozca.
+        </p>
+      } @else {
+        <h1>Cambiar contraseña</h1>
+        <p class="atenuado">Al cambiarla, se cerrarán sus sesiones abiertas en otros equipos.</p>
+      }
+    </header>
+
+    @if (error(); as e) {
+      <app-aviso>{{ e.mensaje }}</app-aviso>
+    }
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ obligatorio() ? 'Contraseña temporal' : 'Contraseña actual' }}</mat-label>
+      <input matInput type="password" formControlName="actual" autocomplete="current-password" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Contraseña nueva</mat-label>
+      <input matInput type="password" formControlName="nueva" autocomplete="new-password" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Repita la contraseña nueva</mat-label>
+      <input matInput type="password" formControlName="confirmacion" autocomplete="new-password" />
+    </mat-form-field>
+
+    <app-reglas-contrasena [reglas]="reglas()" />
+
+    <div class="acciones">
+      <button mat-flat-button class="boton-principal" type="submit" [disabled]="!listo() || enviando()">
+        {{ enviando() ? 'Guardando…' : obligatorio() ? 'Guardar y continuar' : 'Guardar' }}
+      </button>
+      @if (!obligatorio()) {
+        <a mat-button routerLink="/">Cancelar</a>
+      }
+    </div>
+  </form>
+</main>

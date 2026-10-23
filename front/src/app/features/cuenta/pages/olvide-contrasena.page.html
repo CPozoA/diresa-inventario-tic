@@ -1,0 +1,53 @@
+<app-plantilla-acceso titulo="¿No recuerda su contraseña?">
+  <ol lateral class="pasos">
+    <li>Escriba el correo de su cuenta.</li>
+    <li>Abra el enlace que le enviaremos (vale 1 hora).</li>
+    <li>Cree una contraseña nueva.</li>
+  </ol>
+
+  @if (enviadoA(); as correo) {
+    <section class="resultado" aria-live="polite">
+      <span class="icono-resultado ok"><mat-icon aria-hidden="true">mark_email_read</mat-icon></span>
+      <h1>Revise su correo</h1>
+      <p>
+        Si <strong>{{ correo }}</strong> corresponde a una cuenta, en unos minutos recibirá un enlace para crear una
+        contraseña nueva. El enlace vence en 1 hora.
+      </p>
+      <p class="atenuado">
+        ¿No llegó? Revise la carpeta de correo no deseado o pida al administrador de su sede que restablezca su
+        contraseña.
+      </p>
+      <div class="acciones">
+        <a mat-flat-button class="boton-principal" [routerLink]="['/', rutas.iniciarSesion]">Volver a iniciar sesión</a>
+        <button mat-button type="button" (click)="usarOtroCorreo()">Usar otro correo</button>
+      </div>
+    </section>
+  } @else {
+    <form class="formulario" [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+      <header class="encabezado">
+        <h1>Recuperar contraseña</h1>
+        <p class="atenuado">Le enviaremos un enlace para crear una contraseña nueva.</p>
+      </header>
+
+      @if (error(); as e) {
+        <app-aviso>{{ e.mensaje }}</app-aviso>
+      }
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Correo de su cuenta</mat-label>
+        <input matInput type="email" formControlName="correo" autocomplete="email" />
+        @if (formulario.controls.correo.hasError('required')) {
+          <mat-error>Escriba su correo.</mat-error>
+        } @else if (formulario.controls.correo.hasError('email')) {
+          <mat-error>Revise el correo: no tiene un formato válido.</mat-error>
+        }
+      </mat-form-field>
+
+      <button mat-flat-button class="boton-principal" type="submit" [disabled]="enviando()">
+        {{ enviando() ? 'Enviando…' : 'Enviar enlace' }}
+      </button>
+
+      <a [routerLink]="['/', rutas.iniciarSesion]" class="centrado">Volver a iniciar sesión</a>
+    </form>
+  }
+</app-plantilla-acceso>

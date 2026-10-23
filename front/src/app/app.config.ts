@@ -2,6 +2,7 @@ import { registerLocaleData } from '@angular/common';
 import { provideHttpClient, withFetch, withInterceptors, withNoXsrfProtection } from '@angular/common/http';
 import localeEsPe from '@angular/common/locales/es-PE';
 import { ApplicationConfig, DEFAULT_CURRENCY_CODE, LOCALE_ID, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 
 import { provideApiConfiguration } from './api/api-configuration';
@@ -16,6 +17,8 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
+    // Formularios de Material con borde (outline) en toda la aplicación.
+    { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
     provideHttpClient(
       withFetch(),
       // El token antifalsificación lo maneja csrfInterceptor (pide uno nuevo y reintenta si venció),

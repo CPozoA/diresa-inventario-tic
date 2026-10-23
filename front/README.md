@@ -46,13 +46,29 @@ de la API se ven en cada commit.
 
 ```
 src/app/
-├─ api/        cliente generado (ng-openapi-gen); no se edita
-├─ core/       se carga una sola vez
-│  ├─ auth/    SesionStore (sesión y permisos), guards, directiva *siTienePermiso, códigos de permiso
-│  └─ http/    token antifalsificación (CSRF), manejo común de errores (401, contraseña temporal)
-├─ shared/     componentes y pipes sin lógica de negocio (Paso 5B en adelante)
-└─ features/   una carpeta por funcionalidad, con carga diferida
+├─ api/            cliente generado (ng-openapi-gen); no se edita
+├─ core/           se carga una sola vez
+│  ├─ auth/        SesionStore (sesión y permisos), guards, directiva *siTienePermiso, códigos de permiso
+│  ├─ http/        token antifalsificación (CSRF), manejo común de errores (401, contraseña temporal)
+│  ├─ layout/      estructura con menú lateral, encabezado y selector de sede; menu.ts define el menú y sus rutas
+│  └─ rutas.ts     rutas fijas y validación de la ruta de regreso después de iniciar sesión
+├─ shared/ui/      piezas visuales sin lógica de negocio (avisos, logo, plantilla de las pantallas de acceso)
+└─ features/       una carpeta por funcionalidad, con carga diferida
+   ├─ cuenta/      iniciar sesión, olvidé mi contraseña, restablecer (enlace del correo), cambiar contraseña
+   ├─ inicio/      resumen (por ahora, estado vacío) y página técnica /estado
+   └─ pendiente/   lugar de las secciones del menú que aún no se construyen
 ```
+
+## Pantallas
+
+| Ruta | Quién | Qué hace |
+|---|---|---|
+| `/iniciar-sesion` | Sin sesión | Usuario o correo y contraseña. Muestra los mensajes de la API (bloqueo, cuenta o sede inactiva, sesión vencida). |
+| `/olvide-contrasena` | Cualquiera | Pide el enlace por correo. Responde igual exista o no la cuenta. |
+| `/restablecer-contrasena?usuario=…&token=…` | Cualquiera | Página del enlace del correo. |
+| `/cambiar-contrasena` | Con sesión | Obligatoria con contraseña temporal; voluntaria desde el menú de la cuenta. |
+| `/` y secciones del menú | Con sesión | Estructura con menú según permisos. Las secciones aún no construidas muestran "próxima versión". |
+| `/estado` | Cualquiera | Comprobación técnica de la conexión con la API. |
 
 ## Cómo se conecta con la API
 
@@ -63,5 +79,3 @@ src/app/
   `GET /api/cuenta/csrf` y se renueva al iniciar o cerrar sesión (`core/http/csrf.interceptor.ts`).
 - Las fuentes (IBM Plex) y los íconos (Material Icons) se sirven desde la propia aplicación: no depende de
   Google Fonts ni de internet en la red de la sede.
-
-Bosquejos de referencia: los PNG en la carpeta raíz del proyecto.

@@ -17,7 +17,7 @@ Sistema web para el registro y control del inventario de Tecnologías de la Info
 
 ## Estado
 
-Paso 5A terminado: proyecto Angular 22 conectado a la API (proxy, protección CSRF, cliente generado, sesión y permisos). Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
+Paso 5B terminado: inicio de sesión, recuperación y cambio de contraseña, y estructura de la aplicación con menú según permisos. Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
 
 ## Control de versiones
 

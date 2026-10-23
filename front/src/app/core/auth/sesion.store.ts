@@ -3,6 +3,7 @@ import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 
 import { Api } from '../../api/api';
+import { cambiarContrasena } from '../../api/fn/cuenta/cambiar-contrasena';
 import { cerrarSesion } from '../../api/fn/cuenta/cerrar-sesion';
 import { iniciarSesion } from '../../api/fn/cuenta/iniciar-sesion';
 import { obtenerSesion } from '../../api/fn/cuenta/obtener-sesion';
@@ -85,6 +86,18 @@ export const SesionStore = signalStore(
           patchState(store, { sesion: null, carga: 'verificada' });
           await csrf.renovar();
         }
+      },
+
+      /** Cambia la contraseña del usuario conectado y vuelve a leer la sesión (ya sin la marca de contraseña temporal). */
+      async cambiarContrasena(contrasenaActual: string, contrasenaNueva: string): Promise<void> {
+        await api.invoke(cambiarContrasena, { body: { contrasenaActual, contrasenaNueva } });
+        await cargar();
+      },
+
+      /** Olvida la sesión sin llamar a la API (la API ya la dio por cerrada, por ejemplo al vencer). */
+      limpiar(): void {
+        patchState(store, { sesion: null, carga: 'verificada' });
+        void csrf.renovar().catch(() => undefined);
       },
 
       tienePermiso(permiso: CodigoPermiso): boolean {

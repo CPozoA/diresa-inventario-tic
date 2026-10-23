@@ -1,0 +1,57 @@
+<app-plantilla-acceso
+  titulo="Un solo inventario para las siete redes de salud"
+  descripcion="Cada sede registra y consulta solo sus equipos, licencias y mantenimientos."
+>
+  <form class="formulario" [formGroup]="formulario" (ngSubmit)="ingresar()" novalidate>
+    <header class="encabezado">
+      <h1>Iniciar sesión</h1>
+      <p class="atenuado">Ingrese con su usuario o su correo.</p>
+    </header>
+
+    @if (error(); as e) {
+      <app-aviso [tono]="tonoError()">{{ e.mensaje }}</app-aviso>
+    } @else if (sesionVencida()) {
+      <app-aviso tono="info">Su sesión se cerró después de 30 minutos sin actividad. Vuelva a ingresar.</app-aviso>
+    }
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Usuario o correo</mat-label>
+      <input matInput formControlName="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" />
+      @if (formulario.controls.usuario.hasError('required')) {
+        <mat-error>Escriba su usuario o correo.</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="campo-con-enlace">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Contraseña</mat-label>
+        <input
+          matInput
+          formControlName="contrasena"
+          [type]="claveVisible() ? 'text' : 'password'"
+          autocomplete="current-password"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="claveVisible.set(!claveVisible())"
+          [attr.aria-label]="claveVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          [attr.aria-pressed]="claveVisible()"
+        >
+          <mat-icon>{{ claveVisible() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (formulario.controls.contrasena.hasError('required')) {
+          <mat-error>Escriba su contraseña.</mat-error>
+        }
+      </mat-form-field>
+      <a class="enlace-derecha" [routerLink]="['/', rutas.olvideContrasena]">¿Olvidó su contraseña?</a>
+    </div>
+
+    <button mat-flat-button class="boton-principal" type="submit" [disabled]="enviando()">
+      {{ enviando() ? 'Ingresando…' : 'Ingresar' }}
+    </button>
+
+    <p class="nota atenuado">Por seguridad, después de 3 intentos fallidos la cuenta se bloquea durante 15 minutos.</p>
+  </form>
+</app-plantilla-acceso>

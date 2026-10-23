@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.8 · 23/10/2026 · Cambios: D24 implementada y D31 a D34 (Paso 5A: base del frontend y protección CSRF).
+> Versión 0.9 · 23/10/2026 · Cambios: D35 y D36 (Paso 5B: pantallas de acceso y estructura con menú según permisos).
 
 ---
 
@@ -72,6 +72,8 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D32 | Fuentes e íconos | IBM Plex Sans/Mono y Material Icons **incluidos en la aplicación** (paquetes npm), no desde Google Fonts | Funciona en redes sin internet o con filtros; no se envían datos de los usuarios a terceros. |
 | D33 | Desarrollo local | `ng serve` en **https://localhost:4200** con el certificado de desarrollo de .NET exportado (`npm run certificado`) y un proxy de `/api` a `https://localhost:7180` | Mismo esquema que producción (HTTPS, un solo sitio, cookie `SameSite=Strict`); el enlace de "restablecer contraseña" ya apunta a esa dirección. |
 | D34 | Pruebas del frontend | **Vitest** (el ejecutor por defecto de Angular 22) con `HttpTestingController` para probar interceptores y stores sin API | Rápido y sin navegador. |
+| D35 | Menú y rutas | El menú se define en un solo lugar (`front/src/app/core/layout/menu.ts`): de ahí salen las opciones visibles (según los permisos de la sesión) y las rutas con su guard de permiso. Las secciones aún no construidas muestran "disponible en una próxima versión" | Un permiso nuevo o una pantalla nueva se agregan en un solo sitio; el menú y la protección de rutas no se desalinean. |
+| D36 | Sede del superadministrador | Selector en el encabezado: "Todas las sedes" (datos consolidados) o una sede (las pantallas se filtran a ella). Se recuerda en la pestaña del navegador. Los usuarios de sede no lo ven: siempre trabajan en la suya | Revisar una sede concreta sin perder la vista consolidada. |
 
 ### Decisiones pendientes de confirmar
 

@@ -1,0 +1,56 @@
+<app-plantilla-acceso
+  titulo="Una contraseña que solo usted conozca"
+  descripcion="Evite datos fáciles de adivinar, como su DNI, su fecha de nacimiento o el nombre de la sede."
+>
+  @switch (estado()) {
+    @case ('formulario') {
+      <form class="formulario" [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
+        <header class="encabezado">
+          <h1>Crear una contraseña nueva</h1>
+          <p class="atenuado">Al guardarla, su cuenta se desbloquea si estaba bloqueada.</p>
+        </header>
+
+        @if (error(); as e) {
+          <app-aviso>{{ e.mensaje }}</app-aviso>
+        }
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Contraseña nueva</mat-label>
+          <input matInput type="password" formControlName="nueva" autocomplete="new-password" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Repita la contraseña nueva</mat-label>
+          <input matInput type="password" formControlName="confirmacion" autocomplete="new-password" />
+        </mat-form-field>
+
+        <app-reglas-contrasena [reglas]="reglas()" />
+
+        <button mat-flat-button class="boton-principal" type="submit" [disabled]="!cumple() || enviando()">
+          {{ enviando() ? 'Guardando…' : 'Guardar contraseña' }}
+        </button>
+      </form>
+    }
+    @case ('enlaceInvalido') {
+      <section class="resultado">
+        <span class="icono-resultado alerta"><mat-icon aria-hidden="true">schedule</mat-icon></span>
+        <h1>Este enlace ya no es válido</h1>
+        <p>El enlace para restablecer la contraseña no es válido o ya venció. Solicite uno nuevo.</p>
+        <p class="atenuado">Los enlaces vencen 1 hora después de enviarse y solo sirven una vez.</p>
+        <div class="acciones">
+          <a mat-flat-button class="boton-principal" [routerLink]="['/', rutas.olvideContrasena]">Solicitar un enlace nuevo</a>
+        </div>
+      </section>
+    }
+    @case ('listo') {
+      <section class="resultado" aria-live="polite">
+        <span class="icono-resultado ok"><mat-icon aria-hidden="true">check</mat-icon></span>
+        <h1>Contraseña actualizada</h1>
+        <p>Ya puede iniciar sesión con su contraseña nueva.</p>
+        <div class="acciones">
+          <a mat-flat-button class="boton-principal" [routerLink]="['/', rutas.iniciarSesion]">Ir a iniciar sesión</a>
+        </div>
+      </section>
+    }
+  }
+</app-plantilla-acceso>

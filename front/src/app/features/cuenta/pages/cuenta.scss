@@ -1,0 +1,103 @@
+// Estilos comunes de las pantallas de cuenta (iniciar sesión, recuperar, restablecer y cambiar contraseña).
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.campo-con-enlace {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.enlace-derecha {
+  align-self: flex-end;
+  font-size: 13px;
+}
+
+.boton-principal {
+  height: 44px;
+}
+
+.nota {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.55;
+  }
+}
+
+.icono-resultado {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+
+  &.ok {
+    background: var(--inv-ok-fondo);
+    color: var(--inv-ok);
+  }
+
+  &.alerta {
+    background: var(--inv-alerta-fondo);
+    color: var(--inv-alerta);
+  }
+}
+
+.acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pasos {
+  margin: 4px 0 0;
+  padding-left: 20px;
+  color: var(--inv-lateral-texto);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.centrado {
+  align-self: center;
+}

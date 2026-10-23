@@ -14,10 +14,13 @@
   --inv-acento: #e8b64a;
   --inv-lateral: #172026;
   --inv-lateral-texto: #b7c4cb;
+  --inv-lateral-atenuado: #9fb0b8;
+  --inv-borde-campo: #c9d0cc;
+  --inv-info-fondo: #e3e9fa;
 
   --inv-ok: #1b6b43;
   --inv-ok-fondo: #e1f2e8;
-  --inv-alerta: #8a5a00;
+  --inv-alerta: #6e4800;
   --inv-alerta-fondo: #fbefd3;
   --inv-mal: #9b1c14;
   --inv-mal-fondo: #f9dedb;
@@ -59,6 +62,16 @@ html {
       corner-medium: 10px,
     )
   );
+
+  // Botones con esquinas de 6 px, como en los bosquejos (Material usa botones redondeados por defecto).
+  @include mat.button-overrides(
+    (
+      filled-container-shape: 6px,
+      text-container-shape: 6px,
+      outlined-container-shape: 6px,
+      protected-container-shape: 6px,
+    )
+  );
 }
 
 html,
@@ -89,4 +102,17 @@ code,
 
 .atenuado {
   color: var(--inv-atenuado);
+}
+
+/* Texto solo para lectores de pantalla. */
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

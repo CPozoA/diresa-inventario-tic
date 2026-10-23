@@ -13,6 +13,7 @@ export interface ErrorApi {
 const MENSAJE_SIN_CONEXION = 'No se pudo conectar con el servidor. Revise su conexión e inténtelo de nuevo.';
 const MENSAJE_INESPERADO = 'Ocurrió un error inesperado. Inténtelo de nuevo; si continúa, avise al área de TI.';
 const MENSAJE_SIN_PERMISO = 'No tiene permiso para realizar esta acción.';
+const MENSAJE_DEMASIADOS_INTENTOS = 'Demasiados intentos seguidos. Espere un minuto e inténtelo de nuevo.';
 
 /**
  * Convierte la respuesta de error de la API (ProblemDetails, RFC 9457, con el campo "codigo") en un {@link ErrorApi}.
@@ -33,6 +34,10 @@ export function aErrorApi(error: unknown): ErrorApi {
 
   if (error.status >= 500) {
     return { estado: error.status, codigo, mensaje: MENSAJE_INESPERADO };
+  }
+
+  if (error.status === 429) {
+    return { estado: 429, codigo: null, mensaje: MENSAJE_DEMASIADOS_INTENTOS };
   }
 
   // Sin código, el título es el genérico de HTTP en inglés ("Forbidden"): se usa un texto propio.

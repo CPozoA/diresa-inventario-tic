@@ -1,0 +1,79 @@
+<a class="saltar" href="#contenido">Ir al contenido</a>
+
+<aside class="lateral">
+  <app-logo [subtitulo]="nombreSede()" />
+  <nav aria-label="Menú principal" class="menu">
+    @for (grupo of grupos(); track grupo.titulo) {
+      <div class="grupo">
+        <span class="grupo-titulo">{{ grupo.titulo }}</span>
+        @for (opcion of grupo.opciones; track opcion.ruta) {
+          <a
+            class="opcion"
+            [routerLink]="['/', opcion.ruta]"
+            routerLinkActive="activa"
+            [routerLinkActiveOptions]="{ exact: opcion.ruta === '' }"
+            ariaCurrentWhenActive="page"
+            >{{ opcion.texto }}</a
+          >
+        }
+      </div>
+    }
+  </nav>
+</aside>
+
+<div class="principal">
+  <header class="encabezado">
+    <div class="ambito">
+      @if (sesion.esSuperAdmin()) {
+        <mat-select
+          class="selector-sede"
+          aria-label="Sede"
+          [value]="sedeSeleccionada.sedeId() ?? todas"
+          (valueChange)="seleccionarSede($event)"
+        >
+          <mat-option [value]="todas">Todas las sedes</mat-option>
+          @for (sede of sedeSeleccionada.sedes(); track sede.id) {
+            <mat-option [value]="sede.id">{{ sede.nombre }}{{ sede.activa ? '' : ' (inactiva)' }}</mat-option>
+          }
+        </mat-select>
+      } @else {
+        <span class="chip-sede"><mat-icon aria-hidden="true">apartment</mat-icon>{{ nombreSede() }}</span>
+      }
+    </div>
+
+    <div class="acciones">
+      <a *siTienePermiso="permisos.Activos.Crear" mat-flat-button routerLink="/inventario/nuevo">
+        <mat-icon>add</mat-icon> Nuevo activo
+      </a>
+
+      <button type="button" class="usuario" [matMenuTriggerFor]="menuUsuario" aria-label="Menú de la cuenta">
+        <span class="avatar" aria-hidden="true">{{ iniciales() }}</span>
+        <span class="usuario-textos">
+          <span class="usuario-nombre">{{ sesion.sesion()?.nombreCompleto }}</span>
+          <span class="usuario-rol">{{ rol() }}</span>
+        </span>
+        <mat-icon aria-hidden="true">expand_more</mat-icon>
+      </button>
+
+      <mat-menu #menuUsuario="matMenu" xPosition="before">
+        <div class="menu-cabecera">
+          <span class="mono">{{ sesion.sesion()?.nombreUsuario }}</span>
+          <span class="atenuado">{{ sesion.sesion()?.correo }}</span>
+        </div>
+        <mat-divider />
+        <a mat-menu-item [routerLink]="['/', rutas.cambiarContrasena]">
+          <mat-icon>key</mat-icon>
+          <span>Cambiar contraseña</span>
+        </a>
+        <button mat-menu-item type="button" (click)="cerrarSesion()">
+          <mat-icon>logout</mat-icon>
+          <span>Cerrar sesión</span>
+        </button>
+      </mat-menu>
+    </div>
+  </header>
+
+  <main id="contenido" class="contenido" tabindex="-1">
+    <router-outlet />
+  </main>
+</div>
