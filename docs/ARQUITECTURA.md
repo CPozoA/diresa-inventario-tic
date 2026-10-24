@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.13 · 24/10/2026 · Cambios: D38 y §5.8 (fotos de los activos); §11 divide el Paso 7 en 7A–7D.
+> Versión 0.14 · 24/10/2026 · Cambios: D39–D42, §5.9 (establecimientos) y §5.10 (ficha del activo); Paso 6D en §11.
 
 ---
 
@@ -76,6 +76,10 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D36 | Sede del superadministrador | Selector en el encabezado: "Todas las sedes" (datos consolidados) o una sede (las pantallas se filtran a ella). Se recuerda en la pestaña del navegador. Los usuarios de sede no lo ven: siempre trabajan en la suya | Revisar una sede concreta sin perder la vista consolidada. |
 | D37 | API de catálogos | Una sola API y un solo conjunto de casos de uso para todos los catálogos (`/api/catalogos/{tipo}`), con una tabla y una entidad por catálogo. Cada catálogo se describe en `Application/Catalogos/DefinicionesCatalogo.cs` | Agregar un catálogo nuevo es una entidad, su configuración y una línea en las definiciones; el frontend reutiliza una sola pantalla. |
 | D38 | Fotos de los activos | Hasta **6 fotos por activo**, una marcada como principal. Los archivos se guardan en una **carpeta del servidor fuera de la web pública** (detrás de la interfaz `IAlmacenArchivos`), y en la base solo sus datos. Se suben y se entregan por endpoints de la misma API, separados de la ficha (§5.8) | SQL Server Express limita cada base a 10 GB; separar las fotos de la ficha evita perder datos si una subida falla y mantiene ligeras las listas. La interfaz permite cambiar de almacenamiento (Proxmox) sin tocar el resto. |
+| D39 | Establecimientos | Tabla maestra de **establecimientos de salud** (496 al inicio), cada uno de **una sola sede**. Cada activo pertenece a un establecimiento y solo guarda su referencia. La mantiene el superadministrador; se carga desde Excel (§5.9) | Los datos del establecimiento se escriben una vez y se corrigen en un solo lugar; un usuario de sede solo elige establecimientos de su red. |
+| D40 | Ubicación física | Texto libre dentro del activo ("Piso 2, oficina 204"). **Se retira el catálogo de ubicaciones** del Paso 6B; las áreas siguen como catálogo de la sede | La ubicación depende de cada local; un catálogo por sede no sirve para decenas de establecimientos. |
+| D41 | Discos y memoria RAM | Una fila por disco y por módulo. Tipo, capacidad, uso y velocidad se **eligen de listas fijas** definidas en el dominio; la velocidad de la RAM se ofrece según su tipo. La capacidad de un disco admite "Otra" para casos raros (§5.10) | Evita errores de registro (500 por 512, TB por GB) y permite sumar totales confiables. |
+| D42 | Excel | **ClosedXML** (licencia MIT) para importar establecimientos y, más adelante, para la exportación a Excel | Formato que los usuarios ya tienen; una sola librería para leer y escribir. |
 
 ### Decisiones pendientes de confirmar
 
@@ -227,9 +231,9 @@ Es la pieza de seguridad más importante del sistema.
 
 | Globales (superadmin, permiso `Catalogos.GestionarGlobales`) | Por sede (permiso `Catalogos.GestionarSede`) |
 |---|---|
-| Tipos de activo, marcas, estados del activo, sistemas operativos, tipos de licencia | Áreas o dependencias, ubicaciones físicas |
+| Tipos de activo, marcas, estados del activo, sistemas operativos, tipos de licencia | Áreas o dependencias |
 
-- **Implementados en el Paso 6B.** Los tipos de mantenimiento y de almacenamiento se agregarán con sus módulos.
+- **Implementados en el Paso 6B.** El catálogo de ubicaciones físicas se retira en el Paso 6D (D40). Los tipos de mantenimiento se agregarán con su módulo.
 - Cada catálogo es una tabla en el esquema `catalogos` con nombre y estado (activo o desactivado). Los de sede llevan `SedeId` (`IPerteneceASede`), así que usan el mismo filtro y la misma protección de §5.6.
 - Nombre único dentro del catálogo (y de la sede, en los de sede).
 - **No se eliminan: se desactivan.** Un elemento desactivado deja de ofrecerse al registrar, pero los registros que ya lo usan lo conservan.
@@ -254,6 +258,40 @@ Es la pieza de seguridad más importante del sistema.
 - **Aislamiento:** la tabla de fotos pertenece a la sede (`IPerteneceASede`) y las fotos solo se entregan por la API, con sesión y el filtro de §5.6. Nunca hay enlaces públicos. Se responden con `X-Content-Type-Options: nosniff`.
 - **Almacenamiento:** carpeta configurable fuera de `wwwroot` (`Almacenamiento:Ruta`), organizada por sede. Al eliminar un activo se eliminan sus fotos. El almacenamiento es reutilizable para otros módulos (por ejemplo, evidencias de mantenimiento).
 - **En la pantalla es un solo paso:** al pulsar *Guardar*, se guarda la ficha y luego se suben las fotos una por una, con su avance. Si una falla, la ficha ya quedó guardada y solo se reintenta esa foto.
+
+### 5.9 Establecimientos (D39)
+
+| Dato | Tipo | Regla |
+|---|---|---|
+| Id_Establecimiento | número | Obligatorio y único. Es el identificador de la lista oficial, no la clave interna de la tabla |
+| Código único | número | Obligatorio y único. Se busca por él al registrar un activo |
+| Nombre | texto | Obligatorio |
+| Categoría | texto | Ejemplo: II-1 |
+| Microred | texto | |
+| Red | sede | Al importar, el texto de la red se convierte en una de las 7 sedes; si no corresponde a ninguna, la fila se rechaza |
+| Provincia, distrito | texto | |
+| Ubigeo | texto de 6 dígitos | Conserva el 0 inicial (050601) |
+
+- Pertenece a la sede (`IPerteneceASede`): un usuario de sede solo ve y elige los de su red; el superadministrador, todos.
+- **Lo mantiene el superadministrador:** agregar, editar y desactivar. No se elimina si tiene activos; desactivado, deja de ofrecerse al registrar.
+- **Importación desde Excel** con una plantilla descargable. Se revisan todas las filas antes de guardar (sede reconocida, códigos sin repetir, ubigeo de 6 dígitos) y se informa qué filas tienen errores. Si una fila trae un Id_Establecimiento que ya existe, se actualizan sus datos.
+
+### 5.10 Ficha del activo
+
+Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inventario_TIC.xlsx` (✔ = obligatorio).
+
+| Grupo | Campos |
+|---|---|
+| Identificación | Establecimiento ✔ (búsqueda por código único o nombre), código patrimonial ✔ (**único por sede**), tipo de activo ✔, marca ✔, modelo ✔, N° de serie (avisa si se repite), descripción |
+| Ubicación y responsable | Área ✔ (catálogo de la sede), ubicación física (texto, D40), responsable (texto; pasará a salir de la asignación vigente cuando exista ese módulo) |
+| Estado | Estado ✔ (catálogo), conservación ✔ (Nuevo, Bueno, Regular, Malo), criticidad (Alta, Media, Baja) |
+| Adquisición y garantía | Fecha de adquisición, proveedor, N° de OC o factura, tipo de adquisición (Compra, Arrendamiento, Donación, Transferencia, Comodato), valor (S/), vida útil (años), fin de garantía, observaciones |
+| Técnicos (solo equipos de cómputo) | Procesador, velocidad o generación, N° de núcleos, tarjeta gráfica, pantalla (pulgadas), sistema operativo (catálogo), versión del SO, hostname, dominio o grupo de trabajo, IP, MAC, antivirus o EDR, disco cifrado (Sí/No), puertos principales, accesorios incluidos |
+| Discos (D41) | Ranura, tipo (SSD SATA, NVMe, HDD, Híbrido), capacidad (lista de GB/TB u "Otra"), marca y modelo, N° de serie, uso (Sistema, Datos, Respaldo) |
+| Memoria RAM (D41) | Ranura, tipo (DDR3, DDR3L, DDR4, DDR5, LPDDR4X, LPDDR5), capacidad (2 a 64 GB), velocidad (lista según el tipo), marca y modelo |
+
+- **Se calculan, no se escriben:** RAM total, almacenamiento total, antigüedad, estado de la garantía, vida útil restante y situación de renovación.
+- **Para pasos posteriores:** los campos propios de servidores, red y periféricos (mientras tanto se registran con los campos comunes); licencias, mantenimiento y asignaciones en sus módulos; fotos en el 7D.
 
 ---
 
@@ -438,7 +476,8 @@ Consideraciones del hosting compartido:
 | **6A** | Pantallas de sedes, usuarios y roles (sobre la API del 4B) | Prueba manual en el navegador |
 | **6B** | Áreas y ubicaciones (por sede) y catálogos generales: API, migración y pantallas | `dotnet test` y prueba manual |
 | **6C** | Catálogos: un solo campo para buscar y agregar (avisa repetidos sin distinguir mayúsculas ni tildes); confirmación en todas las acciones; menú lateral y encabezado fijos al desplazarse; en celular, menú como panel con el botón ☰ | `npm test` y prueba manual |
-| **7A** | Activos en el backend: ficha técnica con discos y módulos de RAM, migración, API con permisos y aislamiento por sede | `dotnet test` |
+| **6D** | Establecimientos (D39): tabla, migración, API, importación desde Excel y pantalla del superadministrador; retiro del catálogo de ubicaciones (D40) | `dotnet test`, `npm test` y prueba manual con un Excel |
+| **7A** | Activos en el backend (§5.10): ficha técnica con discos y módulos de RAM, migración, API con permisos y aislamiento por sede | `dotnet test` |
 | **7B** | Bosquejos de la lista de activos y de la ficha técnica | Revisión en el lienzo de diseño |
 | **7C** | Pantallas de activos en Angular (lista con búsqueda y filtros, ficha para crear y editar) | `npm test` y prueba de punta a punta |
 | **7D** | Fotos de los activos (D38, §5.8): almacenamiento, API, cámara o carga de archivos y reducción en el navegador | `dotnet test`, `npm test` y prueba en celular |
