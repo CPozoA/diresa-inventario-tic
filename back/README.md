@@ -15,6 +15,8 @@ back/
 └─ src/
    ├─ Inventario.Domain/         entidades y reglas puras, sin dependencias
    │  ├─ Common/                 Entidad, EntidadAuditable, IPerteneceASede, DominioException
+   │  ├─ Catalogos/              Area, Ubicacion (por sede); TipoActivo, Marca, EstadoActivo, SistemaOperativo,
+   │  │                          TipoLicencia (generales); CatalogosIniciales
    │  ├─ Sedes/                  Sede, SedesIniciales (las 7 redes de salud)
    │  ├─ Seguridad/              Permisos (catálogo), Rol, RolPermiso, TipoRol, RolesDelSistema
    │  └─ Usuarios/               Usuario, UsuarioRol
@@ -23,6 +25,7 @@ back/
    │  │                          IServicioIdentidad, IServicioCorreo, IEnlacesAplicacion,
    │  │                          ReglasDeGestion (anti-escalamiento), GeneradorContrasenaTemporal
    │  ├─ Cuenta/                 iniciar/cerrar sesión, sesión actual, cambiar y recuperar contraseña
+   │  ├─ Catalogos/              una API para todos los catálogos (DefinicionesCatalogo.cs los describe)
    │  ├─ Sedes/                  listar, crear, editar, activar/desactivar
    │  ├─ Roles/                  listar roles y permisos, crear, editar, eliminar
    │  └─ Usuarios/               listar, obtener, crear, editar, asignar roles, activar/desactivar,
@@ -176,6 +179,28 @@ Reglas contra el escalamiento: [ARQUITECTURA.md §6.3](../docs/ARQUITECTURA.md#6
 | 4 | En otra ventana privada, inicia sesión como `admin.huanta` y cambia la contraseña | 200 y 204 |
 | 5 | Como `admin.huanta`: `GET /api/usuarios` | 200, solo usuarios de Huanta |
 | 6 | Como `admin.huanta`: `POST /api/roles` con `{"nombre": "X", "permisos": ["Sedes.Gestionar"]}` | 403, `Gestion.PermisosQueNoTiene` |
+
+## Paso 6B: catálogos
+
+Este paso **sí cambia el modelo**: agrega el esquema `catalogos` con siete tablas. Desde la carpeta `back`, con la API detenida:
+
+```powershell
+dotnet ef migrations add Catalogos --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+Al arrancar, la API carga los valores iniciales de los catálogos generales (tipos de activo, marcas, estados, sistemas
+operativos y tipos de licencia). Las pruebas automáticas aplican la migración solas en su base de pruebas.
+
+| Endpoint | Quién | Qué hace |
+|---|---|---|
+| `GET /api/catalogos` | Con sesión | Catálogos disponibles y si puede modificarlos |
+| `GET /api/catalogos/{tipo}?sedeId=&incluirInactivos=` | Con sesión | Elementos (por omisión, solo activos) |
+| `POST /api/catalogos/{tipo}`, `PUT /api/catalogos/{tipo}/{id}` | Permiso del catálogo | Agregar y renombrar |
+| `POST /api/catalogos/{tipo}/{id}/activar\|desactivar` | Permiso del catálogo | No se eliminan: se desactivan |
+
+`tipo`: `areas`, `ubicaciones` (por sede, `Catalogos.GestionarSede`) · `tipos-activo`, `marcas`, `estados-activo`,
+`sistemas-operativos`, `tipos-licencia` (generales, `Catalogos.GestionarGlobales`).
 
 ### Correo en producción
 

@@ -1,0 +1,35 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.alta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+
+  .campo {
+    flex: 1 1 280px;
+    max-width: 480px;
+  }
+
+  button {
+    height: 44px;
+  }
+}
+
+.barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-height: 40px;
+}
+
+tr.inactivo td {
+  color: var(--inv-atenuado);
+}

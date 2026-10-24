@@ -1,6 +1,7 @@
 using System.Reflection;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Catalogos;
 using Inventario.Domain.Common;
 using Inventario.Domain.Sedes;
 using Inventario.Domain.Seguridad;
@@ -30,6 +31,20 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IUsuari
     public DbSet<Usuario> Usuarios => Set<Usuario>();
 
     public DbSet<Rol> Roles => Set<Rol>();
+
+    public DbSet<Area> Areas => Set<Area>();
+
+    public DbSet<Ubicacion> Ubicaciones => Set<Ubicacion>();
+
+    public DbSet<TipoActivo> TiposActivo => Set<TipoActivo>();
+
+    public DbSet<Marca> Marcas => Set<Marca>();
+
+    public DbSet<EstadoActivo> EstadosActivo => Set<EstadoActivo>();
+
+    public DbSet<SistemaOperativo> SistemasOperativos => Set<SistemaOperativo>();
+
+    public DbSet<TipoLicencia> TiposLicencia => Set<TipoLicencia>();
 
     /// <summary>Claves que cifran la cookie de sesión. Se guardan aquí para sobrevivir a los reciclajes de IIS.</summary>
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();

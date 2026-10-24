@@ -22,6 +22,243 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Inventario.Domain.Catalogos.Area", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("SedeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SedeId", "Nombre")
+                        .IsUnique();
+
+                    b.ToTable("Areas", "catalogos");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Catalogos.EstadoActivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("EstadosActivo", "catalogos");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Catalogos.Marca", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("Marcas", "catalogos");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Catalogos.SistemaOperativo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("SistemasOperativos", "catalogos");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Catalogos.TipoActivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("TiposActivo", "catalogos");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Catalogos.TipoLicencia", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("TiposLicencia", "catalogos");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Catalogos.Ubicacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("SedeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SedeId", "Nombre")
+                        .IsUnique();
+
+                    b.ToTable("Ubicaciones", "catalogos");
+                });
+
             modelBuilder.Entity("Inventario.Domain.Sedes.Sede", b =>
                 {
                     b.Property<Guid>("Id")
@@ -325,6 +562,24 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("CuentaTokens", "seguridad");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Catalogos.Area", b =>
+                {
+                    b.HasOne("Inventario.Domain.Sedes.Sede", null)
+                        .WithMany()
+                        .HasForeignKey("SedeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Catalogos.Ubicacion", b =>
+                {
+                    b.HasOne("Inventario.Domain.Sedes.Sede", null)
+                        .WithMany()
+                        .HasForeignKey("SedeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Inventario.Domain.Seguridad.Rol", b =>

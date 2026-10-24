@@ -1,3 +1,4 @@
+using Inventario.Domain.Catalogos;
 using Inventario.Domain.Sedes;
 using Inventario.Domain.Seguridad;
 using Inventario.Domain.Usuarios;
@@ -43,6 +44,7 @@ internal sealed partial class InicializadorDatos(
         }
 
         await CrearSedesYRolesAsync(cancellationToken);
+        await CrearCatalogosGeneralesAsync(cancellationToken);
         await CrearSuperAdminSiFaltaAsync(cancellationToken);
     }
 
@@ -66,6 +68,42 @@ internal sealed partial class InicializadorDatos(
             await db.SaveChangesAsync(cancellationToken);
             LogDatosCreados(logger, sedesNuevas.Count, rolesSistemaNuevos.Count);
         }
+    }
+
+    /// <summary>
+    /// Carga los valores iniciales de cada catálogo general que esté vacío. Si el superadministrador ya lo modificó
+    /// (aunque sea desactivando todo), no se toca.
+    /// </summary>
+    private async Task CrearCatalogosGeneralesAsync(CancellationToken cancellationToken)
+    {
+        var cargados = 0;
+        cargados += await CargarSiVacioAsync(db.TiposActivo, CatalogosIniciales.TiposActivo, TipoActivo.Crear, cancellationToken);
+        cargados += await CargarSiVacioAsync(db.Marcas, CatalogosIniciales.Marcas, Marca.Crear, cancellationToken);
+        cargados += await CargarSiVacioAsync(db.EstadosActivo, CatalogosIniciales.EstadosActivo, EstadoActivo.Crear, cancellationToken);
+        cargados += await CargarSiVacioAsync(db.SistemasOperativos, CatalogosIniciales.SistemasOperativos, SistemaOperativo.Crear, cancellationToken);
+        cargados += await CargarSiVacioAsync(db.TiposLicencia, CatalogosIniciales.TiposLicencia, TipoLicencia.Crear, cancellationToken);
+
+        if (cargados > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            LogCatalogosCargados(logger, cargados);
+        }
+    }
+
+    private static async Task<int> CargarSiVacioAsync<T>(
+        DbSet<T> tabla,
+        IReadOnlyList<string> nombres,
+        Func<string, T> crear,
+        CancellationToken cancellationToken)
+        where T : ElementoCatalogo
+    {
+        if (await tabla.AnyAsync(cancellationToken))
+        {
+            return 0;
+        }
+
+        tabla.AddRange(nombres.Select(crear));
+        return 1;
     }
 
     private async Task CrearSuperAdminSiFaltaAsync(CancellationToken cancellationToken)
@@ -133,4 +171,7 @@ internal sealed partial class InicializadorDatos(
     [LoggerMessage(EventId = 1006, Level = LogLevel.Information,
         Message = "Superadministrador '{NombreUsuario}' creado. Deberá cambiar la contraseña temporal al iniciar sesión.")]
     private static partial void LogSuperAdminCreado(ILogger logger, string nombreUsuario);
+
+    [LoggerMessage(EventId = 1007, Level = LogLevel.Information, Message = "Catálogos generales cargados con sus valores iniciales: {Cantidad}.")]
+    private static partial void LogCatalogosCargados(ILogger logger, int cantidad);
 }

@@ -748,6 +748,227 @@
           }
         }
       }
+    },
+    "/api/catalogos": {
+      "get": {
+        "tags": [
+          "Catalogos"
+        ],
+        "summary": "Catálogos disponibles y si quien consulta puede modificarlos.",
+        "operationId": "ListarTiposCatalogo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TipoCatalogoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalogos/{tipo}": {
+      "get": {
+        "tags": [
+          "Catalogos"
+        ],
+        "summary": "Elementos de un catálogo. En áreas y ubicaciones, el superadministrador indica ?sedeId=.",
+        "operationId": "ListarElementosCatalogo",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "incluirInactivos",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ElementoCatalogoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Catalogos"
+        ],
+        "summary": "Agrega un elemento al catálogo.",
+        "operationId": "CrearElementoCatalogo",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearElementoCatalogoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdCreado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalogos/{tipo}/{id}": {
+      "put": {
+        "tags": [
+          "Catalogos"
+        ],
+        "summary": "Cambia el nombre de un elemento.",
+        "operationId": "RenombrarElementoCatalogo",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenombrarElementoCatalogoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/catalogos/{tipo}/{id}/activar": {
+      "post": {
+        "tags": [
+          "Catalogos"
+        ],
+        "summary": "Vuelve a ofrecer el elemento al registrar.",
+        "operationId": "ActivarElementoCatalogo",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/catalogos/{tipo}/{id}/desactivar": {
+      "post": {
+        "tags": [
+          "Catalogos"
+        ],
+        "summary": "Deja de ofrecer el elemento al registrar; se conserva en los registros que ya lo usan.",
+        "operationId": "DesactivarElementoCatalogo",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -792,6 +1013,25 @@
         "type": "object",
         "properties": {
           "contrasenaTemporal": {
+            "type": "string"
+          }
+        }
+      },
+      "CrearElementoCatalogoRequest": {
+        "required": [
+          "sedeId",
+          "nombre"
+        ],
+        "type": "object",
+        "properties": {
+          "sedeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "nombre": {
             "type": "string"
           }
         }
@@ -961,6 +1201,26 @@
           }
         }
       },
+      "ElementoCatalogoDto": {
+        "required": [
+          "id",
+          "nombre",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
       "IdCreado": {
         "required": [
           "id"
@@ -1008,6 +1268,17 @@
           },
           "puedeOtorgar": {
             "type": "boolean"
+          }
+        }
+      },
+      "RenombrarElementoCatalogoRequest": {
+        "required": [
+          "nombre"
+        ],
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "type": "string"
           }
         }
       },
@@ -1222,6 +1493,33 @@
           }
         }
       },
+      "TipoCatalogoDto": {
+        "required": [
+          "codigo",
+          "nombre",
+          "nombreSingular",
+          "esDeSede",
+          "puedeGestionar"
+        ],
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "nombreSingular": {
+            "type": "string"
+          },
+          "esDeSede": {
+            "type": "boolean"
+          },
+          "puedeGestionar": {
+            "type": "boolean"
+          }
+        }
+      },
       "TokenCsrfDto": {
         "required": [
           "token"
@@ -1328,6 +1626,9 @@
     },
     {
       "name": "Usuarios"
+    },
+    {
+      "name": "Catalogos"
     }
   ]
 }

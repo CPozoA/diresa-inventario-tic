@@ -55,3 +55,15 @@ export type { RestablecerContrasenaUsuario$Params as RestablecerContrasenaUsuari
 export { restablecerContrasenaUsuario as restablecerContrasenaUsuario } from './fn/usuarios/restablecer-contrasena-usuario';
 export type { DesbloquearUsuario$Params as DesbloquearUsuario$Params } from './fn/usuarios/desbloquear-usuario';
 export { desbloquearUsuario as desbloquearUsuario } from './fn/usuarios/desbloquear-usuario';
+export type { ListarTiposCatalogo$Params as ListarTiposCatalogo$Params } from './fn/catalogos/listar-tipos-catalogo';
+export { listarTiposCatalogo as listarTiposCatalogo } from './fn/catalogos/listar-tipos-catalogo';
+export type { ListarElementosCatalogo$Params as ListarElementosCatalogo$Params } from './fn/catalogos/listar-elementos-catalogo';
+export { listarElementosCatalogo as listarElementosCatalogo } from './fn/catalogos/listar-elementos-catalogo';
+export type { CrearElementoCatalogo$Params as CrearElementoCatalogo$Params } from './fn/catalogos/crear-elemento-catalogo';
+export { crearElementoCatalogo as crearElementoCatalogo } from './fn/catalogos/crear-elemento-catalogo';
+export type { RenombrarElementoCatalogo$Params as RenombrarElementoCatalogo$Params } from './fn/catalogos/renombrar-elemento-catalogo';
+export { renombrarElementoCatalogo as renombrarElementoCatalogo } from './fn/catalogos/renombrar-elemento-catalogo';
+export type { ActivarElementoCatalogo$Params as ActivarElementoCatalogo$Params } from './fn/catalogos/activar-elemento-catalogo';
+export { activarElementoCatalogo as activarElementoCatalogo } from './fn/catalogos/activar-elemento-catalogo';
+export type { DesactivarElementoCatalogo$Params as DesactivarElementoCatalogo$Params } from './fn/catalogos/desactivar-elemento-catalogo';
+export { desactivarElementoCatalogo as desactivarElementoCatalogo } from './fn/catalogos/desactivar-elemento-catalogo';

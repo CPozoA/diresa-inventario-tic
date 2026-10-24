@@ -17,7 +17,7 @@ Sistema web para el registro y control del inventario de Tecnologías de la Info
 
 ## Estado
 
-Paso 6A terminado: pantallas de sedes, usuarios y roles. Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
+Paso 6B terminado: catálogos (áreas y ubicaciones por sede, y catálogos generales) con su API y sus pantallas. Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
 
 ## Control de versiones
 

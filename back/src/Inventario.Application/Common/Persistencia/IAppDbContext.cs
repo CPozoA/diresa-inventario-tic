@@ -1,3 +1,4 @@
+using Inventario.Domain.Catalogos;
 using Inventario.Domain.Sedes;
 using Inventario.Domain.Seguridad;
 using Inventario.Domain.Usuarios;
@@ -17,6 +18,22 @@ public interface IAppDbContext
     DbSet<Usuario> Usuarios { get; }
 
     DbSet<Rol> Roles { get; }
+
+    // Catálogos de cada sede.
+    DbSet<Area> Areas { get; }
+
+    DbSet<Ubicacion> Ubicaciones { get; }
+
+    // Catálogos generales.
+    DbSet<TipoActivo> TiposActivo { get; }
+
+    DbSet<Marca> Marcas { get; }
+
+    DbSet<EstadoActivo> EstadosActivo { get; }
+
+    DbSet<SistemaOperativo> SistemasOperativos { get; }
+
+    DbSet<TipoLicencia> TiposLicencia { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

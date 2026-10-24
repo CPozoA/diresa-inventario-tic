@@ -1,0 +1,80 @@
+<div class="editor">
+  @if (tipo().puedeGestionar) {
+      <form class="alta" [formGroup]="alta" (ngSubmit)="agregar()" novalidate>
+      <mat-form-field subscriptSizing="dynamic" class="campo">
+        <mat-label>Nuevo: {{ tipo().nombreSingular.toLowerCase() }}</mat-label>
+        <input matInput [formControl]="nuevo" maxlength="100" />
+      </mat-form-field>
+      <button mat-flat-button type="submit" [disabled]="agregando()"><mat-icon>add</mat-icon> Agregar</button>
+    </form>
+    @if (errorAlta(); as e) {
+      <app-aviso>{{ e.mensaje }}</app-aviso>
+    }
+  }
+
+  <div class="barra">
+    <span class="atenuado">
+      {{ visibles().length }} {{ visibles().length === 1 ? 'elemento' : 'elementos' }}
+    </span>
+    @if (cantidadInactivos() > 0) {
+      <mat-checkbox [checked]="mostrarInactivos()" (change)="mostrarInactivos.set($event.checked)">
+        Mostrar desactivados ({{ cantidadInactivos() }})
+      </mat-checkbox>
+    }
+  </div>
+
+  @if (elementos.error()) {
+    <app-aviso>{{ mensajeError(elementos.error()) }}</app-aviso>
+  }
+
+  <section class="tarjeta-tabla">
+    @if (elementos.isLoading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <div class="tabla-contenedor">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th scope="col">Nombre</th>
+            <th scope="col">Estado</th>
+            @if (tipo().puedeGestionar) {
+              <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (elemento of visibles(); track elemento.id) {
+            <tr [class.inactivo]="!elemento.activo">
+              <td>{{ elemento.nombre }}</td>
+              <td>
+                <span class="pastilla" [class.ok]="elemento.activo" [class.neutra]="!elemento.activo">
+                  {{ elemento.activo ? 'Activo' : 'Desactivado' }}
+                </span>
+              </td>
+              @if (tipo().puedeGestionar) {
+                <td class="celda-acciones">
+                  <button mat-icon-button type="button" [matMenuTriggerFor]="acciones" [attr.aria-label]="'Acciones de ' + elemento.nombre">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #acciones="matMenu" xPosition="before">
+                    <button mat-menu-item type="button" (click)="renombrar(elemento)"><mat-icon>edit</mat-icon>Renombrar</button>
+                    <button mat-menu-item type="button" (click)="cambiarEstado(elemento)">
+                      <mat-icon>{{ elemento.activo ? 'visibility_off' : 'visibility' }}</mat-icon>
+                      {{ elemento.activo ? 'Desactivar' : 'Activar' }}
+                    </button>
+                  </mat-menu>
+                </td>
+              }
+            </tr>
+          } @empty {
+            @if (!elementos.isLoading()) {
+              <tr>
+                <td colspan="3" class="vacio">Todavía no hay elementos en este catálogo.</td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

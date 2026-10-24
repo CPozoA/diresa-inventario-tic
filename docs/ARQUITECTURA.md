@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.10 · 23/10/2026 · Cambios: Paso 6 dividido en 6A y 6B (6A: pantallas de sedes, usuarios y roles).
+> Versión 0.11 · 23/10/2026 · Cambios: §5.7 y D37 (Paso 6B: catálogos).
 
 ---
 
@@ -74,6 +74,7 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D34 | Pruebas del frontend | **Vitest** (el ejecutor por defecto de Angular 22) con `HttpTestingController` para probar interceptores y stores sin API | Rápido y sin navegador. |
 | D35 | Menú y rutas | El menú se define en un solo lugar (`front/src/app/core/layout/menu.ts`): de ahí salen las opciones visibles (según los permisos de la sesión) y las rutas con su guard de permiso. Las secciones aún no construidas muestran "disponible en una próxima versión" | Un permiso nuevo o una pantalla nueva se agregan en un solo sitio; el menú y la protección de rutas no se desalinean. |
 | D36 | Sede del superadministrador | Selector en el encabezado: "Todas las sedes" (datos consolidados) o una sede (las pantallas se filtran a ella). Se recuerda en la pestaña del navegador. Los usuarios de sede no lo ven: siempre trabajan en la suya | Revisar una sede concreta sin perder la vista consolidada. |
+| D37 | API de catálogos | Una sola API y un solo conjunto de casos de uso para todos los catálogos (`/api/catalogos/{tipo}`), con una tabla y una entidad por catálogo. Cada catálogo se describe en `Application/Catalogos/DefinicionesCatalogo.cs` | Agregar un catálogo nuevo es una entidad, su configuración y una línea en las definiciones; el frontend reutiliza una sola pantalla. |
 
 ### Decisiones pendientes de confirmar
 
@@ -223,11 +224,16 @@ Es la pieza de seguridad más importante del sistema.
 
 ### 5.7 Catálogos
 
-| Globales (superadmin) | Por sede (administrador de sede) |
+| Globales (superadmin, permiso `Catalogos.GestionarGlobales`) | Por sede (permiso `Catalogos.GestionarSede`) |
 |---|---|
-| Tipos de activo, marcas, sistemas operativos, tipos de licencia, tipos de mantenimiento, estados, tipos de almacenamiento | Áreas o dependencias, ubicaciones físicas |
+| Tipos de activo, marcas, estados del activo, sistemas operativos, tipos de licencia | Áreas o dependencias, ubicaciones físicas |
 
-Los catálogos por sede usan el mismo mecanismo de §5.6. Los catálogos no se borran si están en uso: se **desactivan**.
+- **Implementados en el Paso 6B.** Los tipos de mantenimiento y de almacenamiento se agregarán con sus módulos.
+- Cada catálogo es una tabla en el esquema `catalogos` con nombre y estado (activo o desactivado). Los de sede llevan `SedeId` (`IPerteneceASede`), así que usan el mismo filtro y la misma protección de §5.6.
+- Nombre único dentro del catálogo (y de la sede, en los de sede).
+- **No se eliminan: se desactivan.** Un elemento desactivado deja de ofrecerse al registrar, pero los registros que ya lo usan lo conservan.
+- Una sola API para todos: `/api/catalogos/{tipo}` (D37). Consultarlos solo exige sesión (se necesitan al registrar activos); modificarlos, el permiso del catálogo.
+- Los catálogos generales arrancan con valores iniciales (`Domain/Catalogos/CatalogosIniciales.cs`), que se cargan una sola vez, cuando el catálogo está vacío.
 
 ---
 
