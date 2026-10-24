@@ -18,7 +18,7 @@ internal abstract class DefinicionCatalogo(string codigo, string nombre, string 
 
     public string NombreSingular { get; } = nombreSingular;
 
-    /// <summary>Verdadero si cada sede tiene el suyo (áreas, ubicaciones).</summary>
+    /// <summary>Verdadero si cada sede tiene el suyo (áreas).</summary>
     public bool EsDeSede { get; } = esDeSede;
 
     /// <summary>Permiso para crear, renombrar, activar o desactivar elementos.</summary>
@@ -92,8 +92,6 @@ internal static class DefinicionesCatalogo
     public static IReadOnlyList<DefinicionCatalogo> Todas { get; } =
     [
         new DefinicionCatalogo<Area>("areas", "Áreas", "Área", db => db.Areas, (sede, n) => Area.Crear(sede ?? Guid.Empty, n)),
-        new DefinicionCatalogo<Ubicacion>(
-            "ubicaciones", "Ubicaciones", "Ubicación", db => db.Ubicaciones, (sede, n) => Ubicacion.Crear(sede ?? Guid.Empty, n)),
         new DefinicionCatalogo<TipoActivo>(
             "tipos-activo", "Tipos de activo", "Tipo de activo", db => db.TiposActivo, (_, n) => TipoActivo.Crear(n)),
         new DefinicionCatalogo<Marca>("marcas", "Marcas", "Marca", db => db.Marcas, (_, n) => Marca.Crear(n)),

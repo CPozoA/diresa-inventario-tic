@@ -63,6 +63,11 @@ public static class Permisos
         public const string Gestionar = "Sedes.Gestionar";
     }
 
+    public static class Establecimientos
+    {
+        public const string Gestionar = "Establecimientos.Gestionar";
+    }
+
     public static class Administradores
     {
         public const string Gestionar = "Administradores.Gestionar";
@@ -84,7 +89,7 @@ public static class Permisos
         new(Asignaciones.Ver, "Asignaciones", "Ver asignaciones de equipos", false),
         new(Asignaciones.Gestionar, "Asignaciones", "Registrar entregas y devoluciones", false),
 
-        new(Catalogos.GestionarSede, "Catálogos", "Administrar áreas y ubicaciones de la sede", false),
+        new(Catalogos.GestionarSede, "Catálogos", "Administrar las áreas de la sede", false),
         new(Usuarios.Ver, "Usuarios", "Ver usuarios de la sede", false),
         new(Usuarios.Gestionar, "Usuarios", "Crear, desactivar y restablecer usuarios de la sede", false),
         new(Roles.Ver, "Roles", "Ver roles de la sede", false),
@@ -92,6 +97,7 @@ public static class Permisos
 
         new(Catalogos.GestionarGlobales, "Administración general", "Administrar catálogos comunes a todas las sedes", true),
         new(Sedes.Gestionar, "Administración general", "Crear y modificar sedes", true),
+        new(Establecimientos.Gestionar, "Administración general", "Registrar, importar y modificar establecimientos", true),
         new(Administradores.Gestionar, "Administración general", "Asignar administradores de sede", true),
     ];
 

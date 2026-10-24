@@ -14,7 +14,8 @@ const funcionalidades: Readonly<Record<string, LoadChildren>> = {
   sedes: () => import('./features/sedes/sedes.routes').then((m) => m.SEDES_RUTAS),
   usuarios: () => import('./features/usuarios/usuarios.routes').then((m) => m.USUARIOS_RUTAS),
   roles: () => import('./features/roles/roles.routes').then((m) => m.ROLES_RUTAS),
-  'areas-ubicaciones': () => import('./features/catalogos/catalogos.routes').then((m) => m.AREAS_UBICACIONES_RUTAS),
+  areas: () => import('./features/catalogos/catalogos.routes').then((m) => m.AREAS_RUTAS),
+  establecimientos: () => import('./features/establecimientos/establecimientos.routes').then((m) => m.ESTABLECIMIENTOS_RUTAS),
   catalogos: () => import('./features/catalogos/catalogos.routes').then((m) => m.CATALOGOS_GENERALES_RUTAS),
 };
 

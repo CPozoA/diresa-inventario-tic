@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Http.HttpResults;
 namespace Inventario.Api.Endpoints;
 
 /// <summary>
-/// Catálogos (listas de valores). Una sola API para todos: <c>/api/catalogos/{tipo}</c>, con tipo = areas, ubicaciones,
+/// Catálogos (listas de valores). Una sola API para todos: <c>/api/catalogos/{tipo}</c>, con tipo = areas,
 /// tipos-activo, marcas, estados-activo, sistemas-operativos o tipos-licencia. Consultar: cualquier usuario con sesión.
-/// Modificar: Catalogos.GestionarSede (áreas y ubicaciones) o Catalogos.GestionarGlobales (los demás); lo valida Application.
+/// Modificar: Catalogos.GestionarSede (áreas) o Catalogos.GestionarGlobales (los demás); lo valida Application.
 /// </summary>
 internal static class CatalogosEndpoints
 {
@@ -23,7 +23,7 @@ internal static class CatalogosEndpoints
 
         grupo.MapGet("/{tipo}", ListarAsync)
             .WithName("ListarElementosCatalogo")
-            .WithSummary("Elementos de un catálogo. En áreas y ubicaciones, el superadministrador indica ?sedeId=.");
+            .WithSummary("Elementos de un catálogo. En áreas, el superadministrador indica ?sedeId=.");
 
         grupo.MapPost("/{tipo}", CrearAsync)
             .WithName("CrearElementoCatalogo")

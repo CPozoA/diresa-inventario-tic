@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Inventario.Api.IntegrationTests;
 
 /// <summary>
-/// Catálogos: los de sede (áreas, ubicaciones) quedan aislados por sede y los administra la sede;
+/// Catálogos: los de sede (áreas) quedan aislados por sede y los administra la sede;
 /// los generales los consulta cualquiera y solo los modifica el superadministrador.
 /// </summary>
 [Collection(ColeccionApi.Nombre)]
@@ -70,9 +70,9 @@ public sealed class CatalogosTests(FabricaApi api)
         using var superAdmin = await api.CrearClienteConSesionAsync(DatosPrueba.SuperAdmin);
         var nombre = NombreUnico("Almacén");
 
-        await admin.PostAsJsonAsync("/api/catalogos/ubicaciones", new { nombre }, Ct);
-        var repetida = await admin.PostAsJsonAsync("/api/catalogos/ubicaciones", new { nombre = $"  {nombre} " }, Ct);
-        var enPuquio = await superAdmin.PostAsJsonAsync("/api/catalogos/ubicaciones", new { sedeId = api.SedePuquioId, nombre }, Ct);
+        await admin.PostAsJsonAsync("/api/catalogos/areas", new { nombre }, Ct);
+        var repetida = await admin.PostAsJsonAsync("/api/catalogos/areas", new { nombre = $"  {nombre} " }, Ct);
+        var enPuquio = await superAdmin.PostAsJsonAsync("/api/catalogos/areas", new { sedeId = api.SedePuquioId, nombre }, Ct);
 
         Assert.Equal(HttpStatusCode.Conflict, repetida.StatusCode);
         Assert.Equal("Catalogos.NombreDuplicado", await repetida.LeerCodigoAsync());
@@ -150,6 +150,16 @@ public sealed class CatalogosTests(FabricaApi api)
         Assert.Equal(HttpStatusCode.NoContent, desactivar.StatusCode);
         Assert.DoesNotContain(activos!, e => e.Id == creado.Id);
         Assert.Contains(todos!, e => e.Id == creado.Id && !e.Activo);
+    }
+
+    [Fact]
+    public async Task ElCatalogoDeUbicacionesSeRetiro_Responde404()
+    {
+        using var admin = await api.CrearClienteConSesionAsync(DatosPrueba.AdminHuanta);
+
+        var respuesta = await admin.GetAsync("/api/catalogos/ubicaciones", Ct);
+
+        Assert.Equal(HttpStatusCode.NotFound, respuesta.StatusCode);
     }
 
     [Fact]

@@ -223,7 +223,7 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.ToTable("TiposLicencia", "catalogos");
                 });
 
-            modelBuilder.Entity("Inventario.Domain.Catalogos.Ubicacion", b =>
+            modelBuilder.Entity("Inventario.Domain.Establecimientos.Establecimiento", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
@@ -231,11 +231,29 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Categoria")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("CodigoUnico")
+                        .HasColumnType("int");
+
                     b.Property<DateTimeOffset>("CreadoEn")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<Guid?>("CreadoPor")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Distrito")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("IdEstablecimiento")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Microred")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<DateTimeOffset?>("ModificadoEn")
                         .HasColumnType("datetimeoffset");
@@ -245,18 +263,31 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
 
                     b.Property<string>("Nombre")
                         .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Provincia")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid>("SedeId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Ubigeo")
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("SedeId", "Nombre")
+                    b.HasIndex("CodigoUnico")
                         .IsUnique();
 
-                    b.ToTable("Ubicaciones", "catalogos");
+                    b.HasIndex("IdEstablecimiento")
+                        .IsUnique();
+
+                    b.HasIndex("SedeId", "Nombre");
+
+                    b.ToTable("Establecimientos", "organizacion");
                 });
 
             modelBuilder.Entity("Inventario.Domain.Sedes.Sede", b =>
@@ -573,7 +604,7 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Inventario.Domain.Catalogos.Ubicacion", b =>
+            modelBuilder.Entity("Inventario.Domain.Establecimientos.Establecimiento", b =>
                 {
                     b.HasOne("Inventario.Domain.Sedes.Sede", null)
                         .WithMany()

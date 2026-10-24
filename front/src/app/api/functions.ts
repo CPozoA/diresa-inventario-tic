@@ -67,3 +67,17 @@ export type { ActivarElementoCatalogo$Params as ActivarElementoCatalogo$Params }
 export { activarElementoCatalogo as activarElementoCatalogo } from './fn/catalogos/activar-elemento-catalogo';
 export type { DesactivarElementoCatalogo$Params as DesactivarElementoCatalogo$Params } from './fn/catalogos/desactivar-elemento-catalogo';
 export { desactivarElementoCatalogo as desactivarElementoCatalogo } from './fn/catalogos/desactivar-elemento-catalogo';
+export type { ListarEstablecimientos$Params as ListarEstablecimientos$Params } from './fn/establecimientos/listar-establecimientos';
+export { listarEstablecimientos as listarEstablecimientos } from './fn/establecimientos/listar-establecimientos';
+export type { CrearEstablecimiento$Params as CrearEstablecimiento$Params } from './fn/establecimientos/crear-establecimiento';
+export { crearEstablecimiento as crearEstablecimiento } from './fn/establecimientos/crear-establecimiento';
+export type { EditarEstablecimiento$Params as EditarEstablecimiento$Params } from './fn/establecimientos/editar-establecimiento';
+export { editarEstablecimiento as editarEstablecimiento } from './fn/establecimientos/editar-establecimiento';
+export type { ActivarEstablecimiento$Params as ActivarEstablecimiento$Params } from './fn/establecimientos/activar-establecimiento';
+export { activarEstablecimiento as activarEstablecimiento } from './fn/establecimientos/activar-establecimiento';
+export type { DesactivarEstablecimiento$Params as DesactivarEstablecimiento$Params } from './fn/establecimientos/desactivar-establecimiento';
+export { desactivarEstablecimiento as desactivarEstablecimiento } from './fn/establecimientos/desactivar-establecimiento';
+export type { DescargarPlantillaEstablecimientos$Params as DescargarPlantillaEstablecimientos$Params } from './fn/establecimientos/descargar-plantilla-establecimientos';
+export { descargarPlantillaEstablecimientos as descargarPlantillaEstablecimientos } from './fn/establecimientos/descargar-plantilla-establecimientos';
+export type { ImportarEstablecimientos$Params as ImportarEstablecimientos$Params } from './fn/establecimientos/importar-establecimientos';
+export { importarEstablecimientos as importarEstablecimientos } from './fn/establecimientos/importar-establecimientos';

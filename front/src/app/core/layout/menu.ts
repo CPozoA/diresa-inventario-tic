@@ -32,8 +32,9 @@ export const MENU: readonly GrupoMenu[] = [
     opciones: [
       { texto: 'Usuarios', ruta: 'usuarios', permiso: Permisos.Usuarios.Ver },
       { texto: 'Roles', ruta: 'roles', permiso: Permisos.Roles.Ver },
-      { texto: 'Áreas y ubicaciones', ruta: 'areas-ubicaciones', permiso: Permisos.Catalogos.GestionarSede },
+      { texto: 'Áreas', ruta: 'areas', permiso: Permisos.Catalogos.GestionarSede },
       { texto: 'Sedes', ruta: 'sedes', permiso: Permisos.Sedes.Gestionar },
+      { texto: 'Establecimientos', ruta: 'establecimientos', permiso: Permisos.Establecimientos.Gestionar },
       { texto: 'Catálogos generales', ruta: 'catalogos', permiso: Permisos.Catalogos.GestionarGlobales },
     ],
   },

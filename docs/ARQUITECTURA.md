@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.14 · 24/10/2026 · Cambios: D39–D42, §5.9 (establecimientos) y §5.10 (ficha del activo); Paso 6D en §11.
+> Versión 0.15 · 24/10/2026 · Cambios: Paso 6D implementado (§5.9, permiso Establecimientos.Gestionar en §6.2).
 
 ---
 
@@ -272,9 +272,10 @@ Es la pieza de seguridad más importante del sistema.
 | Provincia, distrito | texto | |
 | Ubigeo | texto de 6 dígitos | Conserva el 0 inicial (050601) |
 
+- **Implementado en el Paso 6D.** Tabla `organizacion.Establecimientos`; API en `/api/establecimientos`.
 - Pertenece a la sede (`IPerteneceASede`): un usuario de sede solo ve y elige los de su red; el superadministrador, todos.
-- **Lo mantiene el superadministrador:** agregar, editar y desactivar. No se elimina si tiene activos; desactivado, deja de ofrecerse al registrar.
-- **Importación desde Excel** con una plantilla descargable. Se revisan todas las filas antes de guardar (sede reconocida, códigos sin repetir, ubigeo de 6 dígitos) y se informa qué filas tienen errores. Si una fila trae un Id_Establecimiento que ya existe, se actualizan sus datos.
+- **Lo mantiene el superadministrador** (permiso exclusivo `Establecimientos.Gestionar`): agregar, editar y desactivar. No se elimina si tiene activos; desactivado, deja de ofrecerse al registrar.
+- **Importación desde Excel** con una plantilla descargable. Se revisan todas las filas antes de guardar (sede reconocida, códigos sin repetir, ubigeo de 6 dígitos) y se informa qué filas tienen errores. Si una fila trae un Id_Establecimiento que ya existe, se actualizan sus datos (sin cambiar de red). **Si alguna fila tiene errores no se guarda nada.** Límites: 5 MB y 5000 filas por archivo. Las columnas se reconocen por su encabezado, en cualquier orden; un ubigeo numérico al que Excel quitó el 0 inicial se completa.
 
 ### 5.10 Ficha del activo
 
@@ -315,7 +316,7 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 ### 6.2 Autorización por permisos
 
 - Los **permisos** están definidos en el código (no se inventan desde la interfaz):
-  `Activos.Ver`, `Activos.Crear`, `Activos.Editar`, `Activos.Eliminar`, `Licencias.Ver`, `Licencias.Gestionar`, `Mantenimiento.Ver`, `Mantenimiento.Gestionar`, `Asignaciones.Ver`, `Asignaciones.Gestionar`, `Catalogos.GestionarSede`, `Usuarios.Ver`, `Usuarios.Gestionar`, `Roles.Ver`, `Roles.Gestionar`, y los exclusivos del superadmin: `Sedes.Gestionar`, `Catalogos.GestionarGlobales`, `Administradores.Gestionar`.
+  `Activos.Ver`, `Activos.Crear`, `Activos.Editar`, `Activos.Eliminar`, `Licencias.Ver`, `Licencias.Gestionar`, `Mantenimiento.Ver`, `Mantenimiento.Gestionar`, `Asignaciones.Ver`, `Asignaciones.Gestionar`, `Catalogos.GestionarSede`, `Usuarios.Ver`, `Usuarios.Gestionar`, `Roles.Ver`, `Roles.Gestionar`, y los exclusivos del superadmin: `Sedes.Gestionar`, `Catalogos.GestionarGlobales`, `Establecimientos.Gestionar`, `Administradores.Gestionar`.
 - Un usuario puede tener **varios roles** (D16). Sus permisos efectivos son la **unión** de los permisos de todos sus roles. La pantalla del usuario muestra ese resumen para que se entienda qué puede hacer sin sumar roles a mano.
 - Cada endpoint declara el permiso que exige (`.RequirePermiso(Permisos.Activos.Crear)`).
 - Los permisos del usuario se calculan en el servidor en cada petición (una consulta por petición, D25). Así, quitar un permiso o un rol tiene efecto inmediato. Un usuario desactivado no tiene ningún permiso.

@@ -8,7 +8,7 @@ namespace Inventario.Application.Catalogos;
 /// <param name="Codigo">Código en la URL, por ejemplo <c>tipos-activo</c>.</param>
 /// <param name="Nombre">Nombre en plural para la interfaz.</param>
 /// <param name="NombreSingular">Nombre de un elemento (para "Nueva marca", etc.).</param>
-/// <param name="EsDeSede">Verdadero si cada sede tiene el suyo (áreas, ubicaciones).</param>
+/// <param name="EsDeSede">Verdadero si cada sede tiene el suyo (áreas).</param>
 /// <param name="PuedeGestionar">Si quien consulta puede crear, renombrar o desactivar elementos.</param>
 public sealed record TipoCatalogoDto(string Codigo, string Nombre, string NombreSingular, bool EsDeSede, bool PuedeGestionar);
 

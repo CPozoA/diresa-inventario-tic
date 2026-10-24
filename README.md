@@ -17,7 +17,7 @@ Sistema web para el registro y control del inventario de Tecnologías de la Info
 
 ## Estado
 
-Paso 6C terminado: catálogos (áreas y ubicaciones por sede, y catálogos generales) con su API y sus pantallas, búsqueda que avisa repetidos y confirmación en todas las acciones. Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
+Paso 6D terminado: establecimientos de salud (registro, importación desde Excel y búsqueda), además de los catálogos (áreas por sede y catálogos generales) con búsqueda que avisa repetidos. Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
 
 ## Control de versiones
 

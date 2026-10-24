@@ -45,11 +45,6 @@ internal sealed class AreaConfiguration : IEntityTypeConfiguration<Area>
     public void Configure(EntityTypeBuilder<Area> builder) => ConfiguracionCatalogo.DeSede(builder, "Areas");
 }
 
-internal sealed class UbicacionConfiguration : IEntityTypeConfiguration<Ubicacion>
-{
-    public void Configure(EntityTypeBuilder<Ubicacion> builder) => ConfiguracionCatalogo.DeSede(builder, "Ubicaciones");
-}
-
 internal sealed class TipoActivoConfiguration : IEntityTypeConfiguration<TipoActivo>
 {
     public void Configure(EntityTypeBuilder<TipoActivo> builder) => ConfiguracionCatalogo.General(builder, "TiposActivo");

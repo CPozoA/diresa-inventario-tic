@@ -11,6 +11,7 @@ export const Permisos = {
   Usuarios: { Ver: 'Usuarios.Ver', Gestionar: 'Usuarios.Gestionar' },
   Roles: { Ver: 'Roles.Ver', Gestionar: 'Roles.Gestionar' },
   Sedes: { Gestionar: 'Sedes.Gestionar' },
+  Establecimientos: { Gestionar: 'Establecimientos.Gestionar' },
   Administradores: { Gestionar: 'Administradores.Gestionar' },
 } as const;
 

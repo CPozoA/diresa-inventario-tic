@@ -17,21 +17,6 @@ public sealed class Area : ElementoCatalogoDeSede
     public static Area Crear(Guid sedeId, string nombre) => new(sedeId, nombre);
 }
 
-/// <summary>Lugar físico de la sede (Piso 2 – Oficina 204, Almacén central…).</summary>
-public sealed class Ubicacion : ElementoCatalogoDeSede
-{
-    private Ubicacion()
-    {
-    }
-
-    private Ubicacion(Guid sedeId, string nombre)
-        : base(sedeId, nombre)
-    {
-    }
-
-    public static Ubicacion Crear(Guid sedeId, string nombre) => new(sedeId, nombre);
-}
-
 // ---------- Catálogos generales: iguales para todas las sedes; solo los administra el superadministrador ----------
 
 /// <summary>Tipo de activo (Laptop, Monitor, Switch…).</summary>

@@ -3,6 +3,7 @@ using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Seguridad;
 using Inventario.Domain.Catalogos;
 using Inventario.Domain.Common;
+using Inventario.Domain.Establecimientos;
 using Inventario.Domain.Sedes;
 using Inventario.Domain.Seguridad;
 using Inventario.Domain.Usuarios;
@@ -32,9 +33,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IUsuari
 
     public DbSet<Rol> Roles => Set<Rol>();
 
-    public DbSet<Area> Areas => Set<Area>();
+    public DbSet<Establecimiento> Establecimientos => Set<Establecimiento>();
 
-    public DbSet<Ubicacion> Ubicaciones => Set<Ubicacion>();
+    public DbSet<Area> Areas => Set<Area>();
 
     public DbSet<TipoActivo> TiposActivo => Set<TipoActivo>();
 

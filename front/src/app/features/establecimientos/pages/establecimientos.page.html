@@ -1,0 +1,119 @@
+<div class="pagina">
+  <header class="pagina-encabezado">
+    <div class="pagina-titulo">
+      <h1>Establecimientos</h1>
+      <span class="atenuado">{{ ambito() }}</span>
+    </div>
+    <div class="acciones-encabezado">
+      <button mat-stroked-button type="button" (click)="importar()"><mat-icon>upload_file</mat-icon> Importar desde Excel</button>
+      <button mat-flat-button type="button" (click)="nuevo()"><mat-icon>add</mat-icon> Nuevo establecimiento</button>
+    </div>
+  </header>
+
+  <div class="filtros">
+    <mat-form-field subscriptSizing="dynamic" class="buscador">
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <mat-label>Buscar por código único, nombre, microred o distrito</mat-label>
+      <input matInput autocomplete="off" [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" />
+    </mat-form-field>
+    <mat-button-toggle-group
+      [value]="filtroEstado()"
+      (change)="filtroEstado.set($event.value)"
+      aria-label="Filtrar por estado"
+      hideSingleSelectionIndicator
+    >
+      <mat-button-toggle value="activos">Activos</mat-button-toggle>
+      <mat-button-toggle value="inactivos">Desactivados</mat-button-toggle>
+      <mat-button-toggle value="todos">Todos</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  @if (store.error(); as e) {
+    <app-aviso>{{ e.mensaje }}</app-aviso>
+  }
+
+  <section class="tarjeta-tabla">
+    @if (store.cargando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <div class="tabla-contenedor">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th scope="col">Código único</th>
+            <th scope="col">Establecimiento</th>
+            <th scope="col">Microred</th>
+            <th scope="col">Distrito y provincia</th>
+            @if (muestraRed()) {
+              <th scope="col">Red</th>
+            }
+            <th scope="col">Estado</th>
+            <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of visibles(); track e.id) {
+            <tr [class.inactivo]="!e.activo">
+              <td class="mono">{{ e.codigoUnico }}</td>
+              <td>
+                <div class="dos-lineas">
+                  <span class="principal">{{ e.nombre }}</span>
+                  <span class="atenuado">
+                    @if (e.categoria) {
+                      Categoría {{ e.categoria }} ·
+                    }
+                    Id {{ e.idEstablecimiento }}
+                  </span>
+                </div>
+              </td>
+              <td>{{ e.microred }}</td>
+              <td>{{ ubicacion(e) }}</td>
+              @if (muestraRed()) {
+                <td>{{ e.sedeNombre }}</td>
+              }
+              <td>
+                <span class="pastilla" [class.ok]="e.activo" [class.neutra]="!e.activo">
+                  {{ e.activo ? 'Activo' : 'Desactivado' }}
+                </span>
+              </td>
+              <td class="celda-acciones">
+                <button mat-icon-button type="button" [matMenuTriggerFor]="acciones" [attr.aria-label]="'Acciones de ' + e.nombre">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #acciones="matMenu" xPosition="before">
+                  <button mat-menu-item type="button" (click)="editar(e)"><mat-icon>edit</mat-icon>Editar</button>
+                  <button mat-menu-item type="button" (click)="cambiarEstado(e)">
+                    <mat-icon>{{ e.activo ? 'visibility_off' : 'visibility' }}</mat-icon>
+                    {{ e.activo ? 'Desactivar' : 'Activar' }}
+                  </button>
+                </mat-menu>
+              </td>
+            </tr>
+          } @empty {
+            @if (!store.cargando()) {
+              <tr>
+                <td [attr.colspan]="muestraRed() ? 7 : 6" class="vacio">
+                  @if (store.establecimientos().length === 0) {
+                    Todavía no hay establecimientos. Puede importarlos desde Excel o registrarlos uno por uno.
+                  } @else {
+                    No hay establecimientos que coincidan con la búsqueda.
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (filtrados().length > tamanosPagina[0]) {
+      <mat-paginator
+        [length]="filtrados().length"
+        [pageIndex]="pagina()"
+        [pageSize]="tamanoPagina()"
+        [pageSizeOptions]="tamanosPagina"
+        (page)="cambiarPagina($event)"
+        aria-label="Páginas de establecimientos"
+      />
+    }
+  </section>
+</div>

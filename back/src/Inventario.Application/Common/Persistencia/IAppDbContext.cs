@@ -1,4 +1,5 @@
 using Inventario.Domain.Catalogos;
+using Inventario.Domain.Establecimientos;
 using Inventario.Domain.Sedes;
 using Inventario.Domain.Seguridad;
 using Inventario.Domain.Usuarios;
@@ -19,10 +20,10 @@ public interface IAppDbContext
 
     DbSet<Rol> Roles { get; }
 
+    DbSet<Establecimiento> Establecimientos { get; }
+
     // Catálogos de cada sede.
     DbSet<Area> Areas { get; }
-
-    DbSet<Ubicacion> Ubicaciones { get; }
 
     // Catálogos generales.
     DbSet<TipoActivo> TiposActivo { get; }

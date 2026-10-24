@@ -1,0 +1,39 @@
+.acciones-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.buscador {
+  flex: 1 1 320px;
+  max-width: 560px;
+}
+
+.dos-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .principal {
+    font-weight: 500;
+  }
+
+  .atenuado {
+    font-size: 12px;
+  }
+}
+
+tr.inactivo td {
+  color: var(--inv-atenuado);
+}
+
+mat-paginator {
+  border-top: 1px solid var(--inv-borde);
+}

@@ -1,8 +1,10 @@
 using Inventario.Application.Common.Correo;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Application.Establecimientos.Importar;
 using Inventario.Infrastructure.Correo;
 using Inventario.Infrastructure.Enlaces;
+using Inventario.Infrastructure.Excel;
 using Inventario.Infrastructure.Identidad;
 using Inventario.Infrastructure.Persistencia;
 using Inventario.Infrastructure.Persistencia.Inicializacion;
@@ -36,6 +38,9 @@ public static class DependencyInjection
         AgregarPersistencia(services, configuration);
         AgregarIdentidad(services);
         AgregarCorreoYEnlaces(services, configuration);
+
+        // Excel (ClosedXML, D42).
+        services.AddSingleton<IHojaEstablecimientos, HojaEstablecimientosExcel>();
 
         services.Configure<OpcionesInicializacion>(configuration.GetSection(OpcionesInicializacion.Seccion));
         services.AddScoped<InicializadorDatos>();

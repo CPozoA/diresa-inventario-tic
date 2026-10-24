@@ -36,7 +36,7 @@ public abstract class ElementoCatalogo : EntidadAuditable
         Guardas.TextoObligatorio(nombre, "El nombre", LongitudMaximaNombre);
 }
 
-/// <summary>Catálogo propio de cada sede (áreas, ubicaciones). Lo administra la sede.</summary>
+/// <summary>Catálogo propio de cada sede (áreas). Lo administra la sede.</summary>
 public abstract class ElementoCatalogoDeSede : ElementoCatalogo, IPerteneceASede
 {
     // Requerido por EF Core.

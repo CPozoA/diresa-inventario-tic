@@ -199,8 +199,31 @@ operativos y tipos de licencia). Las pruebas automáticas aplican la migración 
 | `POST /api/catalogos/{tipo}`, `PUT /api/catalogos/{tipo}/{id}` | Permiso del catálogo | Agregar y renombrar |
 | `POST /api/catalogos/{tipo}/{id}/activar\|desactivar` | Permiso del catálogo | No se eliminan: se desactivan |
 
-`tipo`: `areas`, `ubicaciones` (por sede, `Catalogos.GestionarSede`) · `tipos-activo`, `marcas`, `estados-activo`,
-`sistemas-operativos`, `tipos-licencia` (generales, `Catalogos.GestionarGlobales`).
+`tipo`: `areas` (por sede, `Catalogos.GestionarSede`) · `tipos-activo`, `marcas`, `estados-activo`,
+`sistemas-operativos`, `tipos-licencia` (generales, `Catalogos.GestionarGlobales`). El catálogo de ubicaciones se retiró
+en el Paso 6D (la ubicación física es texto en cada activo, D40).
+
+## Paso 6D: establecimientos
+
+Este paso **cambia el modelo**: agrega la tabla `organizacion.Establecimientos` y **elimina** `catalogos.Ubicaciones`
+(se pierden las ubicaciones de prueba que hayas creado). También agrega el paquete **ClosedXML** (Excel). Desde `back`,
+con la API detenida:
+
+```powershell
+dotnet restore
+dotnet ef migrations add Establecimientos --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+| Endpoint | Quién | Qué hace |
+|---|---|---|
+| `GET /api/establecimientos?sedeId=&buscar=&incluirInactivos=&maximo=` | Con sesión | Lista (un usuario de sede solo ve los de su red). `buscar`: código único, Id_Establecimiento o parte del nombre |
+| `POST /api/establecimientos`, `PUT /api/establecimientos/{id}` | `Establecimientos.Gestionar` | Registrar y corregir (la red no cambia) |
+| `POST /api/establecimientos/{id}/activar\|desactivar` | `Establecimientos.Gestionar` | No se eliminan: se desactivan |
+| `GET /api/establecimientos/plantilla` | `Establecimientos.Gestionar` | Plantilla de Excel |
+| `POST /api/establecimientos/importar` (archivo `.xlsx`, campo `archivo`) | `Establecimientos.Gestionar` | Importa; si una fila tiene errores no guarda nada y devuelve la lista de filas a corregir |
+
+`Establecimientos.Gestionar` es exclusivo del superadministrador. Detalle de columnas y reglas: `docs/ARQUITECTURA.md` §5.9.
 
 ### Correo en producción
 
@@ -224,7 +247,7 @@ dotnet test
 
 | Proyecto | Qué comprueba |
 |---|---|
-| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles |
+| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles, catálogos, establecimientos (datos válidos, ubigeo, reconocimiento de la red) |
 | `ArchitectureTests` | Que el dominio no dependa de nada, que Application no dependa de Infrastructure ni de la Api, que los handlers sean internos |
 | `Api.IntegrationTests` | Protección CSRF (sin token → 400; el token de antes de iniciar sesión no sirve después). Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan |
 

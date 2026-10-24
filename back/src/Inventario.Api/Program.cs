@@ -68,6 +68,7 @@ api.MapSedesEndpoints();
 api.MapRolesEndpoints();
 api.MapUsuariosEndpoints();
 api.MapCatalogosEndpoints();
+api.MapEstablecimientosEndpoints();
 
 await app.Services.InicializarBaseDatosAsync();
 

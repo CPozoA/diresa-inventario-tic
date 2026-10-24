@@ -8,6 +8,7 @@ describe('menuVisible', () => {
     const opciones = menuVisible(todos).flatMap((g) => g.opciones.map((o) => o.texto));
 
     expect(opciones).toContain('Sedes');
+    expect(opciones).toContain('Establecimientos');
     expect(opciones).toContain('Catálogos generales');
   });
 
@@ -23,5 +24,6 @@ describe('menuVisible', () => {
 
     expect(opciones).toContain('Usuarios');
     expect(opciones).not.toContain('Sedes');
+    expect(opciones).not.toContain('Establecimientos');
   });
 });

@@ -778,7 +778,7 @@
         "tags": [
           "Catalogos"
         ],
-        "summary": "Elementos de un catálogo. En áreas y ubicaciones, el superadministrador indica ?sedeId=.",
+        "summary": "Elementos de un catálogo. En áreas, el superadministrador indica ?sedeId=.",
         "operationId": "ListarElementosCatalogo",
         "parameters": [
           {
@@ -969,6 +969,230 @@
           }
         }
       }
+    },
+    "/api/establecimientos": {
+      "get": {
+        "tags": [
+          "Establecimientos"
+        ],
+        "summary": "Establecimientos ordenados por nombre. ?buscar= código único, Id_Establecimiento o parte del nombre.",
+        "operationId": "ListarEstablecimientos",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "incluirInactivos",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "maximo",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EstablecimientoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Establecimientos"
+        ],
+        "summary": "Registra un establecimiento en una red.",
+        "operationId": "CrearEstablecimiento",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearEstablecimientoCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdCreado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/establecimientos/{id}": {
+      "put": {
+        "tags": [
+          "Establecimientos"
+        ],
+        "summary": "Corrige los datos de un establecimiento. La red no cambia.",
+        "operationId": "EditarEstablecimiento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarEstablecimientoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/establecimientos/{id}/activar": {
+      "post": {
+        "tags": [
+          "Establecimientos"
+        ],
+        "summary": "Vuelve a ofrecer el establecimiento al registrar activos.",
+        "operationId": "ActivarEstablecimiento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/establecimientos/{id}/desactivar": {
+      "post": {
+        "tags": [
+          "Establecimientos"
+        ],
+        "summary": "Deja de ofrecer el establecimiento al registrar activos; se conserva en los que ya lo usan.",
+        "operationId": "DesactivarEstablecimiento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/establecimientos/plantilla": {
+      "get": {
+        "tags": [
+          "Establecimientos"
+        ],
+        "summary": "Plantilla de Excel para importar establecimientos.",
+        "operationId": "DescargarPlantillaEstablecimientos",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/establecimientos/importar": {
+      "post": {
+        "tags": [
+          "Establecimientos"
+        ],
+        "summary": "Importa establecimientos desde Excel. Si alguna fila tiene errores, no se guarda nada.",
+        "operationId": "ImportarEstablecimientos",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "archivo": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoImportacionDto"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1033,6 +1257,75 @@
           },
           "nombre": {
             "type": "string"
+          }
+        }
+      },
+      "CrearEstablecimientoCommand": {
+        "required": [
+          "sedeId",
+          "idEstablecimiento",
+          "codigoUnico",
+          "nombre",
+          "categoria",
+          "microred",
+          "provincia",
+          "distrito",
+          "ubigeo"
+        ],
+        "type": "object",
+        "properties": {
+          "sedeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "idEstablecimiento": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "codigoUnico": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "microred": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "provincia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "distrito": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ubigeo": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -1136,6 +1429,70 @@
           }
         }
       },
+      "EditarEstablecimientoRequest": {
+        "required": [
+          "idEstablecimiento",
+          "codigoUnico",
+          "nombre",
+          "categoria",
+          "microred",
+          "provincia",
+          "distrito",
+          "ubigeo"
+        ],
+        "type": "object",
+        "properties": {
+          "idEstablecimiento": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "codigoUnico": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "microred": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "provincia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "distrito": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ubigeo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "EditarRolRequest": {
         "required": [
           "nombre",
@@ -1221,6 +1578,108 @@
           }
         }
       },
+      "ErrorFilaDto": {
+        "required": [
+          "fila",
+          "mensaje"
+        ],
+        "type": "object",
+        "properties": {
+          "fila": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "mensaje": {
+            "type": "string"
+          }
+        }
+      },
+      "EstablecimientoDto": {
+        "required": [
+          "id",
+          "sedeId",
+          "sedeNombre",
+          "idEstablecimiento",
+          "codigoUnico",
+          "nombre",
+          "categoria",
+          "microred",
+          "provincia",
+          "distrito",
+          "ubigeo",
+          "activo"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sedeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sedeNombre": {
+            "type": "string"
+          },
+          "idEstablecimiento": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "codigoUnico": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "microred": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "provincia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "distrito": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ubigeo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "activo": {
+            "type": "boolean"
+          }
+        }
+      },
       "IdCreado": {
         "required": [
           "id"
@@ -1232,6 +1691,10 @@
             "format": "uuid"
           }
         }
+      },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
       },
       "IniciarSesionCommand": {
         "required": [
@@ -1323,6 +1786,60 @@
           },
           "contrasenaNueva": {
             "type": "string"
+          }
+        }
+      },
+      "ResultadoImportacionDto": {
+        "required": [
+          "guardado",
+          "filas",
+          "creados",
+          "actualizados",
+          "sinCambios",
+          "errores"
+        ],
+        "type": "object",
+        "properties": {
+          "guardado": {
+            "type": "boolean"
+          },
+          "filas": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "creados": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "actualizados": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "sinCambios": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "errores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorFilaDto"
+            }
           }
         }
       },
@@ -1629,6 +2146,9 @@
     },
     {
       "name": "Catalogos"
+    },
+    {
+      "name": "Establecimientos"
     }
   ]
 }
