@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.12 · 24/10/2026 · Cambios: §11 (Paso 6C: búsqueda en catálogos, confirmaciones y menú fijo).
+> Versión 0.13 · 24/10/2026 · Cambios: D38 y §5.8 (fotos de los activos); §11 divide el Paso 7 en 7A–7D.
 
 ---
 
@@ -75,6 +75,7 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D35 | Menú y rutas | El menú se define en un solo lugar (`front/src/app/core/layout/menu.ts`): de ahí salen las opciones visibles (según los permisos de la sesión) y las rutas con su guard de permiso. Las secciones aún no construidas muestran "disponible en una próxima versión" | Un permiso nuevo o una pantalla nueva se agregan en un solo sitio; el menú y la protección de rutas no se desalinean. |
 | D36 | Sede del superadministrador | Selector en el encabezado: "Todas las sedes" (datos consolidados) o una sede (las pantallas se filtran a ella). Se recuerda en la pestaña del navegador. Los usuarios de sede no lo ven: siempre trabajan en la suya | Revisar una sede concreta sin perder la vista consolidada. |
 | D37 | API de catálogos | Una sola API y un solo conjunto de casos de uso para todos los catálogos (`/api/catalogos/{tipo}`), con una tabla y una entidad por catálogo. Cada catálogo se describe en `Application/Catalogos/DefinicionesCatalogo.cs` | Agregar un catálogo nuevo es una entidad, su configuración y una línea en las definiciones; el frontend reutiliza una sola pantalla. |
+| D38 | Fotos de los activos | Hasta **6 fotos por activo**, una marcada como principal. Los archivos se guardan en una **carpeta del servidor fuera de la web pública** (detrás de la interfaz `IAlmacenArchivos`), y en la base solo sus datos. Se suben y se entregan por endpoints de la misma API, separados de la ficha (§5.8) | SQL Server Express limita cada base a 10 GB; separar las fotos de la ficha evita perder datos si una subida falla y mantiene ligeras las listas. La interfaz permite cambiar de almacenamiento (Proxmox) sin tocar el resto. |
 
 ### Decisiones pendientes de confirmar
 
@@ -235,6 +236,25 @@ Es la pieza de seguridad más importante del sistema.
 - Una sola API para todos: `/api/catalogos/{tipo}` (D37). Consultarlos solo exige sesión (se necesitan al registrar activos); modificarlos, el permiso del catálogo.
 - Los catálogos generales arrancan con valores iniciales (`Domain/Catalogos/CatalogosIniciales.cs`), que se cargan una sola vez, cuando el catálogo está vacío.
 
+### 5.8 Fotos de los activos (D38)
+
+- **Cuántas:** hasta 6 por activo; una es la **principal** (se muestra en la lista). Al quitar la principal, pasa a serlo la siguiente.
+- **Cómo se obtienen:** con el selector de archivos del navegador (`accept="image/*"`). En el celular ofrece **tomar foto** con la cámara (el permiso lo pide el propio navegador; exige HTTPS) o elegir de la galería; en la computadora, cargar archivos.
+- **Antes de subir**, el navegador reduce la foto (lado mayor de 1600 px, JPEG o WebP). Así pesa unos cientos de KB y se descarta la información interna de la foto, incluida la **ubicación GPS**.
+- **Endpoints** (misma API, dentro de activos):
+
+  | Acción | Endpoint | Permiso |
+  |---|---|---|
+  | Subir | `POST /api/activos/{id}/imagenes` (multipart) | `Activos.Crear` o `Activos.Editar` |
+  | Ver | `GET /api/activos/{id}/imagenes/{imagenId}` | `Activos.Ver` |
+  | Marcar como principal | `PUT /api/activos/{id}/imagenes/{imagenId}/principal` | `Activos.Editar` |
+  | Quitar | `DELETE /api/activos/{id}/imagenes/{imagenId}` | `Activos.Editar` |
+
+- **Validación en el servidor:** solo JPG, PNG o WebP, comprobados por el **contenido** del archivo (no por la extensión ni por el tipo que declara el navegador); tope de tamaño; el nombre en disco lo genera el sistema (nunca el que envía el usuario).
+- **Aislamiento:** la tabla de fotos pertenece a la sede (`IPerteneceASede`) y las fotos solo se entregan por la API, con sesión y el filtro de §5.6. Nunca hay enlaces públicos. Se responden con `X-Content-Type-Options: nosniff`.
+- **Almacenamiento:** carpeta configurable fuera de `wwwroot` (`Almacenamiento:Ruta`), organizada por sede. Al eliminar un activo se eliminan sus fotos. El almacenamiento es reutilizable para otros módulos (por ejemplo, evidencias de mantenimiento).
+- **En la pantalla es un solo paso:** al pulsar *Guardar*, se guarda la ficha y luego se suben las fotos una por una, con su avance. Si una falla, la ficha ya quedó guardada y solo se reintenta esa foto.
+
 ---
 
 ## 6. Seguridad
@@ -390,6 +410,7 @@ Consideraciones del hosting compartido:
 - IIS recicla la aplicación: **no** se usan tareas en segundo plano permanentes.
 - Las claves de protección de datos se guardan en la base de datos (§6.1).
 - Las migraciones se aplican con un script SQL generado (`dotnet ef migrations script --idempotent`), no automáticamente al arrancar.
+- La carpeta de fotos (§5.8) va **fuera de `wwwroot`** y debe incluirse en las copias de seguridad junto con la base de datos. Vigilar la cuota de disco del plan.
 
 ### 10.1 Pendientes antes de publicar (endurecimiento)
 
@@ -417,6 +438,9 @@ Consideraciones del hosting compartido:
 | **6A** | Pantallas de sedes, usuarios y roles (sobre la API del 4B) | Prueba manual en el navegador |
 | **6B** | Áreas y ubicaciones (por sede) y catálogos generales: API, migración y pantallas | `dotnet test` y prueba manual |
 | **6C** | Catálogos: un solo campo para buscar y agregar (avisa repetidos sin distinguir mayúsculas ni tildes); confirmación en todas las acciones; menú lateral y encabezado fijos al desplazarse; en celular, menú como panel con el botón ☰ | `npm test` y prueba manual |
-| **7** | Módulo de activos básico (con discos y RAM) | Prueba de punta a punta |
+| **7A** | Activos en el backend: ficha técnica con discos y módulos de RAM, migración, API con permisos y aislamiento por sede | `dotnet test` |
+| **7B** | Bosquejos de la lista de activos y de la ficha técnica | Revisión en el lienzo de diseño |
+| **7C** | Pantallas de activos en Angular (lista con búsqueda y filtros, ficha para crear y editar) | `npm test` y prueba de punta a punta |
+| **7D** | Fotos de los activos (D38, §5.8): almacenamiento, API, cámara o carga de archivos y reducción en el navegador | `dotnet test`, `npm test` y prueba en celular |
 
 Fases posteriores: licencias, mantenimiento, asignaciones, resumen, exportación a Excel, registro de auditoría y endurecimiento.
