@@ -1,22 +1,54 @@
 <div class="editor">
+  <form class="alta" [formGroup]="alta" (ngSubmit)="agregar()" novalidate>
+    <mat-form-field subscriptSizing="dynamic" class="campo">
+      <mat-label>{{ etiqueta() }}</mat-label>
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <input
+        matInput
+        formControlName="nombre"
+        maxlength="100"
+        autocomplete="off"
+        (input)="errorAlta.set(null)"
+        (keydown.escape)="limpiar()"
+      />
+      @if (buscando()) {
+        <button matSuffix mat-icon-button type="button" aria-label="Limpiar la búsqueda" (click)="limpiar()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+    @if (tipo().puedeGestionar) {
+      <button mat-flat-button type="submit" [disabled]="!puedeAgregar()">
+        <mat-icon>add</mat-icon> {{ agregando() ? 'Agregando…' : 'Agregar' }}
+      </button>
+    }
+  </form>
+
   @if (tipo().puedeGestionar) {
-      <form class="alta" [formGroup]="alta" (ngSubmit)="agregar()" novalidate>
-      <mat-form-field subscriptSizing="dynamic" class="campo">
-        <mat-label>Nuevo: {{ tipo().nombreSingular.toLowerCase() }}</mat-label>
-        <input matInput [formControl]="nuevo" maxlength="100" />
-      </mat-form-field>
-      <button mat-flat-button type="submit" [disabled]="agregando()"><mat-icon>add</mat-icon> Agregar</button>
-    </form>
+    @if (repetido(); as r) {
+      @if (r.activo) {
+        <app-aviso tono="info">Ya existe «{{ r.nombre }}» en este catálogo.</app-aviso>
+      } @else {
+        <div class="repetido-inactivo">
+          <app-aviso tono="alerta">«{{ r.nombre }}» ya existe, pero está en la lista de desactivados.</app-aviso>
+          <button mat-stroked-button type="button" (click)="cambiarEstado(r)"><mat-icon>visibility</mat-icon> Activar</button>
+        </div>
+      }
+    }
     @if (errorAlta(); as e) {
       <app-aviso>{{ e.mensaje }}</app-aviso>
     }
   }
 
   <div class="barra">
-    <span class="atenuado">
-      {{ visibles().length }} {{ visibles().length === 1 ? 'elemento' : 'elementos' }}
+    <span class="atenuado" aria-live="polite">
+      @if (buscando()) {
+        {{ visibles().length }} de {{ cantidadTotal() }} {{ cantidadTotal() === 1 ? 'elemento' : 'elementos' }}
+      } @else {
+        {{ visibles().length }} {{ visibles().length === 1 ? 'elemento' : 'elementos' }}
+      }
     </span>
-    @if (cantidadInactivos() > 0) {
+    @if (!buscando() && cantidadInactivos() > 0) {
       <mat-checkbox [checked]="mostrarInactivos()" (change)="mostrarInactivos.set($event.checked)">
         Mostrar desactivados ({{ cantidadInactivos() }})
       </mat-checkbox>
@@ -69,7 +101,16 @@
           } @empty {
             @if (!elementos.isLoading()) {
               <tr>
-                <td colspan="3" class="vacio">Todavía no hay elementos en este catálogo.</td>
+                <td colspan="3" class="vacio">
+                  @if (buscando()) {
+                    No hay coincidencias.
+                    @if (tipo().puedeGestionar) {
+                      Puede agregarlo con el botón <strong>Agregar</strong>.
+                    }
+                  } @else {
+                    Todavía no hay elementos en este catálogo.
+                  }
+                </td>
               </tr>
             }
           }

@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.11 · 23/10/2026 · Cambios: §5.7 y D37 (Paso 6B: catálogos).
+> Versión 0.12 · 24/10/2026 · Cambios: §11 (Paso 6C: búsqueda en catálogos, confirmaciones y menú fijo).
 
 ---
 
@@ -416,6 +416,7 @@ Consideraciones del hosting compartido:
 | **5B** | Pantallas de inicio de sesión, cambio y recuperación de contraseña; estructura con menú según permisos | Prueba manual en el navegador |
 | **6A** | Pantallas de sedes, usuarios y roles (sobre la API del 4B) | Prueba manual en el navegador |
 | **6B** | Áreas y ubicaciones (por sede) y catálogos generales: API, migración y pantallas | `dotnet test` y prueba manual |
+| **6C** | Catálogos: un solo campo para buscar y agregar (avisa repetidos sin distinguir mayúsculas ni tildes); confirmación en todas las acciones; menú lateral y encabezado fijos al desplazarse; en celular, menú como panel con el botón ☰ | `npm test` y prueba manual |
 | **7** | Módulo de activos básico (con discos y RAM) | Prueba de punta a punta |
 
 Fases posteriores: licencias, mantenimiento, asignaciones, resumen, exportación a Excel, registro de auditoría y endurecimiento.

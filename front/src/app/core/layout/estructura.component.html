@@ -1,7 +1,17 @@
 <a class="saltar" href="#contenido">Ir al contenido</a>
 
-<aside class="lateral">
-  <app-logo [subtitulo]="nombreSede()" />
+<!-- En pantallas angostas el menú es un panel que se abre con el botón ☰; en anchas está siempre a la izquierda. -->
+@if (menuAbierto()) {
+  <div class="fondo-menu" aria-hidden="true" (click)="cerrarMenu()"></div>
+}
+
+<aside id="menu-lateral" class="lateral" [class.abierta]="menuAbierto()" tabindex="-1" #lateral>
+  <div class="lateral-cabecera">
+    <app-logo [subtitulo]="nombreSede()" />
+    <button mat-icon-button type="button" class="cerrar-menu" aria-label="Cerrar el menú" (click)="cerrarMenu(true)">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
   <nav aria-label="Menú principal" class="menu">
     @for (grupo of grupos(); track grupo.titulo) {
       <div class="grupo">
@@ -13,6 +23,7 @@
             routerLinkActive="activa"
             [routerLinkActiveOptions]="{ exact: opcion.ruta === '' }"
             ariaCurrentWhenActive="page"
+            (click)="cerrarMenu()"
             >{{ opcion.texto }}</a
           >
         }
@@ -24,6 +35,18 @@
 <div class="principal">
   <header class="encabezado">
     <div class="ambito">
+      <button
+        mat-icon-button
+        type="button"
+        class="abrir-menu"
+        aria-label="Abrir el menú"
+        aria-controls="menu-lateral"
+        [attr.aria-expanded]="menuAbierto()"
+        (click)="abrirMenu()"
+        #botonMenu
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
       @if (sesion.esSuperAdmin()) {
         <mat-select
           class="selector-sede"
@@ -42,8 +65,8 @@
     </div>
 
     <div class="acciones">
-      <a *siTienePermiso="permisos.Activos.Crear" mat-flat-button routerLink="/inventario/nuevo">
-        <mat-icon>add</mat-icon> Nuevo activo
+      <a *siTienePermiso="permisos.Activos.Crear" mat-flat-button routerLink="/inventario/nuevo" class="nuevo-activo" aria-label="Nuevo activo">
+        <mat-icon>add</mat-icon> <span class="texto-nuevo">Nuevo activo</span>
       </a>
 
       <button type="button" class="usuario" [matMenuTriggerFor]="menuUsuario" aria-label="Menú de la cuenta">

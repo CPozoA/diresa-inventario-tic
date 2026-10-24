@@ -1,7 +1,6 @@
 :host {
   min-height: 100vh;
   display: flex;
-  flex-wrap: wrap;
 }
 
 .saltar {
@@ -19,8 +18,7 @@
 }
 
 .lateral {
-  flex: 1 1 224px;
-  max-width: 100%;
+  flex: 0 0 224px;
   background: var(--inv-lateral);
   padding: 24px 16px;
   display: flex;
@@ -31,6 +29,34 @@
   app-logo {
     padding: 0 4px;
   }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.lateral-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Botones del panel de menú: solo existen en pantallas angostas. */
+.abrir-menu,
+.cerrar-menu {
+  display: none;
+}
+
+.cerrar-menu {
+  color: var(--inv-lateral-texto);
+}
+
+.ambito {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
 }
 
 .menu {
@@ -73,7 +99,7 @@
 }
 
 .principal {
-  flex: 999 1 560px;
+  flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -181,6 +207,112 @@
 .contenido {
   padding: 32px;
   outline: none;
+}
+
+/* El encabezado queda fijo arriba al desplazarse, en cualquier pantalla. */
+.encabezado {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/*
+ * Pantalla ancha: el menú queda fijo a la izquierda al desplazarse, así se cambia de opción sin volver arriba.
+ * Si el menú no entra en la altura, se desplaza solo él.
+ */
+@media (min-width: 784px) {
+  .lateral {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    overflow-y: auto;
+  }
+}
+
+/* Pantalla angosta: el menú es un panel que se abre con ☰ sobre el contenido, con un fondo que lo cierra. */
+@media (max-width: 783.98px) {
+  .lateral {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    width: min(288px, 85vw);
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+      transform 200ms ease,
+      visibility 0s linear 200ms;
+
+    &.abierta {
+      transform: none;
+      visibility: visible;
+      transition: transform 200ms ease;
+    }
+  }
+
+  .fondo-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 19;
+    background: rgba(23, 32, 38, 0.5);
+  }
+
+  .abrir-menu,
+  .cerrar-menu {
+    display: inline-flex;
+  }
+
+  .encabezado {
+    flex-wrap: nowrap;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .ambito {
+    flex: 1 1 auto;
+  }
+
+  .selector-sede {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  .chip-sede {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .acciones {
+    gap: 4px;
+  }
+
+  /* "Nuevo activo" queda solo con el ícono (su nombre sigue en aria-label). */
+  .texto-nuevo {
+    display: none;
+  }
+
+  .nuevo-activo {
+    min-width: 44px;
+    padding: 0 10px;
+
+    mat-icon {
+      margin: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lateral,
+  .lateral.abierta {
+    transition: none;
+  }
 }
 
 @media (max-width: 720px) {

@@ -21,6 +21,17 @@
   }
 }
 
+.repetido-inactivo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+
+  app-aviso {
+    flex: 1 1 280px;
+  }
+}
+
 .barra {
   display: flex;
   align-items: center;
