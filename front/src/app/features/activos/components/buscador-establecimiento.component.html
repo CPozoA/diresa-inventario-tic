@@ -1,0 +1,44 @@
+@if (elegido(); as e) {
+  <div class="elegido">
+    <span class="pastilla neutra mono">Cód. único {{ e.codigoUnico }}</span>
+    <div class="dos-lineas">
+      <span class="principal">{{ e.nombre }}</span>
+      @if (e.detalle) {
+        <span class="atenuado">{{ e.detalle }}</span>
+      }
+    </div>
+    <button mat-stroked-button type="button" (click)="cambiar()"><mat-icon>swap_horiz</mat-icon> Cambiar</button>
+  </div>
+} @else {
+  <mat-form-field class="campo" subscriptSizing="dynamic" floatLabel="always">
+    <mat-label>Código único o nombre</mat-label>
+    <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+    <input
+      #campo
+      matInput
+      autocomplete="off"
+      placeholder="Por ejemplo 2345 o Luricocha"
+      [formControl]="busqueda"
+      [matAutocomplete]="lista"
+    />
+    <mat-autocomplete #lista="matAutocomplete" [displayWith]="mostrar" (optionSelected)="elegir($event)">
+      @for (e of resultados(); track e.id) {
+        <mat-option [value]="e" class="opcion-establecimiento">
+          <span class="opcion">
+            <span class="mono codigo">{{ e.codigoUnico }}</span>
+            <span class="dos-lineas">
+              <span class="principal">{{ e.nombre }}</span>
+              <span class="atenuado">{{ detalle(e) }}</span>
+            </span>
+          </span>
+        </mat-option>
+      }
+    </mat-autocomplete>
+    @if (marcarError() && !sinCoincidencias()) {
+      <mat-hint class="error">Elija el establecimiento del activo.</mat-hint>
+    }
+  </mat-form-field>
+  @if (sinCoincidencias()) {
+    <p class="sin-coincidencias" role="status">Ningún establecimiento activo coincide con «{{ busqueda.value }}».</p>
+  }
+}

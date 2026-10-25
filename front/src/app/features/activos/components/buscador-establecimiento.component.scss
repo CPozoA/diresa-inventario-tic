@@ -1,0 +1,60 @@
+:host {
+  display: block;
+}
+
+.campo {
+  width: 100%;
+  max-width: 560px;
+}
+
+.elegido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  .dos-lineas {
+    flex: 1 1 240px;
+  }
+}
+
+.dos-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .principal {
+    font-weight: 500;
+  }
+
+  .atenuado {
+    font-size: 12px;
+  }
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.codigo {
+  min-width: 48px;
+  color: var(--inv-primario);
+  font-weight: 500;
+}
+
+.opcion-establecimiento {
+  height: auto;
+  min-height: 56px;
+}
+
+.error {
+  color: var(--inv-mal);
+}
+
+.sin-coincidencias {
+  margin: 8px 0 0;
+  color: var(--inv-atenuado);
+}

@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.17 · 24/10/2026 · Cambios: D43 (ficha técnica por tipo de activo); Paso 7C-1 implementado (lista y ficha de activos en Angular).
+> Versión 0.18 · 25/10/2026 · Cambios: Paso 7C-2 implementado (formulario para registrar y editar activos).
 
 ---
 
@@ -313,7 +313,16 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 - **Lista** en `/inventario`: búsqueda (espera a que se deje de escribir) y filtros por establecimiento, tipo, estado, garantía y renovación. Los filtros y la página viven en la dirección (`?buscar=dell&garantia=Vencida&pagina=2`), así que se pueden recargar, compartir y recuperar al volver de una ficha. Con "Todas las sedes" se muestra la red de cada activo y no se ofrece el filtro de establecimiento. En pantallas angostas las filas pasan a tarjetas y los filtros se abren con un botón.
 - **Ficha** en `/inventario/{id}`, solo lectura: secciones según la ficha del tipo, ciclo de vida (antigüedad frente a vida útil, garantía y renovación prevista) y adquisición. Editar y Eliminar según permiso; eliminar pide confirmación.
 - **Catálogos generales:** en Tipos de activo, una columna para elegir la ficha de cada tipo (con confirmación).
-- **Pendiente para el 7C-2:** formulario de registro y edición (`/inventario/nuevo` y `/inventario/{id}/editar` muestran por ahora "próxima versión").
+
+**Implementado en el Paso 7C-2** (formulario en `/inventario/nuevo` y `/inventario/{id}/editar`):
+
+- **Establecimiento** por búsqueda (código único o parte del nombre), solo los activos de la red; el superadministrador con "Todas las sedes" busca en todas. Al editar solo se ofrece la red del activo. Las áreas son las de la red del establecimiento elegido.
+- **Secciones según la ficha del tipo (D43):** al elegir el tipo se muestran las características que lleva. Lo escrito en secciones que el tipo no lleva no se valida ni se envía, y la pantalla avisa si se descartará algo.
+- **Discos y RAM:** filas que se agregan y quitan, con totales; capacidades de la lista (en discos, "Otra…" para escribir los GB); la velocidad de la RAM se elige entre las de su tipo y se borra si deja de corresponder.
+- **Validaciones junto al campo** que adelantan las de la API (obligatorios, largos, IP, MAC, fechas, rangos); la API vuelve a validar todo. Un código patrimonial repetido se marca en su campo.
+- **Avisos:** número de serie ya registrado en la red (no impide guardar), renovación prevista según la fecha de adquisición y la vida útil.
+- **Cambios sin guardar:** pregunta antes de salir por un enlace o con Cancelar; al recargar o cerrar la pestaña, el navegador muestra su propia pregunta.
+- Un elemento de catálogo desactivado se sigue mostrando (marcado) si el activo ya lo tenía.
 
 ---
 
@@ -502,7 +511,7 @@ Consideraciones del hosting compartido:
 | **7A** | Activos en el backend (§5.10): ficha técnica con discos y módulos de RAM, migración, API con permisos y aislamiento por sede | `dotnet test` |
 | **7B** | Bosquejos de la lista de activos y de la ficha técnica | Revisión en el lienzo de diseño |
 | **7C-1** | Ficha técnica por tipo (D43) en la API; lista de activos con búsqueda y filtros, y ficha de solo lectura en Angular | `dotnet test`, `npm test` y prueba manual |
-| **7C-2** | Formulario para registrar y editar activos (establecimiento por búsqueda, secciones según la ficha, discos y RAM, aviso de serie repetida) | `npm test` y prueba de punta a punta |
+| **7C-2** | Formulario para registrar y editar activos (establecimiento por búsqueda, secciones según la ficha, discos y RAM, aviso de serie repetida, aviso de cambios sin guardar) | `npm test` y prueba de punta a punta |
 | **7D** | Fotos de los activos (D38, §5.8): almacenamiento, API, cámara o carga de archivos y reducción en el navegador | `dotnet test`, `npm test` y prueba en celular |
 
 Fases posteriores: licencias, mantenimiento, asignaciones, resumen, exportación a Excel, registro de auditoría y endurecimiento.

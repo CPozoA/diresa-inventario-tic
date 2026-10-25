@@ -1,7 +1,6 @@
 import { LoadChildren, Route, Routes } from '@angular/router';
 
 import { autenticadoGuard, invitadoGuard, permisoGuard } from './core/auth/guards';
-import { Permisos } from './core/auth/permisos';
 import { MENU } from './core/layout/menu';
 import { RUTAS } from './core/rutas';
 
@@ -78,13 +77,6 @@ export const routes: Routes = [
         pathMatch: 'full',
         title: titulo('Resumen'),
         loadComponent: () => import('./features/inicio/resumen.page').then((m) => m.ResumenPage),
-      },
-      {
-        path: 'inventario/nuevo',
-        title: titulo('Nuevo activo'),
-        canActivate: [permisoGuard(Permisos.Activos.Crear)],
-        data: { titulo: 'Nuevo activo' },
-        loadComponent: cargarPendiente,
       },
       ...rutasDelMenu,
     ],

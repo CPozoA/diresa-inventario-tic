@@ -1,0 +1,467 @@
+<div class="pagina">
+  <a class="volver" [routerLink]="rutaCancelar()">
+    <mat-icon aria-hidden="true">arrow_back</mat-icon> {{ esEdicion() ? 'Volver a la ficha' : 'Volver al inventario' }}
+  </a>
+
+  <header class="pagina-titulo">
+    <h1>{{ esEdicion() ? 'Editar activo' : 'Nuevo activo' }}</h1>
+    <span class="atenuado">Los campos con * son obligatorios. Las características técnicas cambian según el tipo de activo.</span>
+  </header>
+
+  @if (cargando() && !errorCarga()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando el formulario" />
+  }
+
+  @if (errorCarga(); as e) {
+    <app-aviso>{{ e }}</app-aviso>
+  } @else if (!cargando()) {
+    @if (errorGuardar(); as e) {
+      <app-aviso>{{ e.mensaje }}</app-aviso>
+    }
+
+    <form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
+      <!-- Establecimiento -->
+      <section class="tarjeta" [class.con-error]="intentoGuardar() && !establecimiento()">
+        <h2>Establecimiento *</h2>
+        <app-buscador-establecimiento
+          [sedeId]="sedeDeBusqueda()"
+          [marcarError]="intentoGuardar()"
+          [elegido]="establecimiento()"
+          (elegidoChange)="alElegirEstablecimiento($event)"
+        />
+        @if (esEdicion()) {
+          <p class="nota">Puede cambiarlo por otro de la misma red. Un activo no pasa a otra red.</p>
+        }
+      </section>
+
+      <!-- Identificación -->
+      <section class="tarjeta" formGroupName="generales">
+        <h2>Identificación</h2>
+        <div class="campos">
+          <mat-form-field>
+            <mat-label>Código patrimonial</mat-label>
+            <input matInput formControlName="codigoPatrimonial" maxlength="30" autocomplete="off" class="mono mayusculas" required />
+            @if (generales.codigoPatrimonial.hasError('duplicado')) {
+              <mat-error>Ya existe ese código en la red.</mat-error>
+            } @else {
+              <mat-error>Escriba el código patrimonial.</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Tipo de activo</mat-label>
+            <mat-select formControlName="tipoActivoId" required>
+              @for (t of opcionesTipo(); track t.id) {
+                <mat-option [value]="t.id">{{ t.nombre }}{{ t.activo ? '' : ' (desactivado)' }}</mat-option>
+              }
+            </mat-select>
+            @if (ficha(); as f) {
+              <mat-hint>Ficha técnica: {{ textoFicha(f) }}</mat-hint>
+            }
+            <mat-error>Elija el tipo de activo.</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Marca</mat-label>
+            <mat-select formControlName="marcaId" required>
+              @for (m of opcionesMarca(); track m.id) {
+                <mat-option [value]="m.id">{{ m.nombre }}{{ m.activo ? '' : ' (desactivada)' }}</mat-option>
+              }
+            </mat-select>
+            <mat-error>Elija la marca.</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Modelo</mat-label>
+            <input matInput formControlName="modelo" maxlength="100" required />
+            <mat-error>Escriba el modelo.</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>N° de serie</mat-label>
+            <input matInput formControlName="numeroSerie" maxlength="60" autocomplete="off" class="mono" />
+          </mat-form-field>
+          <mat-form-field class="ancho">
+            <mat-label>Descripción</mat-label>
+            <input matInput formControlName="descripcion" maxlength="250" placeholder="Por ejemplo: laptop de oficina de 14 pulgadas" />
+          </mat-form-field>
+        </div>
+        @if (serieRepetida().length > 0) {
+          <app-aviso tono="alerta">
+            Este número de serie ya está registrado en
+            @for (a of serieRepetida(); track a.id; let ultimo = $last) {
+              <a [routerLink]="['/inventario', a.id]" target="_blank">{{ a.codigoPatrimonial }}</a> ({{ a.modelo }}){{ ultimo ? '.' : ', ' }}
+            }
+            Revise que no sea el mismo equipo; si no lo es, puede guardar igual.
+          </app-aviso>
+        }
+      </section>
+
+      <!-- Ubicación y estado -->
+      <section class="tarjeta" formGroupName="generales">
+        <h2>Ubicación y estado</h2>
+        <div class="campos">
+          <mat-form-field>
+            <mat-label>Área</mat-label>
+            <mat-select formControlName="areaId" required>
+              @for (a of opcionesArea(); track a.id) {
+                <mat-option [value]="a.id">{{ a.nombre }}{{ a.activo ? '' : ' (desactivada)' }}</mat-option>
+              }
+            </mat-select>
+            @if (!establecimiento()) {
+              <mat-hint>Elija primero el establecimiento.</mat-hint>
+            }
+            <mat-error>Elija el área.</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Ubicación física</mat-label>
+            <input matInput formControlName="ubicacionFisica" maxlength="150" placeholder="Por ejemplo: piso 2, oficina 204" />
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Responsable o usuario</mat-label>
+            <input matInput formControlName="responsable" maxlength="150" placeholder="Nombres y apellidos" />
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Estado</mat-label>
+            <mat-select formControlName="estadoActivoId" required>
+              @for (e of opcionesEstado(); track e.id) {
+                <mat-option [value]="e.id">{{ e.nombre }}{{ e.activo ? '' : ' (desactivado)' }}</mat-option>
+              }
+            </mat-select>
+            <mat-error>Elija el estado.</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Criticidad</mat-label>
+            <mat-select formControlName="criticidad">
+              <mat-option [value]="null">Sin definir</mat-option>
+              @for (c of listas.value()?.criticidades ?? []; track c.valor) {
+                <mat-option [value]="c.valor">{{ c.texto }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="grupo-opciones">
+          <span class="etiqueta" id="etiqueta-conservacion">Conservación *</span>
+          <mat-button-toggle-group formControlName="conservacion" aria-labelledby="etiqueta-conservacion" hideSingleSelectionIndicator>
+            @for (c of listas.value()?.conservaciones ?? []; track c.valor) {
+              <mat-button-toggle [value]="c.valor">{{ c.texto }}</mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+        </div>
+        <mat-form-field class="ancho">
+          <mat-label>Observaciones</mat-label>
+          <textarea matInput formControlName="observaciones" maxlength="1000" rows="2"></textarea>
+        </mat-form-field>
+      </section>
+
+      <!-- Adquisición y garantía -->
+      <section class="tarjeta" formGroupName="adquisicion">
+        <h2>Adquisición y garantía</h2>
+        <div class="campos">
+          <mat-form-field>
+            <mat-label>Fecha de adquisición</mat-label>
+            <input matInput type="date" formControlName="fechaAdquisicion" [max]="hoy" />
+            <mat-error>No puede ser posterior a hoy.</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Vida útil (años)</mat-label>
+            <input matInput type="number" formControlName="vidaUtilAnios" min="1" max="50" step="1" inputmode="numeric" />
+            <mat-error>Entre 1 y 50 años, sin decimales.</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Fin de garantía</mat-label>
+            <input matInput type="date" formControlName="finGarantia" />
+            <mat-error>Es anterior a la adquisición.</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Tipo de adquisición</mat-label>
+            <mat-select formControlName="tipoAdquisicion">
+              <mat-option [value]="null">Sin dato</mat-option>
+              @for (t of listas.value()?.tiposAdquisicion ?? []; track t.valor) {
+                <mat-option [value]="t.valor">{{ t.texto }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Valor de adquisición</mat-label>
+            <span matTextPrefix>S/&nbsp;</span>
+            <input matInput type="number" formControlName="valorAdquisicion" min="0" step="0.01" inputmode="decimal" />
+            <mat-error>Un monto positivo con hasta 2 decimales.</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>N° de OC o factura</mat-label>
+            <input matInput formControlName="numeroOrdenCompra" maxlength="50" />
+          </mat-form-field>
+          <mat-form-field class="ancho">
+            <mat-label>Proveedor</mat-label>
+            <input matInput formControlName="proveedor" maxlength="150" />
+          </mat-form-field>
+        </div>
+        <p class="nota" aria-live="polite">
+          @if (renovacionPrevista(); as fecha) {
+            Renovación prevista: <strong>{{ fecha }}</strong> (fecha de adquisición más la vida útil).
+          } @else {
+            Con la fecha de adquisición y la vida útil se calcula cuándo renovar el equipo.
+          }
+        </p>
+      </section>
+
+      <!-- Características técnicas según la ficha del tipo (D43) -->
+      @if (seDescartanDatos()) {
+        <app-aviso tono="alerta">
+          El tipo «{{ nombreTipo() }}» no lleva algunas de las características técnicas, discos o memoria que ya se
+          escribieron. Si guarda así, esos datos no se guardarán.
+        </app-aviso>
+      }
+
+      @switch (ficha()) {
+        @case (null) {
+          <section class="tarjeta nota-tarjeta">
+            <p class="nota">Elija el tipo de activo para ver sus características técnicas.</p>
+          </section>
+        }
+        @case ('Ninguna') {
+          <section class="tarjeta nota-tarjeta">
+            <p class="nota">El tipo «{{ nombreTipo() }}» no lleva características técnicas, discos ni memoria.</p>
+          </section>
+        }
+        @case ('Red') {
+          <section class="tarjeta" formGroupName="tecnicos">
+            <h2>Datos de red <span class="atenuado">· {{ nombreTipo() }}</span></h2>
+            <div class="campos">
+              <ng-container *ngTemplateOutlet="camposDeRed" />
+            </div>
+          </section>
+        }
+        @case ('Computo') {
+          <section class="tarjeta" formGroupName="tecnicos">
+            <h2>Características técnicas <span class="atenuado">· {{ nombreTipo() }}</span></h2>
+            <div class="campos">
+              <mat-form-field>
+                <mat-label>Procesador</mat-label>
+                <input matInput formControlName="procesador" maxlength="100" placeholder="Intel Core i7-1355U" />
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Velocidad o generación</mat-label>
+                <input matInput formControlName="velocidadGeneracion" maxlength="50" placeholder="13.ª generación" />
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>N° de núcleos</mat-label>
+                <input matInput type="number" formControlName="nucleos" min="1" max="512" step="1" inputmode="numeric" />
+                <mat-error>Entre 1 y 512.</mat-error>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Sistema operativo</mat-label>
+                <mat-select formControlName="sistemaOperativoId">
+                  <mat-option [value]="null">Sin dato</mat-option>
+                  @for (s of opcionesSistema(); track s.id) {
+                    <mat-option [value]="s.id">{{ s.nombre }}{{ s.activo ? '' : ' (desactivado)' }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Versión del sistema operativo</mat-label>
+                <input matInput formControlName="versionSistemaOperativo" maxlength="50" placeholder="23H2" />
+              </mat-form-field>
+              <ng-container *ngTemplateOutlet="camposDeRed" />
+              <mat-form-field>
+                <mat-label>Dominio o grupo de trabajo</mat-label>
+                <input matInput formControlName="dominioGrupo" maxlength="100" />
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Antivirus o EDR</mat-label>
+                <input matInput formControlName="antivirus" maxlength="100" />
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Disco cifrado</mat-label>
+                <mat-select formControlName="discoCifrado">
+                  <mat-option [value]="null">Sin dato</mat-option>
+                  <mat-option [value]="true">Sí</mat-option>
+                  <mat-option [value]="false">No</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Tarjeta gráfica</mat-label>
+                <input matInput formControlName="tarjetaGrafica" maxlength="100" />
+              </mat-form-field>
+              <mat-form-field>
+                <mat-label>Pantalla (pulgadas)</mat-label>
+                <input matInput type="number" formControlName="pantallaPulgadas" min="1" max="150" step="0.1" inputmode="decimal" />
+                <mat-error>Entre 1 y 150, con hasta 1 decimal.</mat-error>
+              </mat-form-field>
+              <mat-form-field class="ancho">
+                <mat-label>Puertos principales</mat-label>
+                <input matInput formControlName="puertosPrincipales" maxlength="250" placeholder="2 USB-C, 2 USB-A, HDMI, RJ-45" />
+              </mat-form-field>
+              <mat-form-field class="ancho">
+                <mat-label>Accesorios incluidos</mat-label>
+                <input matInput formControlName="accesoriosIncluidos" maxlength="250" placeholder="Cargador, maletín" />
+              </mat-form-field>
+            </div>
+          </section>
+
+          <!-- Discos -->
+          <section class="tarjeta">
+            <div class="titulo-con-total">
+              <h2>Discos</h2>
+              @if (discos.length > 0) {
+                <span class="atenuado">Total: <strong>{{ formatoGb(totalDiscos()) }}</strong></span>
+              }
+            </div>
+            @for (disco of discos.controls; track disco; let i = $index) {
+              <fieldset class="fila-componente" [formGroup]="disco">
+                <legend class="visualmente-oculto">Disco {{ i + 1 }}</legend>
+                <mat-form-field>
+                  <mat-label>Tipo</mat-label>
+                  <mat-select formControlName="tipo" required>
+                    @for (t of listas.value()?.tiposDisco ?? []; track t.valor) {
+                      <mat-option [value]="t.valor">{{ t.texto }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field>
+                  <mat-label>Capacidad</mat-label>
+                  <mat-select formControlName="capacidad" required (selectionChange)="alCambiarCapacidad(disco)">
+                    @for (c of capacidadesDisco(); track c) {
+                      <mat-option [value]="c">{{ formatoGb(c) }}</mat-option>
+                    }
+                    <mat-option value="otra">Otra…</mat-option>
+                  </mat-select>
+                  <mat-error>Elija la capacidad.</mat-error>
+                </mat-form-field>
+                @if (esOtraCapacidad(disco)) {
+                  <mat-form-field class="corto">
+                    <mat-label>GB</mat-label>
+                    <input matInput type="number" formControlName="capacidadOtra" min="1" step="1" inputmode="numeric" required />
+                    <mat-error>Escriba los GB (entero).</mat-error>
+                  </mat-form-field>
+                }
+                <mat-form-field class="medio">
+                  <mat-label>Uso</mat-label>
+                  <mat-select formControlName="uso" required>
+                    @for (u of listas.value()?.usosDisco ?? []; track u.valor) {
+                      <mat-option [value]="u.valor">{{ u.texto }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field class="corto">
+                  <mat-label>Ranura</mat-label>
+                  <input matInput formControlName="ranura" maxlength="20" placeholder="M.2 #1" />
+                </mat-form-field>
+                <mat-form-field>
+                  <mat-label>Marca y modelo</mat-label>
+                  <input matInput formControlName="marcaModelo" maxlength="100" />
+                </mat-form-field>
+                <mat-form-field>
+                  <mat-label>N° de serie</mat-label>
+                  <input matInput formControlName="numeroSerie" maxlength="60" class="mono" />
+                </mat-form-field>
+                <button mat-icon-button type="button" class="quitar" [attr.aria-label]="'Quitar el disco ' + (i + 1)" (click)="quitarDisco(i)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </fieldset>
+            } @empty {
+              <p class="nota">Sin discos registrados.</p>
+            }
+            <button mat-stroked-button type="button" class="agregar" [disabled]="discos.length >= maximoDiscos" (click)="agregarDisco()">
+              <mat-icon>add</mat-icon> Agregar disco
+            </button>
+          </section>
+
+          <!-- Memoria RAM -->
+          <section class="tarjeta">
+            <div class="titulo-con-total">
+              <h2>Memoria RAM</h2>
+              @if (modulosRam.length > 0) {
+                <span class="atenuado">Total: <strong>{{ formatoGb(totalRam()) }}</strong></span>
+              }
+            </div>
+            @for (modulo of modulosRam.controls; track modulo; let i = $index) {
+              <fieldset class="fila-componente" [formGroup]="modulo">
+                <legend class="visualmente-oculto">Módulo {{ i + 1 }}</legend>
+                <mat-form-field>
+                  <mat-label>Tipo</mat-label>
+                  <mat-select formControlName="tipo" required (selectionChange)="alCambiarTipoRam(modulo)">
+                    @for (t of listas.value()?.tiposRam ?? []; track t.valor) {
+                      <mat-option [value]="t.valor">{{ t.texto }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field class="medio">
+                  <mat-label>Capacidad</mat-label>
+                  <mat-select formControlName="capacidadGb" required>
+                    @for (c of capacidadesRam(); track c) {
+                      <mat-option [value]="c">{{ c }} GB</mat-option>
+                    }
+                  </mat-select>
+                  <mat-error>Elija la capacidad.</mat-error>
+                </mat-form-field>
+                <mat-form-field>
+                  <mat-label>Velocidad</mat-label>
+                  <mat-select formControlName="velocidadMhz">
+                    <mat-option [value]="null">Sin dato</mat-option>
+                    @for (v of velocidadesDe(modulo.controls['tipo'].value); track v) {
+                      <mat-option [value]="v">{{ v }} MHz</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field class="corto">
+                  <mat-label>Ranura</mat-label>
+                  <input matInput formControlName="ranura" maxlength="20" placeholder="A" />
+                </mat-form-field>
+                <mat-form-field>
+                  <mat-label>Marca y modelo</mat-label>
+                  <input matInput formControlName="marcaModelo" maxlength="100" />
+                </mat-form-field>
+                <button mat-icon-button type="button" class="quitar" [attr.aria-label]="'Quitar el módulo ' + (i + 1)" (click)="quitarModulo(i)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </fieldset>
+            } @empty {
+              <p class="nota">Sin módulos registrados.</p>
+            }
+            @if (modulosRam.length > 0) {
+              <p class="nota">Las velocidades que se ofrecen dependen del tipo de memoria.</p>
+            }
+            <button
+              mat-stroked-button
+              type="button"
+              class="agregar"
+              [disabled]="modulosRam.length >= maximoModulos"
+              (click)="agregarModulo()"
+            >
+              <mat-icon>add</mat-icon> Agregar módulo
+            </button>
+          </section>
+        }
+      }
+
+      <!-- Campos de red: los usan las fichas Red y Cómputo. -->
+      <ng-template #camposDeRed>
+        <ng-container [formGroup]="formulario.controls.tecnicos">
+          <mat-form-field>
+            <mat-label>Nombre de equipo</mat-label>
+            <input matInput formControlName="nombreEquipo" maxlength="63" autocomplete="off" class="mono" placeholder="ADM-LT-001" />
+            <mat-error>Sin espacios: letras, números, . y -</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Dirección IP</mat-label>
+            <input matInput formControlName="direccionIp" maxlength="45" autocomplete="off" class="mono" placeholder="192.168.10.45" />
+            <mat-error>IP no válida (ej. 192.168.10.45).</mat-error>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Dirección MAC</mat-label>
+            <input matInput formControlName="direccionMac" maxlength="22" autocomplete="off" class="mono" placeholder="A4:BB:6D:12:34:56" />
+            <mat-error>MAC no válida (ej. A4:BB:6D:12:34:56).</mat-error>
+          </mat-form-field>
+        </ng-container>
+      </ng-template>
+
+      <div class="barra-acciones">
+        @if (intentoGuardar() && (formulario.invalid || !establecimiento())) {
+          <span class="falta" role="alert">Revise los campos marcados.</span>
+        }
+        <a mat-button [routerLink]="rutaCancelar()">Cancelar</a>
+        <button mat-flat-button type="submit" [disabled]="guardando()">
+          <mat-icon>save</mat-icon> {{ guardando() ? 'Guardando…' : esEdicion() ? 'Guardar cambios' : 'Guardar activo' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>
