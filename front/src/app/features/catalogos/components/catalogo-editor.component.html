@@ -71,6 +71,9 @@
             @if (esTiposActivo()) {
               <th scope="col">Características técnicas</th>
             }
+            @if (esProcesadores()) {
+              <th scope="col">Generaciones</th>
+            }
             <th scope="col">Estado</th>
             @if (tipo().puedeGestionar) {
               <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
@@ -109,6 +112,34 @@
                   }
                 </td>
               }
+              @if (esProcesadores()) {
+                <td>
+                  @if (tipo().puedeGestionar) {
+                    <button
+                      mat-button
+                      type="button"
+                      class="boton-ficha"
+                      [matMenuTriggerFor]="menuGeneraciones"
+                      [attr.aria-label]="'Generaciones de ' + elemento.nombre + ': ' + textoGeneraciones(generacionesDe(elemento)) + '. Cambiar'"
+                    >
+                      {{ textoGeneraciones(generacionesDe(elemento)) }} <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+                    </button>
+                    <mat-menu #menuGeneraciones="matMenu">
+                      @for (f of familias; track f) {
+                        <button mat-menu-item type="button" class="opcion-ficha" (click)="cambiarGeneraciones(elemento, f)">
+                          <mat-icon>{{ f === generacionesDe(elemento) ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
+                          <span class="dos-lineas-menu">
+                            <span>{{ textoGeneraciones(f) }}</span>
+                            <span class="atenuado">{{ descripcionGeneraciones(f) }}</span>
+                          </span>
+                        </button>
+                      }
+                    </mat-menu>
+                  } @else {
+                    {{ textoGeneraciones(generacionesDe(elemento)) }}
+                  }
+                </td>
+              }
               <td>
                 <span class="pastilla" [class.ok]="elemento.activo" [class.neutra]="!elemento.activo">
                   {{ elemento.activo ? 'Activo' : 'Desactivado' }}
@@ -132,7 +163,7 @@
           } @empty {
             @if (!elementos.isLoading()) {
               <tr>
-                <td [attr.colspan]="esTiposActivo() ? 4 : 3" class="vacio">
+                <td [attr.colspan]="columnas()" class="vacio">
                   @if (buscando()) {
                     No hay coincidencias.
                     @if (tipo().puedeGestionar) {

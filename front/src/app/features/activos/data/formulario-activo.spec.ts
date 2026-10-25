@@ -38,8 +38,8 @@ function valor(): ValorFormularioActivo {
       finGarantia: '',
     },
     tecnicos: {
-      procesador: 'Intel Core i7',
-      velocidadGeneracion: '',
+      procesadorId: 'cpu1',
+      generacionProcesador: '13',
       nucleos: 10,
       tarjetaGrafica: '',
       pantallaPulgadas: null,
@@ -72,7 +72,8 @@ describe('formulario del activo', () => {
     expect(cuerpo.generales.numeroSerie).toBeNull();
     expect(cuerpo.generales.descripcion).toBeNull();
     expect(cuerpo.adquisicion?.finGarantia).toBeNull();
-    expect(cuerpo.tecnicos?.procesador).toBe('Intel Core i7');
+    expect(cuerpo.tecnicos?.procesadorId).toBe('cpu1');
+    expect(cuerpo.tecnicos?.generacionProcesador).toBe('13');
     expect(cuerpo.tecnicos?.discoCifrado).toBe(true);
   });
 
@@ -87,7 +88,8 @@ describe('formulario del activo', () => {
     const cuerpo = fichaDesdeFormulario(valor(), 'est1', 'Red');
 
     expect(cuerpo.tecnicos).toMatchObject({ nombreEquipo: 'ADM-LT-014', direccionIp: '192.168.10.45', direccionMac: null });
-    expect(cuerpo.tecnicos?.procesador).toBeNull();
+    expect(cuerpo.tecnicos?.procesadorId).toBeNull();
+    expect(cuerpo.tecnicos?.generacionProcesador).toBeNull();
     expect(cuerpo.tecnicos?.sistemaOperativoId).toBeNull();
     expect(cuerpo.discos).toEqual([]);
     expect(cuerpo.modulosRam).toEqual([]);
@@ -106,7 +108,7 @@ describe('formulario del activo', () => {
     expect(hayDatosQueSeDescartan(valor(), 'Red')).toBe(true);
 
     const soloRed = valor();
-    soloRed.tecnicos = { ...soloRed.tecnicos, procesador: '', nucleos: null, sistemaOperativoId: null, discoCifrado: null };
+    soloRed.tecnicos = { ...soloRed.tecnicos, procesadorId: null, generacionProcesador: null, nucleos: null, sistemaOperativoId: null, discoCifrado: null };
     soloRed.discos = [];
     soloRed.modulosRam = [];
     expect(hayDatosQueSeDescartan(soloRed, 'Red')).toBe(false);
@@ -120,9 +122,9 @@ describe('formulario del activo', () => {
 
   it('ofrece los elementos activos y el ya elegido aunque esté desactivado', () => {
     const lista: ElementoCatalogoDto[] = [
-      { id: 'a', nombre: 'HP', activo: true, ficha: null },
-      { id: 'b', nombre: 'Compaq', activo: false, ficha: null },
-      { id: 'c', nombre: 'Acer', activo: false, ficha: null },
+      { id: 'a', nombre: 'HP', activo: true, ficha: null, generaciones: null },
+      { id: 'b', nombre: 'Compaq', activo: false, ficha: null, generaciones: null },
+      { id: 'c', nombre: 'Acer', activo: false, ficha: null, generaciones: null },
     ];
 
     expect(opcionesDeCatalogo(lista, null).map((e) => e.id)).toEqual(['a']);
@@ -161,8 +163,8 @@ describe('formulario del activo', () => {
         finGarantia: null,
       },
       tecnicos: {
-        procesador: null,
-        velocidadGeneracion: null,
+        procesador: { id: 'cpu1', nombre: 'Intel Core i7' },
+        generacion: { valor: '13', texto: '13.ª generación' },
         nucleos: null,
         tarjetaGrafica: null,
         pantallaPulgadas: null,
@@ -196,6 +198,8 @@ describe('formulario del activo', () => {
     expect(v.adquisicion.valorAdquisicion).toBe(3850.5);
     expect(v.adquisicion.vidaUtilAnios).toBe(4);
     expect(v.tecnicos.sistemaOperativoId).toBe('so1');
+    expect(v.tecnicos.procesadorId).toBe('cpu1');
+    expect(v.tecnicos.generacionProcesador).toBe('13');
     expect(v.discos.map((d) => [d.capacidad, d.capacidadOtra])).toEqual([
       [512, null],
       ['otra', 750],

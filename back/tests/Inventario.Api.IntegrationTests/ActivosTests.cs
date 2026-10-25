@@ -39,7 +39,8 @@ public sealed class ActivosTests(FabricaApi api)
         Guid Tipo,
         Guid Marca,
         Guid Estado,
-        Guid SistemaOperativo);
+        Guid SistemaOperativo,
+        Guid Procesador);
 
     private async Task<Referencias> PrepararAsync()
     {
@@ -74,7 +75,8 @@ public sealed class ActivosTests(FabricaApi api)
             await Elemento("tipos-activo", "Laptop"),
             await Elemento("marcas", "Dell"),
             await Elemento("estados-activo", "Operativo"),
-            await Elemento("sistemas-operativos", "Windows 11 Pro"));
+            await Elemento("sistemas-operativos", "Windows 11 Pro"),
+            await Elemento("procesadores", "Intel Core i7"));
     }
 
     /// <summary>Ficha como la enviaría la interfaz.</summary>
@@ -86,7 +88,9 @@ public sealed class ActivosTests(FabricaApi api)
         string? serie = null,
         string fechaAdquisicion = "2023-03-15",
         string finGarantia = "2024-03-14",
-        object[]? modulosRam = null) =>
+        object[]? modulosRam = null,
+        string ip = "192.168.10.45",
+        string nombreEquipo = "ADM-LT-001") =>
         new
         {
             establecimientoId = establecimiento ?? r.EstablecimientoHuanta,
@@ -115,10 +119,11 @@ public sealed class ActivosTests(FabricaApi api)
             },
             tecnicos = new
             {
-                procesador = "Intel Core i7-1355U",
+                procesadorId = r.Procesador,
+                generacionProcesador = "13",
                 sistemaOperativoId = r.SistemaOperativo,
-                nombreEquipo = "ADM-LT-001",
-                direccionIp = "192.168.10.45",
+                nombreEquipo,
+                direccionIp = ip,
                 direccionMac = "a4-bb-6d-12-34-56",
                 discoCifrado = true,
             },
@@ -159,6 +164,8 @@ public sealed class ActivosTests(FabricaApi api)
         Assert.Equal(codigo, ficha.Generales.CodigoPatrimonial);
         Assert.Equal("Dell", ficha.Generales.Marca.Nombre);
         Assert.Equal("Windows 11 Pro", ficha.Tecnicos.SistemaOperativo?.Nombre);
+        Assert.Equal("Intel Core i7", ficha.Tecnicos.Procesador?.Nombre);
+        Assert.Equal("13.ª generación", ficha.Tecnicos.Generacion?.Texto);
         Assert.Equal("A4:BB:6D:12:34:56", ficha.Tecnicos.DireccionMac);
         Assert.Equal(1536, ficha.AlmacenamientoTotalGb);
         Assert.Equal(16, ficha.RamTotalGb);
@@ -279,6 +286,63 @@ public sealed class ActivosTests(FabricaApi api)
     }
 
     [Fact]
+    public async Task Buscar_EncuentraPorIpYPorNombreDeEquipo()
+    {
+        var r = await PrepararAsync();
+        using var editor = await api.CrearClienteConSesionAsync(DatosPrueba.EditorHuanta);
+        var ip = $"10.{Random.Shared.Next(1, 255)}.{Random.Shared.Next(1, 255)}.{Random.Shared.Next(1, 255)}";
+        var equipo = CodigoUnico("EQ");
+        var porIp = await CrearAsync(editor, Ficha(r, CodigoUnico(), ip: ip));
+        var porEquipo = await CrearAsync(editor, Ficha(r, CodigoUnico(), nombreEquipo: equipo));
+
+        var conIp = await editor.GetFromJsonAsync<PaginaActivosDto>($"/api/activos?buscar={ip}", Json, Ct);
+        var conEquipo = await editor.GetFromJsonAsync<PaginaActivosDto>($"/api/activos?buscar={EnMinusculas(equipo)}", Json, Ct);
+
+        Assert.Equal(porIp, Assert.Single(conIp!.Activos).Id);
+        Assert.Equal(porEquipo, Assert.Single(conEquipo!.Activos).Id);
+    }
+
+    [Fact]
+    public async Task LaGeneracionDebeSerDeLaFamiliaDelProcesador()
+    {
+        var r = await PrepararAsync();
+        using var editor = await api.CrearClienteConSesionAsync(DatosPrueba.EditorHuanta);
+        var conTecnicos = (object tecnicos) => FichaDeTipo(r, r.Tipo, tecnicos);
+
+        // Intel Core i7 ofrece de la 1.ª a la 14.ª generación; "5000" es de AMD Ryzen.
+        var deOtraFamilia = await editor.PostAsJsonAsync(
+            "/api/activos", conTecnicos(new { procesadorId = r.Procesador, generacionProcesador = "5000" }), Ct);
+        var sinProcesador = await editor.PostAsJsonAsync("/api/activos", conTecnicos(new { generacionProcesador = "13" }), Ct);
+        var correcta = await editor.PostAsJsonAsync(
+            "/api/activos", conTecnicos(new { procesadorId = r.Procesador, generacionProcesador = "12" }), Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, deOtraFamilia.StatusCode);
+        Assert.Equal("Activos.GeneracionInvalida", await deOtraFamilia.LeerCodigoAsync());
+        Assert.Equal(HttpStatusCode.BadRequest, sinProcesador.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, correcta.StatusCode);
+    }
+
+    [Fact]
+    public async Task SoloElSuperAdminCambiaLasGeneracionesDeUnProcesador()
+    {
+        using var superAdmin = await api.CrearClienteConSesionAsync(DatosPrueba.SuperAdmin);
+        using var admin = await api.CrearClienteConSesionAsync(DatosPrueba.AdminHuanta);
+        var crear = await superAdmin.PostAsJsonAsync("/api/catalogos/procesadores", new { nombre = CodigoUnico("CPU") }, Ct);
+        var id = (await crear.Content.ReadFromJsonAsync<IdCreado>(Ct))!.Id;
+
+        var delAdmin = await admin.PutAsJsonAsync($"/api/catalogos/procesadores/{id}/generaciones", new { generaciones = "AmdRyzen" }, Ct);
+        var delSuper = await superAdmin.PutAsJsonAsync($"/api/catalogos/procesadores/{id}/generaciones", new { generaciones = "AmdRyzen" }, Ct);
+        var procesadores = (await superAdmin.GetFromJsonAsync<List<ElementoCatalogoDto>>("/api/catalogos/procesadores", Json, Ct))!;
+        var listas = await superAdmin.GetFromJsonAsync<ListasActivoDto>("/api/activos/listas", Json, Ct);
+
+        Assert.Equal(HttpStatusCode.Forbidden, delAdmin.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, delSuper.StatusCode);
+        Assert.Equal(GeneracionesProcesador.AmdRyzen, procesadores.Single(p => p.Id == id).Generaciones);
+        Assert.Equal(GeneracionesProcesador.IntelCoreUltra, procesadores.Single(p => p.Nombre == "Intel Core Ultra 7").Generaciones);
+        Assert.Equal(14, listas!.GeneracionesProcesador.Single(g => g.Familia == "IntelCore").Opciones.Count);
+    }
+
+    [Fact]
     public async Task SerieRepetida_SeAvisaSinDistinguirMayusculas()
     {
         var r = await PrepararAsync();
@@ -351,15 +415,15 @@ public sealed class ActivosTests(FabricaApi api)
             "/api/activos",
             FichaDeTipo(r, impresora, new { direccionIp = "192.168.10.60", direccionMac = "A4BB6D123456" }),
             Ct);
-        var impresoraConProcesador = await editor.PostAsJsonAsync(
+        var impresoraConNucleos = await editor.PostAsJsonAsync(
             "/api/activos",
-            FichaDeTipo(r, impresora, new { procesador = "ARM" }),
+            FichaDeTipo(r, impresora, new { nucleos = 4 }),
             Ct);
 
         Assert.Equal(HttpStatusCode.BadRequest, monitorConDisco.StatusCode);
         Assert.Equal("Activos.DatosNoCorresponden", await monitorConDisco.LeerCodigoAsync());
         Assert.Equal(HttpStatusCode.Created, impresoraConIp.StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, impresoraConProcesador.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, impresoraConNucleos.StatusCode);
 
         var id = (await impresoraConIp.Content.ReadFromJsonAsync<IdCreado>(Ct))!.Id;
         Assert.Equal(FichaTecnica.Red, (await LeerFichaAsync(editor, id))!.Ficha);

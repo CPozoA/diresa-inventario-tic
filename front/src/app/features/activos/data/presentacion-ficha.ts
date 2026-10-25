@@ -45,7 +45,7 @@ export function datosTecnicos(ficha: FichaActivoDto): DatoFicha[] {
   const cifrado = t.discoCifrado === null || t.discoCifrado === undefined ? null : t.discoCifrado ? 'Sí' : 'No';
 
   return [
-    dato('Procesador', unir(t.procesador, t.velocidadGeneracion, nucleos === null ? null : cantidad(nucleos, 'núcleo', 'núcleos'))),
+    dato('Procesador', unir(t.procesador?.nombre, t.generacion?.texto, nucleos === null ? null : cantidad(nucleos, 'núcleo', 'núcleos'))),
     modulos > 0 ? dato('Memoria RAM', formatoGb(ficha.ramTotalGb), { detalle: `(${cantidad(modulos, 'módulo', 'módulos')})` }) : null,
     discos > 0
       ? dato('Almacenamiento', formatoGb(ficha.almacenamientoTotalGb), { detalle: `(${cantidad(discos, 'disco', 'discos')})` })

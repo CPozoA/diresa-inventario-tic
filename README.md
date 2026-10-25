@@ -17,7 +17,7 @@ Sistema web para el registro y control del inventario de Tecnologías de la Info
 
 ## Estado
 
-Paso 7C-2 terminado: registrar y editar activos desde la pantalla. Antes: lista del inventario y ficha técnica; cada tipo de activo indica qué características lleva (D43); API de activos (ficha con discos y RAM, garantía y renovación), establecimientos de salud con importación desde Excel, y catálogos (áreas por sede y catálogos generales). Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
+Paso 7C-3 terminado: procesador y generación se eligen de listas, y el inventario se busca también por IP o nombre de equipo. Antes: registrar y editar activos desde la pantalla; lista del inventario y ficha técnica; cada tipo de activo indica qué características lleva (D43); API de activos (ficha con discos y RAM, garantía y renovación), establecimientos de salud con importación desde Excel, y catálogos (áreas por sede y catálogos generales). Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
 
 ## Control de versiones
 

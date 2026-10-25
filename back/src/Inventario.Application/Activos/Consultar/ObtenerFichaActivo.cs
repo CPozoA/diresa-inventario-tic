@@ -38,8 +38,8 @@ public sealed record GeneralesActivoDto(
 
 /// <summary>Características técnicas, con el nombre del sistema operativo.</summary>
 public sealed record TecnicosActivoDto(
-    string? Procesador,
-    string? VelocidadGeneracion,
+    ReferenciaDto? Procesador,
+    OpcionDto? Generacion,
     int? Nucleos,
     string? TarjetaGrafica,
     decimal? PantallaPulgadas,
@@ -113,6 +113,24 @@ internal sealed class ObtenerFichaActivoHandler(IAppDbContext db, TimeProvider r
                 await NombreAsync(db.SistemasOperativos.AsNoTracking().Where(s => s.Id == sistemaId).Select(s => s.Nombre), cancellationToken))
             : null;
 
+        ReferenciaDto? procesador = null;
+        OpcionDto? generacion = null;
+        if (activo.ProcesadorId is Guid procesadorId)
+        {
+            var datos = await db.Procesadores.AsNoTracking()
+                .Where(p => p.Id == procesadorId)
+                .Select(p => new { p.Nombre, p.Generaciones })
+                .FirstAsync(cancellationToken);
+            procesador = new ReferenciaDto(procesadorId, datos.Nombre);
+
+            // Si el superadministrador cambió las generaciones de la familia, se muestra el código guardado tal cual.
+            if (activo.GeneracionProcesador is string codigo)
+            {
+                var encontrada = GeneracionesDeProcesador.Buscar(datos.Generaciones, codigo);
+                generacion = new OpcionDto(codigo, encontrada?.Texto ?? codigo);
+            }
+        }
+
         var hoy = DateOnly.FromDateTime(reloj.GetLocalNow().DateTime);
 
         return new FichaActivoDto(
@@ -144,8 +162,8 @@ internal sealed class ObtenerFichaActivoHandler(IAppDbContext db, TimeProvider r
                 activo.VidaUtilAnios,
                 activo.FinGarantia),
             new TecnicosActivoDto(
-                activo.Procesador,
-                activo.VelocidadGeneracion,
+                procesador,
+                generacion,
                 activo.Nucleos,
                 activo.TarjetaGrafica,
                 activo.PantallaPulgadas,

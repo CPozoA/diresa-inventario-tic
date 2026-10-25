@@ -13,6 +13,9 @@ public sealed record OpcionDto(string Valor, string Texto);
 /// <summary>Velocidades que corresponden a un tipo de RAM.</summary>
 public sealed record VelocidadesRamDto(string Tipo, IReadOnlyList<int> VelocidadesMhz);
 
+/// <summary>Generaciones que ofrece una familia de procesadores (D44): <c>Familia</c> es la del catálogo ("IntelCore").</summary>
+public sealed record GeneracionesDto(string Familia, IReadOnlyList<OpcionDto> Opciones);
+
 /// <summary>Listas fijas de la ficha técnica (docs/ARQUITECTURA.md D41), para que la interfaz no las repita.</summary>
 public sealed record ListasActivoDto(
     IReadOnlyList<OpcionDto> FichasTecnicas,
@@ -25,7 +28,8 @@ public sealed record ListasActivoDto(
     IReadOnlyList<int> CapacidadesDiscoGb,
     IReadOnlyList<int> CapacidadesRamGb,
     IReadOnlyList<VelocidadesRamDto> VelocidadesRam,
-    int CapacidadMaximaDiscoGb);
+    int CapacidadMaximaDiscoGb,
+    IReadOnlyList<GeneracionesDto> GeneracionesProcesador);
 
 /// <summary>Listas fijas de la ficha técnica.</summary>
 /// <remarks>Requiere Activos.Ver.</remarks>
@@ -60,7 +64,12 @@ internal sealed class ObtenerListasActivoHandler : IQueryHandler<ObtenerListasAc
         ListasActivo.CapacidadesDiscoGb,
         ListasActivo.CapacidadesRamGb,
         ListasActivo.VelocidadesRamMhz.Select(v => new VelocidadesRamDto(v.Key.ToString(), v.Value)).ToList(),
-        ListasActivo.CapacidadMaximaDiscoGb);
+        ListasActivo.CapacidadMaximaDiscoGb,
+        Enum.GetValues<GeneracionesProcesador>()
+            .Select(f => new GeneracionesDto(
+                f.ToString(),
+                GeneracionesDeProcesador.De(f).Select(g => new OpcionDto(g.Codigo, g.Texto)).ToList()))
+            .ToList());
 
     public Task<Result<ListasActivoDto>> Handle(ObtenerListasActivoQuery query, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Exito(Listas));

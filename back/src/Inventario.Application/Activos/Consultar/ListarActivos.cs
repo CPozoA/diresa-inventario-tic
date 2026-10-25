@@ -37,7 +37,7 @@ public sealed record PaginaActivosDto(IReadOnlyList<ActivoResumenDto> Activos, i
 /// <param name="EstadoActivoId">Filtra por estado.</param>
 /// <param name="Garantia">Filtra por estado de la garantía hoy.</param>
 /// <param name="Renovacion">Filtra por situación de renovación hoy.</param>
-/// <param name="Buscar">Código patrimonial, serie, modelo, responsable o marca.</param>
+/// <param name="Buscar">Código patrimonial, serie, modelo, responsable, marca, IP o nombre de equipo.</param>
 /// <param name="Pagina">Desde 1.</param>
 /// <param name="TamanoPagina">Entre 1 y 100 (por omisión, 25).</param>
 /// <remarks>Requiere Activos.Ver.</remarks>
@@ -126,6 +126,8 @@ internal sealed class ListarActivosHandler(IAppDbContext db, TimeProvider reloj)
                 Marca = m.Nombre,
                 a.Modelo,
                 a.NumeroSerie,
+                a.NombreEquipo,
+                a.DireccionIp,
                 Establecimiento = e.Nombre,
                 Area = ar.Nombre,
                 a.Responsable,
@@ -144,7 +146,9 @@ internal sealed class ListarActivosHandler(IAppDbContext db, TimeProvider reloj)
                 || (f.NumeroSerie != null && f.NumeroSerie.Contains(buscar))
                 || f.Modelo.Contains(buscar)
                 || (f.Responsable != null && f.Responsable.Contains(buscar))
-                || f.Marca.Contains(buscar));
+                || f.Marca.Contains(buscar)
+                || (f.DireccionIp != null && f.DireccionIp.Contains(buscar))
+                || (f.NombreEquipo != null && f.NombreEquipo.Contains(buscar)));
         }
 
         var total = await filas.CountAsync(cancellationToken);

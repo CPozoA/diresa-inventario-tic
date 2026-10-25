@@ -235,12 +235,24 @@
             <div class="campos">
               <mat-form-field>
                 <mat-label>Procesador</mat-label>
-                <input matInput formControlName="procesador" maxlength="100" placeholder="Intel Core i7-1355U" />
+                <mat-select formControlName="procesadorId">
+                  <mat-option [value]="null">Sin dato</mat-option>
+                  @for (p of opcionesProcesador(); track p.id) {
+                    <mat-option [value]="p.id">{{ p.nombre }}{{ p.activo ? '' : ' (desactivado)' }}</mat-option>
+                  }
+                </mat-select>
               </mat-form-field>
-              <mat-form-field>
-                <mat-label>Velocidad o generación</mat-label>
-                <input matInput formControlName="velocidadGeneracion" maxlength="50" placeholder="13.ª generación" />
-              </mat-form-field>
+              @if (generaciones().length > 0) {
+                <mat-form-field>
+                  <mat-label>Generación</mat-label>
+                  <mat-select formControlName="generacionProcesador">
+                    <mat-option [value]="null">Sin dato</mat-option>
+                    @for (g of generaciones(); track g.valor) {
+                      <mat-option [value]="g.valor">{{ g.texto }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
               <mat-form-field>
                 <mat-label>N° de núcleos</mat-label>
                 <input matInput type="number" formControlName="nucleos" min="1" max="512" step="1" inputmode="numeric" />

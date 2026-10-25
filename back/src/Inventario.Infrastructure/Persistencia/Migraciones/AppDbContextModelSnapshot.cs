@@ -92,6 +92,10 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.Property<DateOnly?>("FinGarantia")
                         .HasColumnType("date");
 
+                    b.Property<string>("GeneracionProcesador")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.Property<Guid>("MarcaId")
                         .HasColumnType("uniqueidentifier");
 
@@ -129,9 +133,8 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .HasPrecision(4, 1)
                         .HasColumnType("decimal(4,1)");
 
-                    b.Property<string>("Procesador")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<Guid?>("ProcesadorId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Proveedor")
                         .HasMaxLength(150)
@@ -170,10 +173,6 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .HasPrecision(12, 2)
                         .HasColumnType("decimal(12,2)");
 
-                    b.Property<string>("VelocidadGeneracion")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<string>("VersionSistemaOperativo")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -194,6 +193,8 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.HasIndex("FinGarantia");
 
                     b.HasIndex("MarcaId");
+
+                    b.HasIndex("ProcesadorId");
 
                     b.HasIndex("SistemaOperativoId");
 
@@ -387,6 +388,44 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .IsUnique();
 
                     b.ToTable("Marcas", "catalogos");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Catalogos.Procesador", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Generaciones")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("Procesadores", "catalogos");
                 });
 
             modelBuilder.Entity("Inventario.Domain.Catalogos.SistemaOperativo", b =>
@@ -890,6 +929,11 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .HasForeignKey("MarcaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Catalogos.Procesador", null)
+                        .WithMany()
+                        .HasForeignKey("ProcesadorId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Inventario.Domain.Sedes.Sede", null)
                         .WithMany()

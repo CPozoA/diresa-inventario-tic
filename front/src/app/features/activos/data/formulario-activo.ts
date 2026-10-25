@@ -35,8 +35,9 @@ export interface ValorAdquisicion {
 }
 
 export interface ValorTecnicos {
-  procesador: string;
-  velocidadGeneracion: string;
+  procesadorId: string | null;
+  /** Código de la generación ("13"), de la lista de la familia del procesador (D44). */
+  generacionProcesador: string | null;
   nucleos: number | null;
   tarjetaGrafica: string;
   pantallaPulgadas: number | null;
@@ -115,8 +116,8 @@ export function fichaDesdeFormulario(valor: ValorFormularioActivo, establecimien
   const tecnicos =
     ficha === 'Computo'
       ? {
-          procesador: texto(t.procesador),
-          velocidadGeneracion: texto(t.velocidadGeneracion),
+          procesadorId: t.procesadorId,
+          generacionProcesador: t.procesadorId ? t.generacionProcesador : null,
           nucleos: numero(t.nucleos),
           tarjetaGrafica: texto(t.tarjetaGrafica),
           pantallaPulgadas: numero(t.pantallaPulgadas),
@@ -131,8 +132,8 @@ export function fichaDesdeFormulario(valor: ValorFormularioActivo, establecimien
         }
       : ficha === 'Red'
         ? {
-            procesador: null,
-            velocidadGeneracion: null,
+            procesadorId: null,
+            generacionProcesador: null,
             nucleos: null,
             tarjetaGrafica: null,
             pantallaPulgadas: null,
@@ -229,8 +230,8 @@ export function formularioDesdeFicha(ficha: FichaActivoDto, capacidadesDisco: re
       finGarantia: a.finGarantia ?? '',
     },
     tecnicos: {
-      procesador: t.procesador ?? '',
-      velocidadGeneracion: t.velocidadGeneracion ?? '',
+      procesadorId: t.procesador?.id ?? null,
+      generacionProcesador: t.generacion?.valor ?? null,
       nucleos: aNumero(t.nucleos),
       tarjetaGrafica: t.tarjetaGrafica ?? '',
       pantallaPulgadas: aNumero(t.pantallaPulgadas),
@@ -275,8 +276,6 @@ export function hayDatosQueSeDescartan(valor: ValorFormularioActivo, ficha: Fich
   }
   const t = valor.tecnicos;
   const deComputo = [
-    t.procesador,
-    t.velocidadGeneracion,
     t.tarjetaGrafica,
     t.versionSistemaOperativo,
     t.dominioGrupo,
@@ -285,6 +284,7 @@ export function hayDatosQueSeDescartan(valor: ValorFormularioActivo, ficha: Fich
     t.accesoriosIncluidos,
   ].some((x) => x.trim() !== '');
   const otros =
+    t.procesadorId !== null ||
     t.nucleos !== null ||
     t.pantallaPulgadas !== null ||
     t.sistemaOperativoId !== null ||

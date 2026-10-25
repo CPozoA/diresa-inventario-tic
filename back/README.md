@@ -267,6 +267,28 @@ Al arrancar, la API asigna la ficha a los tipos que no la tienen según su nombr
 editar, un tipo `Red` solo acepta nombre de equipo, IP y MAC; un tipo `Ninguna`, ningún dato técnico, disco ni RAM
 (400 `Activos.DatosNoCorresponden`).
 
+## Paso 7C-3: procesador y generación de lista (D44)
+
+Este paso **cambia el modelo**: agrega el catálogo `catalogos.Procesadores` y, en `inventario.Activos`, reemplaza las columnas
+de texto `Procesador` y `VelocidadGeneracion` por `ProcesadorId` y `GeneracionProcesador`. **Lo que se había escrito en esas
+dos columnas se pierde** (solo había datos de prueba). Desde `back`, con la API detenida:
+
+```powershell
+dotnet ef migrations add Procesadores --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+EF avisa que la migración puede perder datos: es lo esperado. Al arrancar, la API carga los procesadores iniciales.
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/catalogos/procesadores` | Con sesión | Familias con `generaciones` (`IntelCore`, `IntelCoreUltra`, `AmdRyzen` o `Ninguna`) |
+| `PUT /api/catalogos/procesadores/{id}/generaciones` | `Catalogos.GestionarGlobales` | Cuerpo `{ "generaciones": "AmdRyzen" }` |
+| `GET /api/activos/listas` | `Activos.Ver` | Incluye `generacionesProcesador`: las opciones de cada familia |
+
+En la ficha, `tecnicos` lleva `procesadorId` y `generacionProcesador` (el código: `"13"`, `"5000"`). La búsqueda del
+inventario (`?buscar=`) también encuentra por IP y por nombre de equipo.
+
 ### Correo en producción
 
 En el servidor se configura `Correo:Modo = Smtp` y los datos del SMTP (`Servidor`, `Puerto`, `Remitente`, `Usuario`,

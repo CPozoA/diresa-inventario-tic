@@ -67,6 +67,8 @@ export type { ActivarElementoCatalogo$Params as ActivarElementoCatalogo$Params }
 export { activarElementoCatalogo as activarElementoCatalogo } from './fn/catalogos/activar-elemento-catalogo';
 export type { CambiarFichaTipoActivo$Params as CambiarFichaTipoActivo$Params } from './fn/catalogos/cambiar-ficha-tipo-activo';
 export { cambiarFichaTipoActivo as cambiarFichaTipoActivo } from './fn/catalogos/cambiar-ficha-tipo-activo';
+export type { CambiarGeneracionesProcesador$Params as CambiarGeneracionesProcesador$Params } from './fn/catalogos/cambiar-generaciones-procesador';
+export { cambiarGeneracionesProcesador as cambiarGeneracionesProcesador } from './fn/catalogos/cambiar-generaciones-procesador';
 export type { DesactivarElementoCatalogo$Params as DesactivarElementoCatalogo$Params } from './fn/catalogos/desactivar-elemento-catalogo';
 export { desactivarElementoCatalogo as desactivarElementoCatalogo } from './fn/catalogos/desactivar-elemento-catalogo';
 export type { ListarEstablecimientos$Params as ListarEstablecimientos$Params } from './fn/establecimientos/listar-establecimientos';

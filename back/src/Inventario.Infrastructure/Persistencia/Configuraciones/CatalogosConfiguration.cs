@@ -73,6 +73,17 @@ internal sealed class SistemaOperativoConfiguration : IEntityTypeConfiguration<S
         ConfiguracionCatalogo.General(builder, "SistemasOperativos");
 }
 
+internal sealed class ProcesadorConfiguration : IEntityTypeConfiguration<Procesador>
+{
+    public void Configure(EntityTypeBuilder<Procesador> builder)
+    {
+        ConfiguracionCatalogo.General(builder, "Procesadores");
+
+        // D44: "IntelCore", "IntelCoreUltra", "AmdRyzen" o "Ninguna".
+        builder.Property(p => p.Generaciones).HasConversion<string>().HasMaxLength(20);
+    }
+}
+
 internal sealed class TipoLicenciaConfiguration : IEntityTypeConfiguration<TipoLicencia>
 {
     public void Configure(EntityTypeBuilder<TipoLicencia> builder) => ConfiguracionCatalogo.General(builder, "TiposLicencia");

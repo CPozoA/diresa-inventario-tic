@@ -139,8 +139,8 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
       finGarantia: ['', noAnteriorA('fechaAdquisicion')],
     }),
     tecnicos: this.fb.group({
-      procesador: ['', Validators.maxLength(100)],
-      velocidadGeneracion: ['', Validators.maxLength(50)],
+      procesadorId: new FormControl<string | null>(null),
+      generacionProcesador: new FormControl<string | null>(null),
       nucleos: new FormControl<number | null>(null, [Validators.min(1), Validators.max(512), entero]),
       tarjetaGrafica: ['', Validators.maxLength(100)],
       pantallaPulgadas: new FormControl<number | null>(null, [Validators.min(1), Validators.max(150), decimales(1)]),
@@ -192,6 +192,7 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   private readonly marcas = this.catalogo('marcas');
   private readonly estados = this.catalogo('estados-activo');
   private readonly sistemas = this.catalogo('sistemas-operativos');
+  private readonly procesadores = this.catalogo('procesadores');
 
   /** Áreas de la red del establecimiento elegido. */
   private readonly areas = resource({
@@ -207,6 +208,17 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   protected readonly opcionesMarca = computed(() => this.opciones(this.marcas.value(), this.valor().generales.marcaId));
   protected readonly opcionesEstado = computed(() => this.opciones(this.estados.value(), this.valor().generales.estadoActivoId));
   protected readonly opcionesArea = computed(() => this.opciones(this.areas.value(), this.valor().generales.areaId));
+  protected readonly opcionesProcesador = computed(() =>
+    this.opciones(this.procesadores.value(), this.valor().tecnicos.procesadorId),
+  );
+
+  /** Generaciones de la familia del procesador elegido (D44); vacía sin procesador o si la familia no tiene. */
+  protected readonly generaciones = computed(() => {
+    const id = this.valor().tecnicos.procesadorId;
+    const familia = this.procesadores.value()?.find((p) => p.id === id)?.generaciones ?? 'Ninguna';
+    return id ? (this.listas.value()?.generacionesProcesador.find((g) => g.familia === familia)?.opciones ?? []) : [];
+  });
+
   protected readonly opcionesSistema = computed(() =>
     this.opciones(this.sistemas.value(), this.valor().tecnicos.sistemaOperativoId),
   );
@@ -325,6 +337,21 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
     effect(() => {
       const hay = this.establecimiento() !== null;
       untracked(() => (hay ? this.generales.areaId.enable() : this.generales.areaId.disable()));
+    });
+
+    // Una generación que no es de la familia del procesador elegido se quita (al cambiar de procesador, o si el
+    // superadministrador cambió las generaciones de la familia de un activo ya registrado).
+    effect(() => {
+      const opciones = this.generaciones();
+      if (!this.procesadores.hasValue() || !this.listas.hasValue()) {
+        return;
+      }
+      untracked(() => {
+        const generacion = this.tecnicos.generacionProcesador;
+        if (generacion.value !== null && !opciones.some((o) => o.valor === generacion.value)) {
+          generacion.setValue(null);
+        }
+      });
     });
 
     // Al cambiar la fecha de adquisición se vuelve a revisar el fin de garantía.

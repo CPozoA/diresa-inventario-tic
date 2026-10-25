@@ -17,7 +17,7 @@ public sealed class ActivoTests
         new(fecha ?? new DateOnly(2023, 3, 15), "Proveedor Tecnológico S.A.C.", "OC-2023-0145", TipoAdquisicion.Compra, 3850m, vidaUtil, finGarantia);
 
     private static DatosTecnicosActivo Tecnicos(string? ip = null, string? mac = null) =>
-        DatosTecnicosActivo.Vacios with { Procesador = "Intel Core i7-1355U", DireccionIp = ip, DireccionMac = mac };
+        DatosTecnicosActivo.Vacios with { ProcesadorId = Guid.CreateVersion7(), GeneracionProcesador = "13", DireccionIp = ip, DireccionMac = mac };
 
     private static Activo Crear(
         DatosAdquisicionActivo? adquisicion = null,
@@ -53,6 +53,11 @@ public sealed class ActivoTests
     [Fact]
     public void Crear_SinEstablecimiento_Rechaza() =>
         Assert.Throws<DominioException>(() => Activo.Crear(Sede, Guid.Empty, Generales(), Adquisicion(), Tecnicos(), [], []));
+
+    [Fact]
+    public void LaGeneracionSinProcesador_Rechaza() =>
+        Assert.Throws<DominioException>(() =>
+            Crear(tecnicos: DatosTecnicosActivo.Vacios with { GeneracionProcesador = "13" }));
 
     [Fact]
     public void LaGarantiaNoTerminaAntesDeLaAdquisicion() =>

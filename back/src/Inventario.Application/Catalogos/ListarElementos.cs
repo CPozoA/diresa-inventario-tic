@@ -11,7 +11,8 @@ namespace Inventario.Application.Catalogos;
 /// <param name="Nombre">Nombre.</param>
 /// <param name="Activo">Falso si ya no se ofrece al registrar.</param>
 /// <param name="Ficha">Solo en tipos de activo: qué características técnicas lleva (D43). Nulo en los demás catálogos.</param>
-public sealed record ElementoCatalogoDto(Guid Id, string Nombre, bool Activo, FichaTecnica? Ficha);
+/// <param name="Generaciones">Solo en procesadores: qué generaciones ofrece (D44). Nulo en los demás catálogos.</param>
+public sealed record ElementoCatalogoDto(Guid Id, string Nombre, bool Activo, FichaTecnica? Ficha, GeneracionesProcesador? Generaciones);
 
 /// <summary>
 /// Elementos de un catálogo, ordenados por nombre. Cualquier usuario con sesión puede consultarlos

@@ -972,6 +972,41 @@
         }
       }
     },
+    "/api/catalogos/procesadores/{id}/generaciones": {
+      "put": {
+        "tags": [
+          "Catalogos"
+        ],
+        "summary": "Cambia qué generaciones ofrece una familia de procesadores: IntelCore, IntelCoreUltra, AmdRyzen o Ninguna.",
+        "operationId": "CambiarGeneracionesProcesador",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CambiarGeneracionesProcesadorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/catalogos/{tipo}/{id}/desactivar": {
       "post": {
         "tags": [
@@ -1234,7 +1269,7 @@
         "tags": [
           "Activos"
         ],
-        "summary": "Inventario paginado, con filtros. ?buscar= código patrimonial, serie, modelo, responsable o marca.",
+        "summary": "Inventario paginado, con filtros. ?buscar= código patrimonial, serie, modelo, responsable, marca, IP o nombre de equipo.",
         "operationId": "ListarActivos",
         "parameters": [
           {
@@ -1658,6 +1693,17 @@
         "properties": {
           "ficha": {
             "$ref": "#/components/schemas/FichaTecnica"
+          }
+        }
+      },
+      "CambiarGeneracionesProcesadorRequest": {
+        "required": [
+          "generaciones"
+        ],
+        "type": "object",
+        "properties": {
+          "generaciones": {
+            "$ref": "#/components/schemas/GeneracionesProcesador"
           }
         }
       },
@@ -2120,8 +2166,8 @@
       },
       "DatosTecnicosActivo": {
         "required": [
-          "procesador",
-          "velocidadGeneracion",
+          "procesadorId",
+          "generacionProcesador",
           "nucleos",
           "tarjetaGrafica",
           "pantallaPulgadas",
@@ -2138,13 +2184,14 @@
         ],
         "type": "object",
         "properties": {
-          "procesador": {
+          "procesadorId": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "format": "uuid"
           },
-          "velocidadGeneracion": {
+          "generacionProcesador": {
             "type": [
               "null",
               "string"
@@ -2371,7 +2418,8 @@
           "id",
           "nombre",
           "activo",
-          "ficha"
+          "ficha",
+          "generaciones"
         ],
         "type": "object",
         "properties": {
@@ -2392,6 +2440,16 @@
               },
               {
                 "$ref": "#/components/schemas/FichaTecnica"
+              }
+            ]
+          },
+          "generaciones": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/GeneracionesProcesador"
               }
             ]
           }
@@ -2715,6 +2773,33 @@
           null
         ]
       },
+      "GeneracionesDto": {
+        "required": [
+          "familia",
+          "opciones"
+        ],
+        "type": "object",
+        "properties": {
+          "familia": {
+            "type": "string"
+          },
+          "opciones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
+          }
+        }
+      },
+      "GeneracionesProcesador": {
+        "enum": [
+          "Ninguna",
+          "IntelCore",
+          "IntelCoreUltra",
+          "AmdRyzen",
+          null
+        ]
+      },
       "GeneralesActivoDto": {
         "required": [
           "codigoPatrimonial",
@@ -2839,7 +2924,8 @@
           "capacidadesDiscoGb",
           "capacidadesRamGb",
           "velocidadesRam",
-          "capacidadMaximaDiscoGb"
+          "capacidadMaximaDiscoGb",
+          "generacionesProcesador"
         ],
         "type": "object",
         "properties": {
@@ -2920,6 +3006,12 @@
               "string"
             ],
             "format": "int32"
+          },
+          "generacionesProcesador": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeneracionesDto"
+            }
           }
         }
       },
@@ -3340,7 +3432,7 @@
       "TecnicosActivoDto": {
         "required": [
           "procesador",
-          "velocidadGeneracion",
+          "generacion",
           "nucleos",
           "tarjetaGrafica",
           "pantallaPulgadas",
@@ -3358,15 +3450,23 @@
         "type": "object",
         "properties": {
           "procesador": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
             ]
           },
-          "velocidadGeneracion": {
-            "type": [
-              "null",
-              "string"
+          "generacion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OpcionDto"
+              }
             ]
           },
           "nucleos": {

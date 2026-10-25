@@ -2,6 +2,7 @@ import { Conservacion } from '../../../api/models/conservacion';
 import { Criticidad } from '../../../api/models/criticidad';
 import { EstadoGarantia } from '../../../api/models/estado-garantia';
 import { FichaTecnica } from '../../../api/models/ficha-tecnica';
+import { GeneracionesProcesador } from '../../../api/models/generaciones-procesador';
 import { SituacionRenovacion } from '../../../api/models/situacion-renovacion';
 import { TipoAdquisicion } from '../../../api/models/tipo-adquisicion';
 import { TipoDisco } from '../../../api/models/tipo-disco';
@@ -86,6 +87,24 @@ export const DESCRIPCION_FICHA: Readonly<Record<NonNullable<FichaTecnica>, strin
   Ninguna: 'Sin características técnicas.',
 };
 
+/** Qué generaciones ofrece una familia de procesadores (D44). */
+export const TEXTO_GENERACIONES: Readonly<Record<NonNullable<GeneracionesProcesador>, string>> = {
+  IntelCore: 'Intel Core',
+  IntelCoreUltra: 'Intel Core Ultra',
+  AmdRyzen: 'AMD Ryzen',
+  Ninguna: 'Sin generación',
+};
+
+export const DESCRIPCION_GENERACIONES: Readonly<Record<NonNullable<GeneracionesProcesador>, string>> = {
+  IntelCore: '1.ª a 14.ª generación.',
+  IntelCoreUltra: 'Serie 1 a Serie 3.',
+  AmdRyzen: 'Serie 1000 a Serie 9000.',
+  Ninguna: 'Sin lista de generaciones (Celeron, Xeon, Apple…).',
+};
+
+/** Orden en que se ofrecen las familias al elegir. */
+export const FAMILIAS_GENERACIONES: readonly NonNullable<GeneracionesProcesador>[] = ['IntelCore', 'IntelCoreUltra', 'AmdRyzen', 'Ninguna'];
+
 /**
  * Lector de una de las tablas anteriores que acepta null: según el campo, el cliente generado puede declarar la lista
  * con null (por ejemplo, la criticidad es opcional en la ficha). Sin valor devuelve el texto indicado.
@@ -106,6 +125,8 @@ export const textoUsoDisco = lector(TEXTO_USO_DISCO, '—');
 export const textoTipoRam = lector(TEXTO_TIPO_RAM, '—');
 export const textoFicha = lector(TEXTO_FICHA, TEXTO_FICHA.Ninguna);
 export const descripcionFicha = lector(DESCRIPCION_FICHA, DESCRIPCION_FICHA.Ninguna);
+export const textoGeneraciones = lector(TEXTO_GENERACIONES, TEXTO_GENERACIONES.Ninguna);
+export const descripcionGeneraciones = lector(DESCRIPCION_GENERACIONES, DESCRIPCION_GENERACIONES.Ninguna);
 
 /** Valores de cada lista, en el orden en que se ofrecen. */
 export const GARANTIAS = Object.keys(TEXTO_GARANTIA) as readonly NonNullable<EstadoGarantia>[];

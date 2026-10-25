@@ -54,6 +54,11 @@ public static class ErroresActivo
                 ? $"El tipo «{tipo}» solo lleva datos de red (nombre de equipo, IP y MAC): quite las demás características, los discos y la memoria."
                 : $"El tipo «{tipo}» no lleva características técnicas, discos ni memoria.");
 
+    public static ErrorAplicacion GeneracionInvalida(string procesador) =>
+        ErrorAplicacion.Validacion(
+            "Activos.GeneracionInvalida",
+            $"La generación elegida no corresponde al procesador «{procesador}». Elija una de su lista.");
+
     public static ErrorAplicacion ReferenciaInvalida(string campo) =>
         ErrorAplicacion.Validacion("Activos.ReferenciaInvalida", $"{campo} no existe o no está disponible.");
 
@@ -136,6 +141,26 @@ internal sealed class VerificadorFichaActivo(IAppDbContext db, TimeProvider relo
             }
         }
 
+        // D44: la generación debe ser de la lista de la familia del procesador.
+        if (ficha.Tecnicos?.ProcesadorId is Guid procesadorId && procesadorId != Guid.Empty)
+        {
+            var procesador = await db.Procesadores.AsNoTracking()
+                .Where(p => p.Id == procesadorId)
+                .Select(p => new { p.Nombre, p.Activo, p.Generaciones })
+                .FirstOrDefaultAsync(cancellationToken);
+            var referencia = procesador is null ? null : new Referencia(procesador.Nombre, procesador.Activo);
+            if (Revisar("El procesador", referencia, procesadorId, actual?.ProcesadorId) is ErrorAplicacion errorProcesador)
+            {
+                return errorProcesador;
+            }
+
+            var generacion = ficha.Tecnicos.GeneracionProcesador?.Trim();
+            if (!string.IsNullOrEmpty(generacion) && GeneracionesDeProcesador.Buscar(procesador!.Generaciones, generacion) is null)
+            {
+                return ErroresActivo.GeneracionInvalida(procesador.Nombre);
+            }
+        }
+
         // D43: solo se aceptan los datos técnicos que lleva el tipo.
         if (!CorrespondeALaFicha(ficha, tipo!.Ficha))
         {
@@ -176,7 +201,7 @@ internal sealed class VerificadorFichaActivo(IAppDbContext db, TimeProvider relo
         var deRed = new[] { t.NombreEquipo, t.DireccionIp, t.DireccionMac };
         var otros = new[]
         {
-            t.Procesador, t.VelocidadGeneracion, t.TarjetaGrafica, t.VersionSistemaOperativo, t.DominioGrupo, t.Antivirus,
+            t.GeneracionProcesador, t.TarjetaGrafica, t.VersionSistemaOperativo, t.DominioGrupo, t.Antivirus,
             t.PuertosPrincipales, t.AccesoriosIncluidos,
         };
 
@@ -184,6 +209,7 @@ internal sealed class VerificadorFichaActivo(IAppDbContext db, TimeProvider relo
             || t.Nucleos is not null
             || t.PantallaPulgadas is not null
             || (t.SistemaOperativoId is Guid so && so != Guid.Empty)
+            || (t.ProcesadorId is Guid cpu && cpu != Guid.Empty)
             || t.DiscoCifrado is not null;
 
         return tipo == FichaTecnica.Red

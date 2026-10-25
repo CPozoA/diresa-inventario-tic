@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
+using Inventario.Domain.Catalogos;
 using Inventario.Domain.Common;
 
 namespace Inventario.Domain.Activos;
@@ -55,8 +56,8 @@ public sealed record DatosAdquisicionActivo(
 }
 
 /// <summary>Características técnicas (equipos de cómputo; IP y MAC sirven también para equipos de red).</summary>
-/// <param name="Procesador">Procesador.</param>
-/// <param name="VelocidadGeneracion">Velocidad o generación del procesador.</param>
+/// <param name="ProcesadorId">Catálogo de procesadores (familia: Intel Core i7, AMD Ryzen 5…).</param>
+/// <param name="GeneracionProcesador">Código de la generación, de la lista de su familia ("13", "5000"…; D44).</param>
 /// <param name="Nucleos">Número de núcleos.</param>
 /// <param name="TarjetaGrafica">Tarjeta gráfica.</param>
 /// <param name="PantallaPulgadas">Tamaño de pantalla.</param>
@@ -71,8 +72,8 @@ public sealed record DatosAdquisicionActivo(
 /// <param name="PuertosPrincipales">Puertos principales.</param>
 /// <param name="AccesoriosIncluidos">Accesorios incluidos.</param>
 public sealed record DatosTecnicosActivo(
-    string? Procesador,
-    string? VelocidadGeneracion,
+    Guid? ProcesadorId,
+    string? GeneracionProcesador,
     int? Nucleos,
     string? TarjetaGrafica,
     decimal? PantallaPulgadas,
@@ -192,9 +193,10 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
     public DateOnly? FechaRenovacion { get; private set; }
 
     // Características técnicas.
-    public string? Procesador { get; private set; }
+    public Guid? ProcesadorId { get; private set; }
 
-    public string? VelocidadGeneracion { get; private set; }
+    /// <summary>Código de la generación ("13"); su texto depende de la familia del procesador (D44).</summary>
+    public string? GeneracionProcesador { get; private set; }
 
     public int? Nucleos { get; private set; }
 
@@ -398,8 +400,9 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
 
     private static Action<Activo> ValidarTecnicos(DatosTecnicosActivo t)
     {
-        var procesador = Guardas.TextoOpcional(t.Procesador, "El procesador", LongitudMaximaTextoTecnico);
-        var velocidad = Guardas.TextoOpcional(t.VelocidadGeneracion, "La velocidad o generación", LongitudMaximaTextoCorto);
+        var procesadorId = t.ProcesadorId == Guid.Empty ? null : t.ProcesadorId;
+        var generacion = Guardas.TextoOpcional(
+            t.GeneracionProcesador, "La generación del procesador", GeneracionesDeProcesador.LongitudMaximaCodigo);
         var grafica = Guardas.TextoOpcional(t.TarjetaGrafica, "La tarjeta gráfica", LongitudMaximaTextoTecnico);
         var version = Guardas.TextoOpcional(t.VersionSistemaOperativo, "La versión del sistema operativo", LongitudMaximaTextoCorto);
         var dominio = Guardas.TextoOpcional(t.DominioGrupo, "El dominio o grupo de trabajo", LongitudMaximaTextoTecnico);
@@ -410,6 +413,7 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
         var ip = ValidarIp(t.DireccionIp);
         var mac = NormalizarMac(t.DireccionMac);
 
+        Exigir(generacion is null || procesadorId is not null, "Elija el procesador antes de su generación.");
         Exigir(t.Nucleos is not int n || (n >= 1 && n <= 512), "El número de núcleos debe estar entre 1 y 512.");
         Exigir(
             t.PantallaPulgadas is not decimal p || (p >= 1 && p <= 150 && decimal.Round(p, 1) == p),
@@ -417,8 +421,8 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
 
         return a =>
         {
-            a.Procesador = procesador;
-            a.VelocidadGeneracion = velocidad;
+            a.ProcesadorId = procesadorId;
+            a.GeneracionProcesador = generacion;
             a.Nucleos = t.Nucleos;
             a.TarjetaGrafica = grafica;
             a.PantallaPulgadas = t.PantallaPulgadas;

@@ -32,6 +32,14 @@ public static class CatalogosIniciales
         "Windows Server 2019", "Ubuntu", "Debian", "macOS", "Android", "Sin sistema operativo",
     ];
 
+    public static IReadOnlyList<string> Procesadores { get; } =
+    [
+        "Intel Core i3", "Intel Core i5", "Intel Core i7", "Intel Core i9", "Intel Core Ultra 5", "Intel Core Ultra 7",
+        "Intel Core Ultra 9", "Intel Celeron", "Intel Pentium", "Intel Atom", "Intel Xeon", "AMD Ryzen 3", "AMD Ryzen 5",
+        "AMD Ryzen 7", "AMD Ryzen 9", "AMD Athlon", "AMD EPYC", "Apple M1", "Apple M2", "Apple M3", "Apple M4",
+        "Qualcomm Snapdragon X", "Otro",
+    ];
+
     public static IReadOnlyList<string> TiposLicencia { get; } =
     [
         "Perpetua", "Suscripción anual", "Suscripción mensual", "OEM", "Volumen", "Software libre",
@@ -57,6 +65,26 @@ public static class CatalogosIniciales
         }
 
         return TiposRed.Contains(clave) ? FichaTecnica.Red : FichaTecnica.Ninguna;
+    }
+
+    /// <summary>
+    /// Generaciones que corresponden a una familia de procesadores por su nombre (D44): "Intel Core i…", "Intel Core
+    /// Ultra…" y "AMD Ryzen…" tienen las suyas; las demás, ninguna. El superadministrador las puede cambiar después.
+    /// </summary>
+    public static GeneracionesProcesador GeneracionesPorOmision(string nombre)
+    {
+        var clave = Clave(nombre);
+        if (clave.StartsWith("INTEL CORE ULTRA", StringComparison.Ordinal))
+        {
+            return GeneracionesProcesador.IntelCoreUltra;
+        }
+
+        if (clave.StartsWith("INTEL CORE I", StringComparison.Ordinal))
+        {
+            return GeneracionesProcesador.IntelCore;
+        }
+
+        return clave.StartsWith("AMD RYZEN", StringComparison.Ordinal) ? GeneracionesProcesador.AmdRyzen : GeneracionesProcesador.Ninguna;
     }
 
     /// <summary>Mayúsculas, sin tildes y con un espacio entre palabras ("All-in-one" → "ALL IN ONE").</summary>

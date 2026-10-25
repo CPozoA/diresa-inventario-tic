@@ -48,6 +48,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IUsuari
 
     public DbSet<SistemaOperativo> SistemasOperativos => Set<SistemaOperativo>();
 
+    public DbSet<Procesador> Procesadores => Set<Procesador>();
+
     public DbSet<TipoLicencia> TiposLicencia => Set<TipoLicencia>();
 
     /// <summary>Claves que cifran la cookie de sesión. Se guardan aquí para sobrevivir a los reciclajes de IIS.</summary>

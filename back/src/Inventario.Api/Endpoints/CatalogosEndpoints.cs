@@ -45,6 +45,11 @@ internal static class CatalogosEndpoints
             .WithName("CambiarFichaTipoActivo")
             .WithSummary("Cambia qué características técnicas lleva un tipo de activo: Computo, Red o Ninguna.");
 
+        grupo.MapPut("/procesadores/{id:guid}/generaciones", CambiarGeneracionesAsync)
+            .RequirePermiso(Permisos.Catalogos.GestionarGlobales)
+            .WithName("CambiarGeneracionesProcesador")
+            .WithSummary("Cambia qué generaciones ofrece una familia de procesadores: IntelCore, IntelCoreUltra, AmdRyzen o Ninguna.");
+
         grupo.MapPost("/{tipo}/{id:guid}/desactivar", DesactivarAsync)
             .WithName("DesactivarElementoCatalogo")
             .WithSummary("Deja de ofrecer el elemento al registrar; se conserva en los registros que ya lo usan.");
@@ -102,10 +107,19 @@ internal static class CatalogosEndpoints
         ICommandHandler<CambiarFichaTipoActivoCommand, Vacio> handler,
         CancellationToken cancellationToken) =>
         (await handler.Handle(new CambiarFichaTipoActivoCommand(id, cuerpo.Ficha), cancellationToken)).ToNoContentResult();
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> CambiarGeneracionesAsync(
+        Guid id,
+        CambiarGeneracionesProcesadorRequest cuerpo,
+        ICommandHandler<CambiarGeneracionesProcesadorCommand, Vacio> handler,
+        CancellationToken cancellationToken) =>
+        (await handler.Handle(new CambiarGeneracionesProcesadorCommand(id, cuerpo.Generaciones), cancellationToken)).ToNoContentResult();
 }
 
 internal sealed record CrearElementoCatalogoRequest(Guid? SedeId, string Nombre);
 
 internal sealed record CambiarFichaTipoActivoRequest(FichaTecnica Ficha);
+
+internal sealed record CambiarGeneracionesProcesadorRequest(GeneracionesProcesador Generaciones);
 
 internal sealed record RenombrarElementoCatalogoRequest(string Nombre);

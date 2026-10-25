@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.18 · 25/10/2026 · Cambios: Paso 7C-2 implementado (formulario para registrar y editar activos).
+> Versión 0.19 · 25/10/2026 · Cambios: D44 (procesador y generación de lista); búsqueda del inventario por IP y nombre de equipo (Paso 7C-3).
 
 ---
 
@@ -81,6 +81,7 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D41 | Discos y memoria RAM | Una fila por disco y por módulo. Tipo, capacidad, uso y velocidad se **eligen de listas fijas** definidas en el dominio; la velocidad de la RAM se ofrece según su tipo. La capacidad de un disco admite "Otra" para casos raros (§5.10) | Evita errores de registro (500 por 512, TB por GB) y permite sumar totales confiables. |
 | D42 | Excel | **ClosedXML** (licencia MIT) para importar establecimientos y, más adelante, para la exportación a Excel | Formato que los usuarios ya tienen; una sola librería para leer y escribir. |
 | D43 | Ficha técnica por tipo | Cada **tipo de activo** indica qué características técnicas lleva: **Cómputo** (todas, con discos y RAM), **Red** (solo nombre de equipo, IP y MAC) o **Ninguna**. Los tipos iniciales la traen asignada por nombre; el superadministrador la cambia en Catálogos generales. La API rechaza datos que no correspondan al tipo (`Activos.DatosNoCorresponden`) | La pantalla muestra solo las secciones que aplican (un monitor no tiene IP ni discos) y la base no acumula datos sin sentido. Que sea un dato del catálogo permite agregar tipos nuevos sin cambiar código. |
+| D44 | Procesador y generación | El procesador se elige del catálogo general **Procesadores** (familias: Intel Core i5, AMD Ryzen 7…) y la generación, de la lista que ofrece su familia: **Intel Core** 1.ª a 14.ª generación, **Intel Core Ultra** Serie 1 a 3, **AMD Ryzen** Serie 1000 a 9000, o **ninguna** (Celeron, Xeon, Apple…). Las familias nuevas toman su lista por el nombre y el superadministrador la cambia en Catálogos generales. Se guarda el código de la generación ("13"); la API rechaza una generación que no sea de la familia (`Activos.GeneracionInvalida`). Reemplaza los textos libres "procesador" y "velocidad o generación" | Escrito a mano, la misma generación terminaba como "13", "13.ª" o "treceava" y no se podía filtrar ni contar. Que la familia indique su lista permite agregar procesadores sin cambiar el programa. |
 
 ### Decisiones pendientes de confirmar
 
@@ -304,7 +305,7 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 - **Listas fijas** (conservación, criticidad, tipo de adquisición, tipos y usos de disco, tipos, capacidades y velocidades de RAM): definidas en `Domain/Activos/ListasActivo.cs` y entregadas por `GET /api/activos/listas` con sus textos. Viajan en la API y se guardan en la base como texto (`"Bueno"`, `"Nvme"`).
 - **Validaciones de la ficha:** IP (IPv4 completa o IPv6), MAC (se guarda como `A4:BB:6D:12:34:56`), nombre de equipo, rangos de valor, vida útil (1 a 50 años), núcleos y pantalla; el fin de garantía no es anterior a la adquisición; la fecha de adquisición no es futura; hasta 16 discos y 32 módulos de RAM.
 - **Cálculos:** la entidad guarda la **fecha de renovación** (adquisición + vida útil) para poder filtrar en la base; antigüedad, garantía (vigente o vencida), vida útil restante y situación de renovación (vigente, próximo a renovar con 1 año o menos, renovar) se calculan a la fecha del servidor.
-- **Lista del inventario** paginada (25 por página, hasta 100), ordenada por código, con filtros por sede (superadministrador), establecimiento, tipo, área, estado, garantía y renovación, y búsqueda por código, serie, modelo, responsable o marca.
+- **Lista del inventario** paginada (25 por página, hasta 100), ordenada por código, con filtros por sede (superadministrador), establecimiento, tipo, área, estado, garantía y renovación, y búsqueda por código, serie, modelo, responsable, marca, IP o nombre de equipo (estas dos desde el 7C-3).
 - **Eliminar** (`Activos.Eliminar`) es para registros hechos por error; un equipo que ya no se usa se marca con el estado "De baja".
 - **Ficha técnica por tipo (D43):** columna `Ficha` en `catalogos.TiposActivo` (`Computo`, `Red`, `Ninguna`). Al arrancar, los tipos que no la tienen la reciben según su nombre (Laptop, PC de escritorio, All-in-one, Servidor, Tablet y Workstation → Cómputo; Impresora, Multifuncional, Escáner, Switch, Router, Access point, Firewall y Teléfono IP → Red; los demás → Ninguna). `PUT /api/catalogos/tipos-activo/{id}/ficha` la cambia (`Catalogos.GestionarGlobales`). Los activos ya registrados conservan sus datos; la ficha (`GET /api/activos/{id}`) informa la del tipo para que la pantalla elija las secciones.
 
@@ -512,6 +513,7 @@ Consideraciones del hosting compartido:
 | **7B** | Bosquejos de la lista de activos y de la ficha técnica | Revisión en el lienzo de diseño |
 | **7C-1** | Ficha técnica por tipo (D43) en la API; lista de activos con búsqueda y filtros, y ficha de solo lectura en Angular | `dotnet test`, `npm test` y prueba manual |
 | **7C-2** | Formulario para registrar y editar activos (establecimiento por búsqueda, secciones según la ficha, discos y RAM, aviso de serie repetida, aviso de cambios sin guardar) | `npm test` y prueba de punta a punta |
+| **7C-3** | Procesador y generación de lista (D44); búsqueda del inventario por IP y nombre de equipo | `dotnet test`, `npm test` y prueba manual |
 | **7D** | Fotos de los activos (D38, §5.8): almacenamiento, API, cámara o carga de archivos y reducción en el navegador | `dotnet test`, `npm test` y prueba en celular |
 
 Fases posteriores: licencias, mantenimiento, asignaciones, resumen, exportación a Excel, registro de auditoría y endurecimiento.

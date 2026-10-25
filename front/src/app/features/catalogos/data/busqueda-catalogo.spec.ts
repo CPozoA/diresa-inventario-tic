@@ -1,7 +1,7 @@
 import { ElementoCatalogoDto } from '../../../api/models/elemento-catalogo-dto';
 import { buscarMismoNombre, filtrarPorNombre, normalizarNombre } from './busqueda-catalogo';
 
-const elemento = (nombre: string, activo = true): ElementoCatalogoDto => ({ id: nombre, nombre, activo, ficha: null });
+const elemento = (nombre: string, activo = true): ElementoCatalogoDto => ({ id: nombre, nombre, activo, ficha: null, generaciones: null });
 
 const lista = [elemento('HP'), elemento('HP Inc.'), elemento('Lenovo'), elemento('Almacén central'), elemento('Dell', false)];
 

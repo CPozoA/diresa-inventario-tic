@@ -44,8 +44,8 @@ function ficha(tipo: FichaTecnica, cambios: Partial<FichaActivoDto> = {}): Ficha
       finGarantia: '2024-03-14',
     },
     tecnicos: {
-      procesador: 'Intel Core i7-1355U',
-      velocidadGeneracion: '13.ª generación',
+      procesador: ref('Intel Core i7'),
+      generacion: { valor: '13', texto: '13.ª generación' },
       nucleos: 10,
       tarjetaGrafica: null,
       pantallaPulgadas: '14',
@@ -90,7 +90,7 @@ describe('presentación de la ficha', () => {
       'Disco cifrado',
       'Pantalla',
     ]);
-    expect(datos[0].valor).toBe('Intel Core i7-1355U · 13.ª generación · 10 núcleos');
+    expect(datos[0].valor).toBe('Intel Core i7 · 13.ª generación · 10 núcleos');
     expect(datos[1]).toMatchObject({ valor: '16 GB', detalle: '(2 módulos)' });
     expect(datos[2]).toMatchObject({ valor: '512 GB', detalle: '(1 disco)' });
     expect(datos[3].valor).toBe('Windows 11 Pro · 23H2');

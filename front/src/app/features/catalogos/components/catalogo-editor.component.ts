@@ -14,21 +14,31 @@ import { firstValueFrom } from 'rxjs';
 import { Api } from '../../../api/api';
 import { activarElementoCatalogo } from '../../../api/fn/catalogos/activar-elemento-catalogo';
 import { cambiarFichaTipoActivo } from '../../../api/fn/catalogos/cambiar-ficha-tipo-activo';
+import { cambiarGeneracionesProcesador } from '../../../api/fn/catalogos/cambiar-generaciones-procesador';
 import { crearElementoCatalogo } from '../../../api/fn/catalogos/crear-elemento-catalogo';
 import { desactivarElementoCatalogo } from '../../../api/fn/catalogos/desactivar-elemento-catalogo';
 import { listarElementosCatalogo } from '../../../api/fn/catalogos/listar-elementos-catalogo';
 import { ElementoCatalogoDto } from '../../../api/models/elemento-catalogo-dto';
 import { FichaTecnica } from '../../../api/models/ficha-tecnica';
+import { GeneracionesProcesador } from '../../../api/models/generaciones-procesador';
 import { TipoCatalogoDto } from '../../../api/models/tipo-catalogo-dto';
 import { ErrorApi, aErrorApi } from '../../../core/http/error-api';
 import { NotificacionesService } from '../../../core/notificaciones.service';
 import { AvisoComponent } from '../../../shared/ui/aviso.component';
 import { confirmar } from '../../../shared/ui/confirmacion.dialog';
-import { FICHAS, descripcionFicha, textoFicha } from '../../activos/data/textos-activo';
+import {
+  FAMILIAS_GENERACIONES,
+  FICHAS,
+  descripcionFicha,
+  descripcionGeneraciones,
+  textoFicha,
+  textoGeneraciones,
+} from '../../activos/data/textos-activo';
 import { buscarMismoNombre, filtrarPorNombre, normalizarNombre } from '../data/busqueda-catalogo';
 import { DatosRenombrar, RenombrarDialog } from './renombrar.dialog';
 
 const CODIGO_TIPOS_ACTIVO = 'tipos-activo';
+const CODIGO_PROCESADORES = 'procesadores';
 
 /** "Solo nombre de equipo, IP y MAC." → "solo nombre de equipo, IP y MAC." (sin tocar las siglas). */
 const enMinusculaInicial = (texto: string): string => texto.charAt(0).toLocaleLowerCase('es-PE') + texto.slice(1);
@@ -70,6 +80,15 @@ export class CatalogoEditorComponent {
   protected readonly fichas = FICHAS;
   protected readonly textoFicha = textoFicha;
   protected readonly descripcionFicha = descripcionFicha;
+
+  /** Los procesadores llevan, además, qué generaciones ofrece su familia (D44). */
+  protected readonly esProcesadores = computed(() => this.tipo().codigo === CODIGO_PROCESADORES);
+  protected readonly familias = FAMILIAS_GENERACIONES;
+  protected readonly textoGeneraciones = textoGeneraciones;
+  protected readonly descripcionGeneraciones = descripcionGeneraciones;
+
+  /** Columnas de la tabla (para el mensaje de "sin elementos"). */
+  protected readonly columnas = computed(() => 3 + (this.esTiposActivo() || this.esProcesadores() ? 1 : 0));
 
   protected readonly mostrarInactivos = signal(false);
   // Sin "required": el campo también sirve para buscar, así que vacío es un estado normal (puedeAgregar lo controla).
@@ -185,6 +204,36 @@ export class CatalogoEditorComponent {
     try {
       await this.api.invoke(cambiarFichaTipoActivo, { id: elemento.id, body: { ficha } });
       this.notificaciones.exito(`«${elemento.nombre}» ahora usa la ficha «${textoFicha(ficha)}».`);
+      this.elementos.reload();
+    } catch (error: unknown) {
+      this.notificaciones.error(error);
+    }
+  }
+
+  /** Las generaciones de un procesador; sin dato se tratan como "Ninguna". */
+  protected generacionesDe(elemento: ElementoCatalogoDto): NonNullable<GeneracionesProcesador> {
+    return elemento.generaciones ?? 'Ninguna';
+  }
+
+  protected async cambiarGeneraciones(elemento: ElementoCatalogoDto, generaciones: NonNullable<GeneracionesProcesador>): Promise<void> {
+    if (generaciones === this.generacionesDe(elemento)) {
+      return;
+    }
+
+    const confirmado = await confirmar(this.dialogos, {
+      titulo: `Generaciones de «${elemento.nombre}»`,
+      mensaje:
+        `Ofrecerá las generaciones de «${textoGeneraciones(generaciones)}»: ${enMinusculaInicial(descripcionGeneraciones(generaciones))} ` +
+        'Los activos ya registrados conservan su dato; si su generación deja de corresponder, se pedirá elegir otra al editarlos.',
+      confirmar: 'Cambiar',
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    try {
+      await this.api.invoke(cambiarGeneracionesProcesador, { id: elemento.id, body: { generaciones } });
+      this.notificaciones.exito(`«${elemento.nombre}» ahora ofrece las generaciones de «${textoGeneraciones(generaciones)}».`);
       this.elementos.reload();
     } catch (error: unknown) {
       this.notificaciones.error(error);

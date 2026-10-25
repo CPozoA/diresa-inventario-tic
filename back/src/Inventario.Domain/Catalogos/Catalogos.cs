@@ -129,6 +129,53 @@ public sealed class SistemaOperativo : ElementoCatalogo
     public static SistemaOperativo Crear(string nombre) => new(nombre);
 }
 
+/// <summary>
+/// Qué generaciones ofrece una familia de procesadores (docs/ARQUITECTURA.md D44). Las listas están en
+/// <see cref="GeneracionesDeProcesador"/>.
+/// </summary>
+public enum GeneracionesProcesador
+{
+    /// <summary>Sin generación (Celeron, Xeon, Apple M1…).</summary>
+    Ninguna,
+
+    /// <summary>Intel Core i3, i5, i7, i9: 1.ª a 14.ª generación.</summary>
+    IntelCore,
+
+    /// <summary>Intel Core Ultra: Serie 1 a Serie 3.</summary>
+    IntelCoreUltra,
+
+    /// <summary>AMD Ryzen: Serie 1000 a Serie 9000.</summary>
+    AmdRyzen,
+}
+
+/// <summary>Familia de procesadores (Intel Core i5, AMD Ryzen 7…), con las generaciones que le corresponden.</summary>
+public sealed class Procesador : ElementoCatalogo
+{
+    private Procesador()
+    {
+    }
+
+    private Procesador(string nombre)
+        : base(nombre)
+    {
+        Generaciones = CatalogosIniciales.GeneracionesPorOmision(Nombre);
+    }
+
+    public GeneracionesProcesador Generaciones { get; private set; }
+
+    public static Procesador Crear(string nombre) => new(nombre);
+
+    public void CambiarGeneraciones(GeneracionesProcesador generaciones)
+    {
+        if (!Enum.IsDefined(generaciones))
+        {
+            throw new DominioException("Las generaciones del procesador no son válidas.");
+        }
+
+        Generaciones = generaciones;
+    }
+}
+
 /// <summary>Modalidad de una licencia de software (Perpetua, Suscripción anual, OEM…).</summary>
 public sealed class TipoLicencia : ElementoCatalogo
 {

@@ -33,8 +33,7 @@ internal sealed class ActivoConfiguration : IEntityTypeConfiguration<Activo>
         builder.Property(a => a.NumeroOrdenCompra).HasMaxLength(Activo.LongitudMaximaOrdenCompra);
         builder.Property(a => a.ValorAdquisicion).HasPrecision(12, 2);
 
-        builder.Property(a => a.Procesador).HasMaxLength(Activo.LongitudMaximaTextoTecnico);
-        builder.Property(a => a.VelocidadGeneracion).HasMaxLength(Activo.LongitudMaximaTextoCorto);
+        builder.Property(a => a.GeneracionProcesador).HasMaxLength(GeneracionesDeProcesador.LongitudMaximaCodigo);
         builder.Property(a => a.TarjetaGrafica).HasMaxLength(Activo.LongitudMaximaTextoTecnico);
         builder.Property(a => a.PantallaPulgadas).HasPrecision(4, 1);
         builder.Property(a => a.VersionSistemaOperativo).HasMaxLength(Activo.LongitudMaximaTextoCorto);
@@ -67,6 +66,7 @@ internal sealed class ActivoConfiguration : IEntityTypeConfiguration<Activo>
         builder.HasOne<Area>().WithMany().HasForeignKey(a => a.AreaId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<EstadoActivo>().WithMany().HasForeignKey(a => a.EstadoActivoId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<SistemaOperativo>().WithMany().HasForeignKey(a => a.SistemaOperativoId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Procesador>().WithMany().HasForeignKey(a => a.ProcesadorId).OnDelete(DeleteBehavior.Restrict);
 
         // Discos y RAM forman parte del activo: se borran con él.
         builder.HasMany(a => a.Discos).WithOne().HasForeignKey(d => d.ActivoId).OnDelete(DeleteBehavior.Cascade);

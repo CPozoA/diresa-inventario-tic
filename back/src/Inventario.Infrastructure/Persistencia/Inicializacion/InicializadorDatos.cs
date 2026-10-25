@@ -82,6 +82,7 @@ internal sealed partial class InicializadorDatos(
         cargados += await CargarSiVacioAsync(db.EstadosActivo, CatalogosIniciales.EstadosActivo, EstadoActivo.Crear, cancellationToken);
         cargados += await CargarSiVacioAsync(db.SistemasOperativos, CatalogosIniciales.SistemasOperativos, SistemaOperativo.Crear, cancellationToken);
         cargados += await CargarSiVacioAsync(db.TiposLicencia, CatalogosIniciales.TiposLicencia, TipoLicencia.Crear, cancellationToken);
+        cargados += await CargarSiVacioAsync(db.Procesadores, CatalogosIniciales.Procesadores, Procesador.Crear, cancellationToken);
 
         if (cargados > 0)
         {

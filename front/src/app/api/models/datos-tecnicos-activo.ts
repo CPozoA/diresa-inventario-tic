@@ -8,13 +8,13 @@ export interface DatosTecnicosActivo {
   direccionMac: (string | null);
   discoCifrado: (boolean | null);
   dominioGrupo: (string | null);
+  generacionProcesador: (string | null);
   nombreEquipo: (string | null);
   nucleos: (number | string | null);
   pantallaPulgadas: (number | string | null);
-  procesador: (string | null);
+  procesadorId: (string | null);
   puertosPrincipales: (string | null);
   sistemaOperativoId: (string | null);
   tarjetaGrafica: (string | null);
-  velocidadGeneracion: (string | null);
   versionSistemaOperativo: (string | null);
 }
