@@ -1,0 +1,243 @@
+.volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-weight: 500;
+  text-decoration: none;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.tarjeta {
+  background: var(--inv-superficie);
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+
+    .atenuado {
+      font-weight: 400;
+      font-size: 14px;
+    }
+  }
+
+  // Las tablas de discos y RAM van de borde a borde de la tarjeta.
+  .tabla-contenedor {
+    margin: 0 -20px -20px;
+    border-top: 1px solid var(--inv-borde);
+  }
+
+  // En pantallas angostas la tabla se desplaza de lado en lugar de partir "M.2 #1" en dos líneas.
+  .tabla td {
+    white-space: nowrap;
+  }
+}
+
+.cabecera {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.identidad {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 500;
+  }
+
+  .modelo {
+    font-size: 17px;
+    font-weight: 500;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  .pastilla {
+    margin-left: 0;
+  }
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.eliminar {
+  --mat-button-outlined-label-text-color: var(--inv-mal);
+  --mat-button-outlined-icon-color: var(--inv-mal);
+}
+
+.columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 1100px) {
+  .columnas {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.establecimiento {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.dos-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .principal {
+    font-weight: 500;
+  }
+
+  .atenuado {
+    font-size: 13px;
+  }
+}
+
+.datos {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px 24px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .ancho {
+    grid-column: 1 / -1;
+  }
+
+  dt {
+    font-size: 12px;
+    color: var(--inv-atenuado);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  // Lista compacta de la columna lateral: etiqueta a la izquierda, valor a la derecha.
+  &.una-columna {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+
+    .fila {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    dt {
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    dd {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: baseline;
+      gap: 4px 6px;
+      text-align: right;
+    }
+  }
+}
+
+.sin-datos {
+  margin: 0;
+  color: var(--inv-atenuado);
+}
+
+.ciclo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ciclo-cifras {
+  display: flex;
+  justify-content: space-between;
+
+  strong {
+    font-size: 18px;
+    font-weight: 600;
+  }
+}
+
+.barra {
+  height: 8px;
+  border-radius: 999px;
+  background: #e8ebe9;
+  overflow: hidden;
+
+  .relleno {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--inv-primario);
+
+    &.ok { background: var(--inv-ok); }
+    &.alerta { background: #c98a10; }
+    &.mal { background: var(--inv-mal); }
+  }
+}
+
+.registro {
+  margin: 0;
+  font-size: 13px;
+}

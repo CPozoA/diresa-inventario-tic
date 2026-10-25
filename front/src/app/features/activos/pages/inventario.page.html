@@ -1,0 +1,209 @@
+<div class="pagina">
+  <header class="pagina-encabezado">
+    <div class="pagina-titulo">
+      <h1>Inventario</h1>
+      <span class="atenuado" aria-live="polite">{{ subtitulo() }}</span>
+    </div>
+  </header>
+
+  <div class="filtros">
+    <div class="fila-busqueda">
+      <mat-form-field subscriptSizing="dynamic" floatLabel="always" class="buscador">
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <mat-label>Buscar</mat-label>
+        <input
+          matInput
+          autocomplete="off"
+          placeholder="Código, serie, modelo, responsable o marca"
+          [formControl]="busqueda"
+          (keydown.escape)="limpiarBusqueda()"
+        />
+        @if (busqueda.value) {
+          <button matSuffix mat-icon-button type="button" aria-label="Limpiar la búsqueda" (click)="limpiarBusqueda()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      <button
+        mat-stroked-button
+        type="button"
+        class="boton-filtros"
+        [attr.aria-expanded]="filtrosAbiertos()"
+        aria-controls="filtros-extra"
+        (click)="filtrosAbiertos.set(!filtrosAbiertos())"
+      >
+        <mat-icon>tune</mat-icon> Filtros
+        @if (cantidadFiltros() > 0) {
+          ({{ cantidadFiltros() }})
+        }
+      </button>
+    </div>
+
+    <div id="filtros-extra" class="filtros-extra" [class.abiertos]="filtrosAbiertos()">
+      @if (!todasLasSedes()) {
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Establecimiento</mat-label>
+          <mat-select [value]="filtros().establecimientoId" (valueChange)="filtrar('establecimientoId', $event)">
+            <mat-option [value]="null">Todos</mat-option>
+            @for (e of establecimientos.value() ?? []; track e.id) {
+              <mat-option [value]="e.id">{{ e.nombre }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Tipo</mat-label>
+        <mat-select [value]="filtros().tipoActivoId" (valueChange)="filtrar('tipoActivoId', $event)">
+          <mat-option [value]="null">Todos</mat-option>
+          @for (t of tipos.value() ?? []; track t.id) {
+            <mat-option [value]="t.id">{{ t.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Estado</mat-label>
+        <mat-select [value]="filtros().estadoActivoId" (valueChange)="filtrar('estadoActivoId', $event)">
+          <mat-option [value]="null">Todos</mat-option>
+          @for (e of estados.value() ?? []; track e.id) {
+            <mat-option [value]="e.id">{{ e.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Garantía</mat-label>
+        <mat-select [value]="filtros().garantia" (valueChange)="filtrar('garantia', $event)">
+          <mat-option [value]="null">Todas</mat-option>
+          @for (g of garantias; track g) {
+            <mat-option [value]="g">{{ textoGarantia(g) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Renovación</mat-label>
+        <mat-select [value]="filtros().renovacion" (valueChange)="filtrar('renovacion', $event)">
+          <mat-option [value]="null">Todas</mat-option>
+          @for (r of renovaciones; track r) {
+            <mat-option [value]="r">{{ textoRenovacion(r) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (conFiltros()) {
+        <button mat-button type="button" class="quitar" (click)="quitarFiltros()"><mat-icon>filter_alt_off</mat-icon> Quitar filtros</button>
+      }
+    </div>
+  </div>
+
+  @if (store.error(); as e) {
+    <app-aviso>{{ e.mensaje }}</app-aviso>
+  }
+
+  <section class="tarjeta-tabla">
+    @if (store.cargando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (store.activos().length > 0) {
+      <!-- Pantallas anchas: tabla. -->
+      <div class="tabla-contenedor vista-tabla">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Código</th>
+              <th scope="col">Equipo</th>
+              <th scope="col">Establecimiento y área</th>
+              <th scope="col">Responsable</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Garantía</th>
+              <th scope="col">Renovación</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of store.activos(); track a.id) {
+              <tr>
+                <td>
+                  <a class="codigo mono" [routerLink]="[a.id]" [state]="volverAqui()">{{ a.codigoPatrimonial }}</a>
+                </td>
+                <td>
+                  <div class="dos-lineas">
+                    <span class="principal">{{ equipo(a) }}</span>
+                    <span class="atenuado">
+                      {{ a.tipoActivo }}
+                      @if (a.numeroSerie) {
+                        · Serie <span class="mono">{{ a.numeroSerie }}</span>
+                      }
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <div class="dos-lineas">
+                    <span>{{ a.establecimiento }}</span>
+                    <span class="atenuado">
+                      {{ a.area }}
+                      @if (todasLasSedes()) {
+                        · {{ a.sedeNombre }}
+                      }
+                    </span>
+                  </div>
+                </td>
+                <td>{{ a.responsable ?? '—' }}</td>
+                <td><span class="pastilla" [class]="tonoEstado(a.estado)">{{ a.estado }}</span></td>
+                <td><span class="pastilla" [class]="tonoGarantia(a.garantia)">{{ textoGarantia(a.garantia) }}</span></td>
+                <td><span class="pastilla" [class]="tonoRenovacion(a.renovacion)">{{ textoRenovacion(a.renovacion) }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pantallas angostas: tarjetas. -->
+      <ul class="vista-tarjetas" aria-label="Activos">
+        @for (a of store.activos(); track a.id) {
+          <li>
+            <a class="tarjeta-activo" [routerLink]="[a.id]" [state]="volverAqui()">
+              <span class="cabecera">
+                <span class="codigo mono">{{ a.codigoPatrimonial }}</span>
+                <span class="pastilla" [class]="tonoEstado(a.estado)">{{ a.estado }}</span>
+              </span>
+              <span class="dos-lineas">
+                <span class="principal">{{ equipo(a) }}</span>
+                <span class="atenuado">
+                  {{ a.tipoActivo }} · {{ a.establecimiento }} · {{ a.area }}
+                  @if (todasLasSedes()) {
+                    · {{ a.sedeNombre }}
+                  }
+                </span>
+              </span>
+              <span class="chips">
+                <span class="pastilla" [class]="tonoGarantia(a.garantia)">Garantía: {{ textoGarantia(a.garantia) | lowercase }}</span>
+                <span class="pastilla" [class]="tonoRenovacion(a.renovacion)">{{ textoRenovacion(a.renovacion) }}</span>
+              </span>
+            </a>
+          </li>
+        }
+      </ul>
+    } @else if (!store.cargando() && !store.error()) {
+      <div class="vacio">
+        @if (conFiltros()) {
+          <p>No hay activos que cumplan los filtros.</p>
+          <button mat-stroked-button type="button" (click)="quitarFiltros()">Quitar filtros</button>
+        } @else {
+          <p>Todavía no hay activos registrados.</p>
+          <a *siTienePermiso="permisos.Activos.Crear" mat-flat-button routerLink="/inventario/nuevo">
+            <mat-icon>add</mat-icon> Registrar el primero
+          </a>
+        }
+      </div>
+    }
+
+    @if (store.total() > tamanosPagina[0]) {
+      <mat-paginator
+        [length]="store.total()"
+        [pageIndex]="filtros().pagina - 1"
+        [pageSize]="filtros().tamanoPagina"
+        [pageSizeOptions]="tamanosPagina"
+        (page)="cambiarPagina($event)"
+        aria-label="Páginas del inventario"
+      />
+    }
+  </section>
+</div>

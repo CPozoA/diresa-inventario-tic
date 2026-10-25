@@ -937,6 +937,41 @@
         }
       }
     },
+    "/api/catalogos/tipos-activo/{id}/ficha": {
+      "put": {
+        "tags": [
+          "Catalogos"
+        ],
+        "summary": "Cambia qué características técnicas lleva un tipo de activo: Computo, Red o Ninguna.",
+        "operationId": "CambiarFichaTipoActivo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CambiarFichaTipoActivoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/catalogos/{tipo}/{id}/desactivar": {
       "post": {
         "tags": [
@@ -1193,10 +1228,395 @@
           }
         }
       }
+    },
+    "/api/activos": {
+      "get": {
+        "tags": [
+          "Activos"
+        ],
+        "summary": "Inventario paginado, con filtros. ?buscar= código patrimonial, serie, modelo, responsable o marca.",
+        "operationId": "ListarActivos",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "establecimientoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "tipoActivoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "areaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "estadoActivoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "garantia",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoGarantia"
+            }
+          },
+          {
+            "name": "renovacion",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SituacionRenovacion"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamanoPagina",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaActivosDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Activos"
+        ],
+        "summary": "Registra un activo. La sede es la del establecimiento.",
+        "operationId": "CrearActivo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FichaActivo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdCreado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activos/listas": {
+      "get": {
+        "tags": [
+          "Activos"
+        ],
+        "summary": "Listas fijas de la ficha: conservación, criticidad, tipos y capacidades de discos y RAM…",
+        "operationId": "ObtenerListasActivo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListasActivoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activos/serie": {
+      "get": {
+        "tags": [
+          "Activos"
+        ],
+        "summary": "Activos de la sede que ya usan ese número de serie (para avisar antes de guardar).",
+        "operationId": "BuscarSerieActivo",
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "excluirId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActivoConSerieDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activos/{id}": {
+      "get": {
+        "tags": [
+          "Activos"
+        ],
+        "summary": "Ficha técnica completa, con discos, RAM y la situación a hoy.",
+        "operationId": "ObtenerFichaActivo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FichaActivoDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Activos"
+        ],
+        "summary": "Reemplaza la ficha, incluidos discos y RAM. El activo no cambia de sede.",
+        "operationId": "EditarActivo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FichaActivo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Activos"
+        ],
+        "summary": "Elimina un activo registrado por error.",
+        "operationId": "EliminarActivo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ActivoConSerieDto": {
+        "required": [
+          "id",
+          "codigoPatrimonial",
+          "modelo",
+          "numeroSerie"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigoPatrimonial": {
+            "type": "string"
+          },
+          "modelo": {
+            "type": "string"
+          },
+          "numeroSerie": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ActivoResumenDto": {
+        "required": [
+          "id",
+          "codigoPatrimonial",
+          "tipoActivo",
+          "marca",
+          "modelo",
+          "numeroSerie",
+          "establecimiento",
+          "area",
+          "responsable",
+          "estado",
+          "garantia",
+          "renovacion",
+          "sedeId",
+          "sedeNombre"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigoPatrimonial": {
+            "type": "string"
+          },
+          "tipoActivo": {
+            "type": "string"
+          },
+          "marca": {
+            "type": "string"
+          },
+          "modelo": {
+            "type": "string"
+          },
+          "numeroSerie": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "establecimiento": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string"
+          },
+          "responsable": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "estado": {
+            "type": "string"
+          },
+          "garantia": {
+            "$ref": "#/components/schemas/EstadoGarantia"
+          },
+          "renovacion": {
+            "$ref": "#/components/schemas/SituacionRenovacion"
+          },
+          "sedeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sedeNombre": {
+            "type": "string"
+          }
+        }
+      },
       "AsignarRolesRequest": {
         "required": [
           "rolIds"
@@ -1229,6 +1649,25 @@
             "type": "string"
           }
         }
+      },
+      "CambiarFichaTipoActivoRequest": {
+        "required": [
+          "ficha"
+        ],
+        "type": "object",
+        "properties": {
+          "ficha": {
+            "$ref": "#/components/schemas/FichaTecnica"
+          }
+        }
+      },
+      "Conservacion": {
+        "enum": [
+          "Nuevo",
+          "Bueno",
+          "Regular",
+          "Malo"
+        ]
       },
       "ContrasenaTemporalDto": {
         "required": [
@@ -1429,6 +1868,375 @@
           }
         }
       },
+      "Criticidad": {
+        "enum": [
+          "Alta",
+          "Media",
+          "Baja",
+          null
+        ]
+      },
+      "DatosAdquisicionActivo": {
+        "required": [
+          "fechaAdquisicion",
+          "proveedor",
+          "numeroOrdenCompra",
+          "tipoAdquisicion",
+          "valorAdquisicion",
+          "vidaUtilAnios",
+          "finGarantia"
+        ],
+        "type": "object",
+        "properties": {
+          "fechaAdquisicion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "proveedor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "numeroOrdenCompra": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tipoAdquisicion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TipoAdquisicion"
+              }
+            ]
+          },
+          "valorAdquisicion": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "vidaUtilAnios": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "finGarantia": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "DatosDisco": {
+        "required": [
+          "ranura",
+          "tipo",
+          "capacidadGb",
+          "marcaModelo",
+          "numeroSerie",
+          "uso"
+        ],
+        "type": "object",
+        "properties": {
+          "ranura": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoDisco"
+          },
+          "capacidadGb": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "marcaModelo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "numeroSerie": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "uso": {
+            "$ref": "#/components/schemas/UsoDisco"
+          }
+        }
+      },
+      "DatosGeneralesActivo": {
+        "required": [
+          "codigoPatrimonial",
+          "tipoActivoId",
+          "marcaId",
+          "modelo",
+          "numeroSerie",
+          "descripcion",
+          "areaId",
+          "ubicacionFisica",
+          "responsable",
+          "estadoActivoId",
+          "conservacion",
+          "criticidad",
+          "observaciones"
+        ],
+        "type": "object",
+        "properties": {
+          "codigoPatrimonial": {
+            "type": "string"
+          },
+          "tipoActivoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "marcaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "modelo": {
+            "type": "string"
+          },
+          "numeroSerie": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "descripcion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "areaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ubicacionFisica": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "responsable": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "estadoActivoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conservacion": {
+            "$ref": "#/components/schemas/Conservacion"
+          },
+          "criticidad": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Criticidad"
+              }
+            ]
+          },
+          "observaciones": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DatosModuloRam": {
+        "required": [
+          "ranura",
+          "tipo",
+          "capacidadGb",
+          "velocidadMhz",
+          "marcaModelo"
+        ],
+        "type": "object",
+        "properties": {
+          "ranura": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoRam"
+          },
+          "capacidadGb": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "velocidadMhz": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "marcaModelo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DatosTecnicosActivo": {
+        "required": [
+          "procesador",
+          "velocidadGeneracion",
+          "nucleos",
+          "tarjetaGrafica",
+          "pantallaPulgadas",
+          "sistemaOperativoId",
+          "versionSistemaOperativo",
+          "nombreEquipo",
+          "dominioGrupo",
+          "direccionIp",
+          "direccionMac",
+          "antivirus",
+          "discoCifrado",
+          "puertosPrincipales",
+          "accesoriosIncluidos"
+        ],
+        "type": "object",
+        "properties": {
+          "procesador": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "velocidadGeneracion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nucleos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "tarjetaGrafica": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pantallaPulgadas": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "sistemaOperativoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "versionSistemaOperativo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nombreEquipo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dominioGrupo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "direccionIp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "direccionMac": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "antivirus": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "discoCifrado": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "puertosPrincipales": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accesoriosIncluidos": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "EditarEstablecimientoRequest": {
         "required": [
           "idEstablecimiento",
@@ -1562,7 +2370,8 @@
         "required": [
           "id",
           "nombre",
-          "activo"
+          "activo",
+          "ficha"
         ],
         "type": "object",
         "properties": {
@@ -1575,6 +2384,16 @@
           },
           "activo": {
             "type": "boolean"
+          },
+          "ficha": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/FichaTecnica"
+              }
+            ]
           }
         }
       },
@@ -1595,6 +2414,59 @@
           },
           "mensaje": {
             "type": "string"
+          }
+        }
+      },
+      "EstablecimientoActivoDto": {
+        "required": [
+          "id",
+          "codigoUnico",
+          "nombre",
+          "categoria",
+          "microred",
+          "provincia",
+          "distrito"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigoUnico": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "microred": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "provincia": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "distrito": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -1680,6 +2552,250 @@
           }
         }
       },
+      "EstadoGarantia": {
+        "enum": [
+          "SinDato",
+          "Vigente",
+          "Vencida"
+        ]
+      },
+      "FichaActivo": {
+        "required": [
+          "establecimientoId",
+          "generales",
+          "adquisicion",
+          "tecnicos",
+          "discos",
+          "modulosRam"
+        ],
+        "type": "object",
+        "properties": {
+          "establecimientoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "generales": {
+            "$ref": "#/components/schemas/DatosGeneralesActivo"
+          },
+          "adquisicion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DatosAdquisicionActivo"
+              }
+            ]
+          },
+          "tecnicos": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DatosTecnicosActivo"
+              }
+            ]
+          },
+          "discos": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DatosDisco"
+            }
+          },
+          "modulosRam": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DatosModuloRam"
+            }
+          }
+        }
+      },
+      "FichaActivoDto": {
+        "required": [
+          "id",
+          "ficha",
+          "sedeId",
+          "sedeNombre",
+          "establecimiento",
+          "generales",
+          "adquisicion",
+          "tecnicos",
+          "discos",
+          "modulosRam",
+          "ramTotalGb",
+          "almacenamientoTotalGb",
+          "situacion",
+          "creadoEn",
+          "modificadoEn"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ficha": {
+            "$ref": "#/components/schemas/FichaTecnica"
+          },
+          "sedeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sedeNombre": {
+            "type": "string"
+          },
+          "establecimiento": {
+            "$ref": "#/components/schemas/EstablecimientoActivoDto"
+          },
+          "generales": {
+            "$ref": "#/components/schemas/GeneralesActivoDto"
+          },
+          "adquisicion": {
+            "$ref": "#/components/schemas/DatosAdquisicionActivo"
+          },
+          "tecnicos": {
+            "$ref": "#/components/schemas/TecnicosActivoDto"
+          },
+          "discos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatosDisco"
+            }
+          },
+          "modulosRam": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatosModuloRam"
+            }
+          },
+          "ramTotalGb": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "almacenamientoTotalGb": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "situacion": {
+            "$ref": "#/components/schemas/SituacionActivo"
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modificadoEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "FichaTecnica": {
+        "enum": [
+          "Ninguna",
+          "Red",
+          "Computo",
+          null
+        ]
+      },
+      "GeneralesActivoDto": {
+        "required": [
+          "codigoPatrimonial",
+          "tipoActivo",
+          "marca",
+          "modelo",
+          "numeroSerie",
+          "descripcion",
+          "area",
+          "ubicacionFisica",
+          "responsable",
+          "estado",
+          "conservacion",
+          "criticidad",
+          "observaciones"
+        ],
+        "type": "object",
+        "properties": {
+          "codigoPatrimonial": {
+            "type": "string"
+          },
+          "tipoActivo": {
+            "$ref": "#/components/schemas/ReferenciaDto"
+          },
+          "marca": {
+            "$ref": "#/components/schemas/ReferenciaDto"
+          },
+          "modelo": {
+            "type": "string"
+          },
+          "numeroSerie": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "descripcion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "area": {
+            "$ref": "#/components/schemas/ReferenciaDto"
+          },
+          "ubicacionFisica": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "responsable": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "estado": {
+            "$ref": "#/components/schemas/ReferenciaDto"
+          },
+          "conservacion": {
+            "$ref": "#/components/schemas/Conservacion"
+          },
+          "criticidad": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Criticidad"
+              }
+            ]
+          },
+          "observaciones": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "IdCreado": {
         "required": [
           "id"
@@ -1711,6 +2827,158 @@
           }
         }
       },
+      "ListasActivoDto": {
+        "required": [
+          "fichasTecnicas",
+          "conservaciones",
+          "criticidades",
+          "tiposAdquisicion",
+          "tiposDisco",
+          "usosDisco",
+          "tiposRam",
+          "capacidadesDiscoGb",
+          "capacidadesRamGb",
+          "velocidadesRam",
+          "capacidadMaximaDiscoGb"
+        ],
+        "type": "object",
+        "properties": {
+          "fichasTecnicas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
+          },
+          "conservaciones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
+          },
+          "criticidades": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
+          },
+          "tiposAdquisicion": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
+          },
+          "tiposDisco": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
+          },
+          "usosDisco": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
+          },
+          "tiposRam": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
+          },
+          "capacidadesDiscoGb": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "capacidadesRamGb": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          "velocidadesRam": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VelocidadesRamDto"
+            }
+          },
+          "capacidadMaximaDiscoGb": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "OpcionDto": {
+        "required": [
+          "valor",
+          "texto"
+        ],
+        "type": "object",
+        "properties": {
+          "valor": {
+            "type": "string"
+          },
+          "texto": {
+            "type": "string"
+          }
+        }
+      },
+      "PaginaActivosDto": {
+        "required": [
+          "activos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "activos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivoResumenDto"
+            }
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pagina": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "PermisoDto": {
         "required": [
           "codigo",
@@ -1731,6 +2999,22 @@
           },
           "puedeOtorgar": {
             "type": "boolean"
+          }
+        }
+      },
+      "ReferenciaDto": {
+        "required": [
+          "id",
+          "nombre"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombre": {
+            "type": "string"
           }
         }
       },
@@ -1999,6 +3283,49 @@
           }
         }
       },
+      "SituacionActivo": {
+        "required": [
+          "antiguedadAnios",
+          "garantia",
+          "vidaUtilRestanteAnios",
+          "renovacion"
+        ],
+        "type": "object",
+        "properties": {
+          "antiguedadAnios": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "garantia": {
+            "$ref": "#/components/schemas/EstadoGarantia"
+          },
+          "vidaUtilRestanteAnios": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "renovacion": {
+            "$ref": "#/components/schemas/SituacionRenovacion"
+          }
+        }
+      },
+      "SituacionRenovacion": {
+        "enum": [
+          "SinDato",
+          "Vigente",
+          "ProximoARenovar",
+          "Renovar"
+        ]
+      },
       "SolicitarRestablecimientoCommand": {
         "required": [
           "correo"
@@ -2009,6 +3336,138 @@
             "type": "string"
           }
         }
+      },
+      "TecnicosActivoDto": {
+        "required": [
+          "procesador",
+          "velocidadGeneracion",
+          "nucleos",
+          "tarjetaGrafica",
+          "pantallaPulgadas",
+          "sistemaOperativo",
+          "versionSistemaOperativo",
+          "nombreEquipo",
+          "dominioGrupo",
+          "direccionIp",
+          "direccionMac",
+          "antivirus",
+          "discoCifrado",
+          "puertosPrincipales",
+          "accesoriosIncluidos"
+        ],
+        "type": "object",
+        "properties": {
+          "procesador": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "velocidadGeneracion": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nucleos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "tarjetaGrafica": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pantallaPulgadas": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "sistemaOperativo": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
+            ]
+          },
+          "versionSistemaOperativo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nombreEquipo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dominioGrupo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "direccionIp": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "direccionMac": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "antivirus": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "discoCifrado": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "puertosPrincipales": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accesoriosIncluidos": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "TipoAdquisicion": {
+        "enum": [
+          "Compra",
+          "Arrendamiento",
+          "Donacion",
+          "Transferencia",
+          "Comodato",
+          null
+        ]
       },
       "TipoCatalogoDto": {
         "required": [
@@ -2037,6 +3496,24 @@
           }
         }
       },
+      "TipoDisco": {
+        "enum": [
+          "SsdSata",
+          "Nvme",
+          "Hdd",
+          "Hibrido"
+        ]
+      },
+      "TipoRam": {
+        "enum": [
+          "Ddr3",
+          "Ddr3L",
+          "Ddr4",
+          "Ddr5",
+          "Lpddr4X",
+          "Lpddr5"
+        ]
+      },
       "TokenCsrfDto": {
         "required": [
           "token"
@@ -2047,6 +3524,13 @@
             "type": "string"
           }
         }
+      },
+      "UsoDisco": {
+        "enum": [
+          "Sistema",
+          "Datos",
+          "Respaldo"
+        ]
       },
       "UsuarioCreadoDto": {
         "required": [
@@ -2125,6 +3609,29 @@
             }
           }
         }
+      },
+      "VelocidadesRamDto": {
+        "required": [
+          "tipo",
+          "velocidadesMhz"
+        ],
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string"
+          },
+          "velocidadesMhz": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        }
       }
     }
   },
@@ -2149,6 +3656,9 @@
     },
     {
       "name": "Establecimientos"
+    },
+    {
+      "name": "Activos"
     }
   ]
 }

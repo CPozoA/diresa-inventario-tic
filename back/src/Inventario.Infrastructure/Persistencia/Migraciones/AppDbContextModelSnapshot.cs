@@ -22,6 +22,271 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Inventario.Domain.Activos.Activo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AccesoriosIncluidos")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Antivirus")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("AreaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CodigoPatrimonial")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Conservacion")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Criticidad")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("DireccionIp")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<string>("DireccionMac")
+                        .HasMaxLength(17)
+                        .HasColumnType("nvarchar(17)");
+
+                    b.Property<bool?>("DiscoCifrado")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("DominioGrupo")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("EstablecimientoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EstadoActivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("FechaAdquisicion")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("FechaRenovacion")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("FinGarantia")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("MarcaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Modelo")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("NombreEquipo")
+                        .HasMaxLength(63)
+                        .HasColumnType("nvarchar(63)");
+
+                    b.Property<int?>("Nucleos")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NumeroOrdenCompra")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("NumeroSerie")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal?>("PantallaPulgadas")
+                        .HasPrecision(4, 1)
+                        .HasColumnType("decimal(4,1)");
+
+                    b.Property<string>("Procesador")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Proveedor")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("PuertosPrincipales")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Responsable")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<Guid>("SedeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("SistemaOperativoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TarjetaGrafica")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("TipoActivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TipoAdquisicion")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("UbicacionFisica")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<decimal?>("ValorAdquisicion")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<string>("VelocidadGeneracion")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("VersionSistemaOperativo")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("VidaUtilAnios")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AreaId");
+
+                    b.HasIndex("EstablecimientoId");
+
+                    b.HasIndex("EstadoActivoId");
+
+                    b.HasIndex("FechaRenovacion");
+
+                    b.HasIndex("FinGarantia");
+
+                    b.HasIndex("MarcaId");
+
+                    b.HasIndex("SistemaOperativoId");
+
+                    b.HasIndex("TipoActivoId");
+
+                    b.HasIndex("SedeId", "CodigoPatrimonial")
+                        .IsUnique();
+
+                    b.HasIndex("SedeId", "NumeroSerie");
+
+                    b.ToTable("Activos", "inventario");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Activos.DiscoActivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ActivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CapacidadGb")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MarcaModelo")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NumeroSerie")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Ranura")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Uso")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActivoId");
+
+                    b.ToTable("Discos", "inventario");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Activos.ModuloRam", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ActivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("CapacidadGb")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MarcaModelo")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Ranura")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("VelocidadMhz")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActivoId");
+
+                    b.ToTable("ModulosRam", "inventario");
+                });
+
             modelBuilder.Entity("Inventario.Domain.Catalogos.Area", b =>
                 {
                     b.Property<Guid>("Id")
@@ -170,6 +435,11 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
 
                     b.Property<Guid?>("CreadoPor")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FichaAsignada")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Ficha");
 
                     b.Property<DateTimeOffset?>("ModificadoEn")
                         .HasColumnType("datetimeoffset");
@@ -595,6 +865,68 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.ToTable("CuentaTokens", "seguridad");
                 });
 
+            modelBuilder.Entity("Inventario.Domain.Activos.Activo", b =>
+                {
+                    b.HasOne("Inventario.Domain.Catalogos.Area", null)
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Establecimientos.Establecimiento", null)
+                        .WithMany()
+                        .HasForeignKey("EstablecimientoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Catalogos.EstadoActivo", null)
+                        .WithMany()
+                        .HasForeignKey("EstadoActivoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Catalogos.Marca", null)
+                        .WithMany()
+                        .HasForeignKey("MarcaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Sedes.Sede", null)
+                        .WithMany()
+                        .HasForeignKey("SedeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Catalogos.SistemaOperativo", null)
+                        .WithMany()
+                        .HasForeignKey("SistemaOperativoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Inventario.Domain.Catalogos.TipoActivo", null)
+                        .WithMany()
+                        .HasForeignKey("TipoActivoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Activos.DiscoActivo", b =>
+                {
+                    b.HasOne("Inventario.Domain.Activos.Activo", null)
+                        .WithMany("Discos")
+                        .HasForeignKey("ActivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Activos.ModuloRam", b =>
+                {
+                    b.HasOne("Inventario.Domain.Activos.Activo", null)
+                        .WithMany("ModulosRam")
+                        .HasForeignKey("ActivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Inventario.Domain.Catalogos.Area", b =>
                 {
                     b.HasOne("Inventario.Domain.Sedes.Sede", null)
@@ -687,6 +1019,13 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Activos.Activo", b =>
+                {
+                    b.Navigation("Discos");
+
+                    b.Navigation("ModulosRam");
                 });
 
             modelBuilder.Entity("Inventario.Domain.Seguridad.Rol", b =>

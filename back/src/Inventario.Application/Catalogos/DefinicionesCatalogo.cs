@@ -2,6 +2,7 @@ using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Domain.Catalogos;
 using Inventario.Domain.Seguridad;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventario.Application.Catalogos;
@@ -48,10 +49,14 @@ internal sealed class DefinicionCatalogo<T>(
     string nombre,
     string nombreSingular,
     Func<IAppDbContext, DbSet<T>> tabla,
-    Func<Guid?, string, T> crear)
+    Func<Guid?, string, T> crear,
+    Expression<Func<T, ElementoCatalogoDto>>? proyeccion = null)
     : DefinicionCatalogo(codigo, nombre, nombreSingular, typeof(ElementoCatalogoDeSede).IsAssignableFrom(typeof(T)))
     where T : ElementoCatalogo
 {
+    private readonly Expression<Func<T, ElementoCatalogoDto>> _proyeccion =
+        proyeccion ?? (e => new ElementoCatalogoDto(e.Id, e.Nombre, e.Activo, null));
+
     public override Task<List<ElementoCatalogoDto>> ListarAsync(
         IAppDbContext db, Guid? sedeId, bool incluirInactivos, CancellationToken cancellationToken)
     {
@@ -63,7 +68,7 @@ internal sealed class DefinicionCatalogo<T>(
 
         return consulta
             .OrderBy(e => e.Nombre)
-            .Select(e => new ElementoCatalogoDto(e.Id, e.Nombre, e.Activo))
+            .Select(_proyeccion)
             .ToListAsync(cancellationToken);
     }
 
@@ -93,7 +98,12 @@ internal static class DefinicionesCatalogo
     [
         new DefinicionCatalogo<Area>("areas", "Áreas", "Área", db => db.Areas, (sede, n) => Area.Crear(sede ?? Guid.Empty, n)),
         new DefinicionCatalogo<TipoActivo>(
-            "tipos-activo", "Tipos de activo", "Tipo de activo", db => db.TiposActivo, (_, n) => TipoActivo.Crear(n)),
+            "tipos-activo",
+            "Tipos de activo",
+            "Tipo de activo",
+            db => db.TiposActivo,
+            (_, n) => TipoActivo.Crear(n),
+            t => new ElementoCatalogoDto(t.Id, t.Nombre, t.Activo, t.FichaAsignada ?? FichaTecnica.Ninguna)),
         new DefinicionCatalogo<Marca>("marcas", "Marcas", "Marca", db => db.Marcas, (_, n) => Marca.Crear(n)),
         new DefinicionCatalogo<EstadoActivo>(
             "estados-activo", "Estados del activo", "Estado", db => db.EstadosActivo, (_, n) => EstadoActivo.Crear(n)),

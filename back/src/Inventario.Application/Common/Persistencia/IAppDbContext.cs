@@ -1,3 +1,4 @@
+using Inventario.Domain.Activos;
 using Inventario.Domain.Catalogos;
 using Inventario.Domain.Establecimientos;
 using Inventario.Domain.Sedes;
@@ -21,6 +22,8 @@ public interface IAppDbContext
     DbSet<Rol> Roles { get; }
 
     DbSet<Establecimiento> Establecimientos { get; }
+
+    DbSet<Activo> Activos { get; }
 
     // Catálogos de cada sede.
     DbSet<Area> Areas { get; }

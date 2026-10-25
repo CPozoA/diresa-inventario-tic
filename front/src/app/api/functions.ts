@@ -65,6 +65,8 @@ export type { RenombrarElementoCatalogo$Params as RenombrarElementoCatalogo$Para
 export { renombrarElementoCatalogo as renombrarElementoCatalogo } from './fn/catalogos/renombrar-elemento-catalogo';
 export type { ActivarElementoCatalogo$Params as ActivarElementoCatalogo$Params } from './fn/catalogos/activar-elemento-catalogo';
 export { activarElementoCatalogo as activarElementoCatalogo } from './fn/catalogos/activar-elemento-catalogo';
+export type { CambiarFichaTipoActivo$Params as CambiarFichaTipoActivo$Params } from './fn/catalogos/cambiar-ficha-tipo-activo';
+export { cambiarFichaTipoActivo as cambiarFichaTipoActivo } from './fn/catalogos/cambiar-ficha-tipo-activo';
 export type { DesactivarElementoCatalogo$Params as DesactivarElementoCatalogo$Params } from './fn/catalogos/desactivar-elemento-catalogo';
 export { desactivarElementoCatalogo as desactivarElementoCatalogo } from './fn/catalogos/desactivar-elemento-catalogo';
 export type { ListarEstablecimientos$Params as ListarEstablecimientos$Params } from './fn/establecimientos/listar-establecimientos';
@@ -81,3 +83,17 @@ export type { DescargarPlantillaEstablecimientos$Params as DescargarPlantillaEst
 export { descargarPlantillaEstablecimientos as descargarPlantillaEstablecimientos } from './fn/establecimientos/descargar-plantilla-establecimientos';
 export type { ImportarEstablecimientos$Params as ImportarEstablecimientos$Params } from './fn/establecimientos/importar-establecimientos';
 export { importarEstablecimientos as importarEstablecimientos } from './fn/establecimientos/importar-establecimientos';
+export type { ListarActivos$Params as ListarActivos$Params } from './fn/activos/listar-activos';
+export { listarActivos as listarActivos } from './fn/activos/listar-activos';
+export type { CrearActivo$Params as CrearActivo$Params } from './fn/activos/crear-activo';
+export { crearActivo as crearActivo } from './fn/activos/crear-activo';
+export type { ObtenerListasActivo$Params as ObtenerListasActivo$Params } from './fn/activos/obtener-listas-activo';
+export { obtenerListasActivo as obtenerListasActivo } from './fn/activos/obtener-listas-activo';
+export type { BuscarSerieActivo$Params as BuscarSerieActivo$Params } from './fn/activos/buscar-serie-activo';
+export { buscarSerieActivo as buscarSerieActivo } from './fn/activos/buscar-serie-activo';
+export type { ObtenerFichaActivo$Params as ObtenerFichaActivo$Params } from './fn/activos/obtener-ficha-activo';
+export { obtenerFichaActivo as obtenerFichaActivo } from './fn/activos/obtener-ficha-activo';
+export type { EditarActivo$Params as EditarActivo$Params } from './fn/activos/editar-activo';
+export { editarActivo as editarActivo } from './fn/activos/editar-activo';
+export type { EliminarActivo$Params as EliminarActivo$Params } from './fn/activos/eliminar-activo';
+export { eliminarActivo as eliminarActivo } from './fn/activos/eliminar-activo';

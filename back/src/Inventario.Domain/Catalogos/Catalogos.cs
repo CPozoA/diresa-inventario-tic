@@ -1,3 +1,5 @@
+using Inventario.Domain.Common;
+
 namespace Inventario.Domain.Catalogos;
 
 // ---------- Catálogos de cada sede (docs/ARQUITECTURA.md D9) ----------
@@ -19,7 +21,23 @@ public sealed class Area : ElementoCatalogoDeSede
 
 // ---------- Catálogos generales: iguales para todas las sedes; solo los administra el superadministrador ----------
 
-/// <summary>Tipo de activo (Laptop, Monitor, Switch…).</summary>
+/// <summary>
+/// Qué características técnicas lleva un tipo de activo (docs/ARQUITECTURA.md D43): decide qué secciones muestra
+/// la ficha y qué datos acepta la API.
+/// </summary>
+public enum FichaTecnica
+{
+    /// <summary>Sin características técnicas (monitor, UPS, proyector…).</summary>
+    Ninguna,
+
+    /// <summary>Solo datos de red: nombre de equipo, IP y MAC (impresora, switch, router…).</summary>
+    Red,
+
+    /// <summary>Equipo de cómputo: todas las características, discos y memoria RAM.</summary>
+    Computo,
+}
+
+/// <summary>Tipo de activo (Laptop, Monitor, Switch…), con la ficha técnica que le corresponde.</summary>
 public sealed class TipoActivo : ElementoCatalogo
 {
     private TipoActivo()
@@ -29,9 +47,41 @@ public sealed class TipoActivo : ElementoCatalogo
     private TipoActivo(string nombre)
         : base(nombre)
     {
+        FichaAsignada = CatalogosIniciales.FichaPorOmision(Nombre);
     }
 
+    /// <summary>
+    /// Ficha guardada. Es nula solo en los tipos registrados antes de que existiera este dato: al arrancar, el sistema
+    /// les asigna la que corresponde por su nombre (<see cref="CatalogosIniciales.FichaPorOmision"/>).
+    /// </summary>
+    public FichaTecnica? FichaAsignada { get; private set; }
+
+    /// <summary>Ficha técnica del tipo.</summary>
+    public FichaTecnica Ficha => FichaAsignada ?? FichaTecnica.Ninguna;
+
     public static TipoActivo Crear(string nombre) => new(nombre);
+
+    public void CambiarFicha(FichaTecnica ficha)
+    {
+        if (!Enum.IsDefined(ficha))
+        {
+            throw new DominioException("La ficha técnica no es válida.");
+        }
+
+        FichaAsignada = ficha;
+    }
+
+    /// <summary>Asigna la ficha por omisión a un tipo registrado antes de que existiera este dato. Devuelve si cambió.</summary>
+    public bool CompletarFichaSiFalta()
+    {
+        if (FichaAsignada is not null)
+        {
+            return false;
+        }
+
+        FichaAsignada = CatalogosIniciales.FichaPorOmision(Nombre);
+        return true;
+    }
 }
 
 /// <summary>Marca o fabricante (HP, Dell, Cisco…).</summary>

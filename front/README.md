@@ -59,7 +59,8 @@ src/app/
    ├─ sedes/       sedes (solo superadmin): crear, renombrar, activar y desactivar
    ├─ usuarios/    usuarios: crear, editar, roles, activar/desactivar, restablecer contraseña, desbloquear
    ├─ roles/       roles de la sede con sus permisos
-   ├─ catalogos/   áreas y ubicaciones (por sede) y catálogos generales; un solo editor para todos
+   ├─ catalogos/   áreas (por sede) y catálogos generales; un solo editor para todos
+   ├─ activos/     inventario: lista con filtros y ficha técnica
    └─ pendiente/   lugar de las secciones del menú que aún no se construyen
 ```
 
@@ -76,7 +77,9 @@ src/app/
 | `/sedes` | `Sedes.Gestionar` | Solo el superadmin. |
 | `/areas` | `Catalogos.GestionarSede` | Áreas de la sede (buscar o agregar en un solo campo); el superadmin elige la sede arriba. |
 | `/establecimientos` | `Establecimientos.Gestionar` | Solo el superadmin. Lista con búsqueda y filtro por estado, registro y corrección, e importación desde Excel con la lista de filas a corregir. |
-| `/catalogos` | `Catalogos.GestionarGlobales` | Tipos de activo, marcas, estados, sistemas operativos y tipos de licencia. |
+| `/catalogos` | `Catalogos.GestionarGlobales` | Tipos de activo (con la ficha técnica de cada uno), marcas, estados, sistemas operativos y tipos de licencia. |
+| `/inventario` | `Activos.Ver` | Lista paginada en la API, con búsqueda y filtros que quedan en la dirección. En celular, tarjetas. |
+| `/inventario/{id}` | `Activos.Ver` (Editar y Eliminar según permiso) | Ficha técnica de solo lectura; las secciones dependen de la ficha del tipo. |
 | `/` y demás secciones del menú | Con sesión | Estructura con menú según permisos. Las secciones aún no construidas muestran "próxima versión". |
 | `/estado` | Cualquiera | Comprobación técnica de la conexión con la API. |
 

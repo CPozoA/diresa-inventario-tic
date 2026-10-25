@@ -47,7 +47,14 @@ internal sealed class AreaConfiguration : IEntityTypeConfiguration<Area>
 
 internal sealed class TipoActivoConfiguration : IEntityTypeConfiguration<TipoActivo>
 {
-    public void Configure(EntityTypeBuilder<TipoActivo> builder) => ConfiguracionCatalogo.General(builder, "TiposActivo");
+    public void Configure(EntityTypeBuilder<TipoActivo> builder)
+    {
+        ConfiguracionCatalogo.General(builder, "TiposActivo");
+
+        // D43: "Computo", "Red" o "Ninguna". Nula solo hasta que el inicializador la completa (tipos anteriores al 7C).
+        builder.Property(t => t.FichaAsignada).HasColumnName("Ficha").HasConversion<string>().HasMaxLength(20);
+        builder.Ignore(t => t.Ficha);
+    }
 }
 
 internal sealed class MarcaConfiguration : IEntityTypeConfiguration<Marca>

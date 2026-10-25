@@ -88,6 +88,24 @@ internal sealed partial class InicializadorDatos(
             await db.SaveChangesAsync(cancellationToken);
             LogCatalogosCargados(logger, cargados);
         }
+
+        await CompletarFichasTecnicasAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Los tipos de activo registrados antes del Paso 7C no tienen ficha técnica (D43): se les asigna la que
+    /// corresponde por su nombre. Solo ocurre una vez; después la cambia el superadministrador.
+    /// </summary>
+    private async Task CompletarFichasTecnicasAsync(CancellationToken cancellationToken)
+    {
+        var pendientes = await db.TiposActivo.Where(t => t.FichaAsignada == null).ToListAsync(cancellationToken);
+        var completados = pendientes.Count(t => t.CompletarFichaSiFalta());
+
+        if (completados > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            LogFichasCompletadas(logger, completados);
+        }
     }
 
     private static async Task<int> CargarSiVacioAsync<T>(
@@ -174,4 +192,7 @@ internal sealed partial class InicializadorDatos(
 
     [LoggerMessage(EventId = 1007, Level = LogLevel.Information, Message = "Catálogos generales cargados con sus valores iniciales: {Cantidad}.")]
     private static partial void LogCatalogosCargados(ILogger logger, int cantidad);
+
+    [LoggerMessage(EventId = 1008, Level = LogLevel.Information, Message = "Ficha técnica asignada por su nombre a {Cantidad} tipos de activo.")]
+    private static partial void LogFichasCompletadas(ILogger logger, int cantidad);
 }

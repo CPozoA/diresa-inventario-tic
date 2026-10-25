@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Inventario.Api.Common;
 using Inventario.Api.Endpoints;
 using Inventario.Api.Seguridad;
@@ -14,6 +15,9 @@ builder.Services.AddProblemDetails();
 
 // Una regla del dominio incumplida (dato inválido) responde 400 con su mensaje; lo demás, 500 genérico.
 builder.Services.AddExceptionHandler<ManejadorExcepcionDominio>();
+
+// Las listas fijas (conservación, tipo de disco…) viajan como texto ("Bueno", "Nvme"), no como números.
+builder.Services.ConfigureHttpJsonOptions(opciones => opciones.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // Contrato OpenAPI: lo usan Scalar (documentación) y, más adelante, el generador del cliente de Angular.
 builder.Services.AddOpenApi();
@@ -69,6 +73,7 @@ api.MapRolesEndpoints();
 api.MapUsuariosEndpoints();
 api.MapCatalogosEndpoints();
 api.MapEstablecimientosEndpoints();
+api.MapActivosEndpoints();
 
 await app.Services.InicializarBaseDatosAsync();
 

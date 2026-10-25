@@ -225,6 +225,48 @@ dotnet ef database update --project src/Inventario.Infrastructure --startup-proj
 
 `Establecimientos.Gestionar` es exclusivo del superadministrador. Detalle de columnas y reglas: `docs/ARQUITECTURA.md` §5.9.
 
+## Paso 7A: activos
+
+Este paso **cambia el modelo**: agrega el esquema `inventario` con las tablas `Activos`, `Discos` y `ModulosRam`. Desde `back`,
+con la API detenida:
+
+```powershell
+dotnet ef migrations add Activos --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/activos?sedeId=&establecimientoId=&tipoActivoId=&areaId=&estadoActivoId=&garantia=&renovacion=&buscar=&pagina=&tamanoPagina=` | `Activos.Ver` | Lista paginada (`garantia`: `Vigente`, `Vencida`, `SinDato`; `renovacion`: `Vigente`, `ProximoARenovar`, `Renovar`, `SinDato`) |
+| `GET /api/activos/{id}` | `Activos.Ver` | Ficha completa con discos, RAM, totales y situación a hoy |
+| `GET /api/activos/listas` | `Activos.Ver` | Listas fijas de la ficha con sus textos |
+| `GET /api/activos/serie?numero=&excluirId=` | `Activos.Ver` | Activos de la sede con ese número de serie |
+| `POST /api/activos`, `PUT /api/activos/{id}` | `Activos.Crear`, `Activos.Editar` | Registrar y reemplazar la ficha (incluidos discos y RAM) |
+| `DELETE /api/activos/{id}` | `Activos.Eliminar` | Eliminar un registro hecho por error |
+
+Para probar en Scalar, el cuerpo de `POST /api/activos` tiene la forma
+`{ "establecimientoId": "…", "generales": { "codigoPatrimonial": "PAT-0001", "tipoActivoId": "…", "marcaId": "…", "modelo": "…", "areaId": "…", "estadoActivoId": "…", "conservacion": "Bueno" }, "adquisicion": { … }, "tecnicos": { … }, "discos": [ … ], "modulosRam": [ … ] }`.
+Los identificadores salen de `GET /api/establecimientos` y `GET /api/catalogos/{tipo}`. Reglas: `docs/ARQUITECTURA.md` §5.10.
+
+## Paso 7C-1: ficha técnica por tipo de activo (D43)
+
+Este paso **cambia el modelo**: agrega la columna `Ficha` a `catalogos.TiposActivo`. Desde `back`, con la API detenida:
+
+```powershell
+dotnet ef migrations add FichaTecnica --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+Al arrancar, la API asigna la ficha a los tipos que no la tienen según su nombre (verás en el registro cuántos completó).
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `PUT /api/catalogos/tipos-activo/{id}/ficha` | `Catalogos.GestionarGlobales` | Cuerpo `{ "ficha": "Computo" }` (`Computo`, `Red` o `Ninguna`) |
+
+`GET /api/catalogos/tipos-activo` incluye `ficha` en cada tipo, y `GET /api/activos/{id}` la del tipo del activo. Al registrar o
+editar, un tipo `Red` solo acepta nombre de equipo, IP y MAC; un tipo `Ninguna`, ningún dato técnico, disco ni RAM
+(400 `Activos.DatosNoCorresponden`).
+
 ### Correo en producción
 
 En el servidor se configura `Correo:Modo = Smtp` y los datos del SMTP (`Servidor`, `Puerto`, `Remitente`, `Usuario`,
@@ -247,7 +289,7 @@ dotnet test
 
 | Proyecto | Qué comprueba |
 |---|---|
-| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles, catálogos, establecimientos (datos válidos, ubigeo, reconocimiento de la red) |
+| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles, catálogos, establecimientos (datos válidos, ubigeo, reconocimiento de la red), activos (ficha, IP y MAC, discos y RAM, garantía y renovación) |
 | `ArchitectureTests` | Que el dominio no dependa de nada, que Application no dependa de Infrastructure ni de la Api, que los handlers sean internos |
 | `Api.IntegrationTests` | Protección CSRF (sin token → 400; el token de antes de iniciar sesión no sirve después). Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan |
 

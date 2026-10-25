@@ -68,6 +68,9 @@
         <thead>
           <tr>
             <th scope="col">Nombre</th>
+            @if (esTiposActivo()) {
+              <th scope="col">Características técnicas</th>
+            }
             <th scope="col">Estado</th>
             @if (tipo().puedeGestionar) {
               <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
@@ -78,6 +81,34 @@
           @for (elemento of visibles(); track elemento.id) {
             <tr [class.inactivo]="!elemento.activo">
               <td>{{ elemento.nombre }}</td>
+              @if (esTiposActivo()) {
+                <td>
+                  @if (tipo().puedeGestionar) {
+                    <button
+                      mat-button
+                      type="button"
+                      class="boton-ficha"
+                      [matMenuTriggerFor]="menuFicha"
+                      [attr.aria-label]="'Características técnicas de ' + elemento.nombre + ': ' + textoFicha(fichaDe(elemento)) + '. Cambiar'"
+                    >
+                      {{ textoFicha(fichaDe(elemento)) }} <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+                    </button>
+                    <mat-menu #menuFicha="matMenu">
+                      @for (f of fichas; track f) {
+                        <button mat-menu-item type="button" class="opcion-ficha" (click)="cambiarFicha(elemento, f)">
+                          <mat-icon>{{ f === fichaDe(elemento) ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
+                          <span class="dos-lineas-menu">
+                            <span>{{ textoFicha(f) }}</span>
+                            <span class="atenuado">{{ descripcionFicha(f) }}</span>
+                          </span>
+                        </button>
+                      }
+                    </mat-menu>
+                  } @else {
+                    {{ textoFicha(fichaDe(elemento)) }}
+                  }
+                </td>
+              }
               <td>
                 <span class="pastilla" [class.ok]="elemento.activo" [class.neutra]="!elemento.activo">
                   {{ elemento.activo ? 'Activo' : 'Desactivado' }}
@@ -101,7 +132,7 @@
           } @empty {
             @if (!elementos.isLoading()) {
               <tr>
-                <td colspan="3" class="vacio">
+                <td [attr.colspan]="esTiposActivo() ? 4 : 3" class="vacio">
                   @if (buscando()) {
                     No hay coincidencias.
                     @if (tipo().puedeGestionar) {

@@ -1,0 +1,154 @@
+// Ancho desde el que se usa la tabla (el mismo del menú lateral fijo).
+$ancho-tabla: 784px;
+
+.filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fila-busqueda {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.buscador {
+  flex: 1 1 auto;
+  max-width: 640px;
+}
+
+.boton-filtros {
+  flex-shrink: 0;
+}
+
+.filtros-extra {
+  display: none;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+
+  &.abiertos {
+    display: flex;
+  }
+
+  // Angosto: dos filtros por fila.
+  mat-form-field {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 140px;
+  }
+}
+
+.codigo {
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--inv-primario);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.dos-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .principal {
+    font-weight: 500;
+  }
+
+  .atenuado {
+    font-size: 12px;
+  }
+}
+
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  color: var(--inv-atenuado);
+  text-align: center;
+
+  p {
+    margin: 0;
+  }
+}
+
+mat-paginator {
+  border-top: 1px solid var(--inv-borde);
+}
+
+// ---------- Tarjetas (pantallas angostas) ----------
+
+.vista-tarjetas {
+  list-style: none;
+  margin: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-activo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+  color: var(--inv-tinta);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--inv-primario);
+  }
+
+  .cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .codigo {
+    text-decoration: none;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+.vista-tabla {
+  display: none;
+}
+
+@media (min-width: $ancho-tabla) {
+  .boton-filtros {
+    display: none;
+  }
+
+  .filtros-extra {
+    display: flex;
+
+    mat-form-field {
+      flex: 1 1 180px;
+      max-width: 260px;
+    }
+  }
+
+  .vista-tabla {
+    display: block;
+  }
+
+  .vista-tarjetas {
+    display: none;
+  }
+}

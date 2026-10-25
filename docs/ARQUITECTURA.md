@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.15 · 24/10/2026 · Cambios: Paso 6D implementado (§5.9, permiso Establecimientos.Gestionar en §6.2).
+> Versión 0.17 · 24/10/2026 · Cambios: D43 (ficha técnica por tipo de activo); Paso 7C-1 implementado (lista y ficha de activos en Angular).
 
 ---
 
@@ -80,6 +80,7 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D40 | Ubicación física | Texto libre dentro del activo ("Piso 2, oficina 204"). **Se retira el catálogo de ubicaciones** del Paso 6B; las áreas siguen como catálogo de la sede | La ubicación depende de cada local; un catálogo por sede no sirve para decenas de establecimientos. |
 | D41 | Discos y memoria RAM | Una fila por disco y por módulo. Tipo, capacidad, uso y velocidad se **eligen de listas fijas** definidas en el dominio; la velocidad de la RAM se ofrece según su tipo. La capacidad de un disco admite "Otra" para casos raros (§5.10) | Evita errores de registro (500 por 512, TB por GB) y permite sumar totales confiables. |
 | D42 | Excel | **ClosedXML** (licencia MIT) para importar establecimientos y, más adelante, para la exportación a Excel | Formato que los usuarios ya tienen; una sola librería para leer y escribir. |
+| D43 | Ficha técnica por tipo | Cada **tipo de activo** indica qué características técnicas lleva: **Cómputo** (todas, con discos y RAM), **Red** (solo nombre de equipo, IP y MAC) o **Ninguna**. Los tipos iniciales la traen asignada por nombre; el superadministrador la cambia en Catálogos generales. La API rechaza datos que no correspondan al tipo (`Activos.DatosNoCorresponden`) | La pantalla muestra solo las secciones que aplican (un monitor no tiene IP ni discos) y la base no acumula datos sin sentido. Que sea un dato del catálogo permite agregar tipos nuevos sin cambiar código. |
 
 ### Decisiones pendientes de confirmar
 
@@ -294,6 +295,26 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 - **Se calculan, no se escriben:** RAM total, almacenamiento total, antigüedad, estado de la garantía, vida útil restante y situación de renovación.
 - **Para pasos posteriores:** los campos propios de servidores, red y periféricos (mientras tanto se registran con los campos comunes); licencias, mantenimiento y asignaciones en sus módulos; fotos en el 7D.
 
+**Implementado en el Paso 7A** (tablas `inventario.Activos`, `inventario.Discos` e `inventario.ModulosRam`; API en `/api/activos`):
+
+- **La sede no se envía:** es la del establecimiento elegido. El área debe ser de esa misma red. Al editar, el establecimiento puede cambiar dentro de la red, nunca a otra (no hay transferencias).
+- **Referencias activas:** establecimiento, área y elementos de catálogo deben existir y estar activos. Un elemento ya desactivado se acepta si el activo ya lo tenía, para poder editar sus otros datos.
+- **Código patrimonial:** se guarda sin espacios a los lados y en mayúsculas; único por sede (índice único `SedeId + CodigoPatrimonial`).
+- **Número de serie repetido:** no es un error; `GET /api/activos/serie?numero=` devuelve los activos de la sede que ya lo usan, para avisar antes de guardar.
+- **Listas fijas** (conservación, criticidad, tipo de adquisición, tipos y usos de disco, tipos, capacidades y velocidades de RAM): definidas en `Domain/Activos/ListasActivo.cs` y entregadas por `GET /api/activos/listas` con sus textos. Viajan en la API y se guardan en la base como texto (`"Bueno"`, `"Nvme"`).
+- **Validaciones de la ficha:** IP (IPv4 completa o IPv6), MAC (se guarda como `A4:BB:6D:12:34:56`), nombre de equipo, rangos de valor, vida útil (1 a 50 años), núcleos y pantalla; el fin de garantía no es anterior a la adquisición; la fecha de adquisición no es futura; hasta 16 discos y 32 módulos de RAM.
+- **Cálculos:** la entidad guarda la **fecha de renovación** (adquisición + vida útil) para poder filtrar en la base; antigüedad, garantía (vigente o vencida), vida útil restante y situación de renovación (vigente, próximo a renovar con 1 año o menos, renovar) se calculan a la fecha del servidor.
+- **Lista del inventario** paginada (25 por página, hasta 100), ordenada por código, con filtros por sede (superadministrador), establecimiento, tipo, área, estado, garantía y renovación, y búsqueda por código, serie, modelo, responsable o marca.
+- **Eliminar** (`Activos.Eliminar`) es para registros hechos por error; un equipo que ya no se usa se marca con el estado "De baja".
+- **Ficha técnica por tipo (D43):** columna `Ficha` en `catalogos.TiposActivo` (`Computo`, `Red`, `Ninguna`). Al arrancar, los tipos que no la tienen la reciben según su nombre (Laptop, PC de escritorio, All-in-one, Servidor, Tablet y Workstation → Cómputo; Impresora, Multifuncional, Escáner, Switch, Router, Access point, Firewall y Teléfono IP → Red; los demás → Ninguna). `PUT /api/catalogos/tipos-activo/{id}/ficha` la cambia (`Catalogos.GestionarGlobales`). Los activos ya registrados conservan sus datos; la ficha (`GET /api/activos/{id}`) informa la del tipo para que la pantalla elija las secciones.
+
+**Implementado en el Paso 7C-1** (Angular, `features/activos`):
+
+- **Lista** en `/inventario`: búsqueda (espera a que se deje de escribir) y filtros por establecimiento, tipo, estado, garantía y renovación. Los filtros y la página viven en la dirección (`?buscar=dell&garantia=Vencida&pagina=2`), así que se pueden recargar, compartir y recuperar al volver de una ficha. Con "Todas las sedes" se muestra la red de cada activo y no se ofrece el filtro de establecimiento. En pantallas angostas las filas pasan a tarjetas y los filtros se abren con un botón.
+- **Ficha** en `/inventario/{id}`, solo lectura: secciones según la ficha del tipo, ciclo de vida (antigüedad frente a vida útil, garantía y renovación prevista) y adquisición. Editar y Eliminar según permiso; eliminar pide confirmación.
+- **Catálogos generales:** en Tipos de activo, una columna para elegir la ficha de cada tipo (con confirmación).
+- **Pendiente para el 7C-2:** formulario de registro y edición (`/inventario/nuevo` y `/inventario/{id}/editar` muestran por ahora "próxima versión").
+
 ---
 
 ## 6. Seguridad
@@ -480,7 +501,8 @@ Consideraciones del hosting compartido:
 | **6D** | Establecimientos (D39): tabla, migración, API, importación desde Excel y pantalla del superadministrador; retiro del catálogo de ubicaciones (D40) | `dotnet test`, `npm test` y prueba manual con un Excel |
 | **7A** | Activos en el backend (§5.10): ficha técnica con discos y módulos de RAM, migración, API con permisos y aislamiento por sede | `dotnet test` |
 | **7B** | Bosquejos de la lista de activos y de la ficha técnica | Revisión en el lienzo de diseño |
-| **7C** | Pantallas de activos en Angular (lista con búsqueda y filtros, ficha para crear y editar) | `npm test` y prueba de punta a punta |
+| **7C-1** | Ficha técnica por tipo (D43) en la API; lista de activos con búsqueda y filtros, y ficha de solo lectura en Angular | `dotnet test`, `npm test` y prueba manual |
+| **7C-2** | Formulario para registrar y editar activos (establecimiento por búsqueda, secciones según la ficha, discos y RAM, aviso de serie repetida) | `npm test` y prueba de punta a punta |
 | **7D** | Fotos de los activos (D38, §5.8): almacenamiento, API, cámara o carga de archivos y reducción en el navegador | `dotnet test`, `npm test` y prueba en celular |
 
 Fases posteriores: licencias, mantenimiento, asignaciones, resumen, exportación a Excel, registro de auditoría y endurecimiento.

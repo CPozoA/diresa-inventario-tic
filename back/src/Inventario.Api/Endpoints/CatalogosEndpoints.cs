@@ -1,7 +1,10 @@
 using Inventario.Api.Common;
 using Inventario.Application.Catalogos;
 using Inventario.Application.Common.Mensajeria;
+using Inventario.Api.Seguridad;
 using Inventario.Application.Common.Resultados;
+using Inventario.Domain.Catalogos;
+using Inventario.Domain.Seguridad;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Inventario.Api.Endpoints;
@@ -36,6 +39,11 @@ internal static class CatalogosEndpoints
         grupo.MapPost("/{tipo}/{id:guid}/activar", ActivarAsync)
             .WithName("ActivarElementoCatalogo")
             .WithSummary("Vuelve a ofrecer el elemento al registrar.");
+
+        grupo.MapPut("/tipos-activo/{id:guid}/ficha", CambiarFichaAsync)
+            .RequirePermiso(Permisos.Catalogos.GestionarGlobales)
+            .WithName("CambiarFichaTipoActivo")
+            .WithSummary("Cambia qué características técnicas lleva un tipo de activo: Computo, Red o Ninguna.");
 
         grupo.MapPost("/{tipo}/{id:guid}/desactivar", DesactivarAsync)
             .WithName("DesactivarElementoCatalogo")
@@ -87,8 +95,17 @@ internal static class CatalogosEndpoints
         ICommandHandler<CambiarEstadoElementoCatalogoCommand, Vacio> handler,
         CancellationToken cancellationToken) =>
         (await handler.Handle(new CambiarEstadoElementoCatalogoCommand(tipo, id, Activo: false), cancellationToken)).ToNoContentResult();
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> CambiarFichaAsync(
+        Guid id,
+        CambiarFichaTipoActivoRequest cuerpo,
+        ICommandHandler<CambiarFichaTipoActivoCommand, Vacio> handler,
+        CancellationToken cancellationToken) =>
+        (await handler.Handle(new CambiarFichaTipoActivoCommand(id, cuerpo.Ficha), cancellationToken)).ToNoContentResult();
 }
 
 internal sealed record CrearElementoCatalogoRequest(Guid? SedeId, string Nombre);
+
+internal sealed record CambiarFichaTipoActivoRequest(FichaTecnica Ficha);
 
 internal sealed record RenombrarElementoCatalogoRequest(string Nombre);

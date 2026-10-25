@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+
 namespace Inventario.Domain.Catalogos;
 
 /// <summary>
@@ -33,4 +36,57 @@ public static class CatalogosIniciales
     [
         "Perpetua", "Suscripción anual", "Suscripción mensual", "OEM", "Volumen", "Software libre",
     ];
+
+    private static readonly string[] TiposComputo = ["LAPTOP", "PC DE ESCRITORIO", "ALL IN ONE", "SERVIDOR", "TABLET", "WORKSTATION"];
+
+    private static readonly string[] TiposRed =
+    [
+        "IMPRESORA", "MULTIFUNCIONAL", "ESCANER", "SWITCH", "ROUTER", "ACCESS POINT", "FIREWALL", "TELEFONO IP",
+    ];
+
+    /// <summary>
+    /// Ficha técnica que corresponde a un tipo por su nombre (D43): cómputo para laptops, PC, servidores…; red para
+    /// impresoras, switches…; ninguna para el resto. El superadministrador la puede cambiar después.
+    /// </summary>
+    public static FichaTecnica FichaPorOmision(string nombre)
+    {
+        var clave = Clave(nombre);
+        if (TiposComputo.Contains(clave))
+        {
+            return FichaTecnica.Computo;
+        }
+
+        return TiposRed.Contains(clave) ? FichaTecnica.Red : FichaTecnica.Ninguna;
+    }
+
+    /// <summary>Mayúsculas, sin tildes y con un espacio entre palabras ("All-in-one" → "ALL IN ONE").</summary>
+    private static string Clave(string texto)
+    {
+        var resultado = new StringBuilder();
+        var espacio = false;
+        foreach (var caracter in texto.Normalize(NormalizationForm.FormD))
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(caracter) == UnicodeCategory.NonSpacingMark)
+            {
+                continue;
+            }
+
+            if (char.IsLetterOrDigit(caracter))
+            {
+                if (espacio && resultado.Length > 0)
+                {
+                    resultado.Append(' ');
+                }
+
+                resultado.Append(char.ToUpperInvariant(caracter));
+                espacio = false;
+            }
+            else
+            {
+                espacio = true;
+            }
+        }
+
+        return resultado.ToString();
+    }
 }

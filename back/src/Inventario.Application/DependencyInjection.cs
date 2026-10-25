@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<Common.Seguridad.CalculadoraPermisos>();
         services.AddScoped<Common.Seguridad.IPermisosUsuarioActual, Common.Seguridad.PermisosUsuarioActual>();
         services.AddScoped<Common.Seguridad.ReglasDeGestion>();
+        services.AddScoped<Activos.VerificadorFichaActivo>();
 
         return services;
     }

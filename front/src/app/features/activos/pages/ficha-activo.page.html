@@ -1,0 +1,256 @@
+<div class="pagina">
+  <a class="volver" href="/inventario" (click)="volver($event)"><mat-icon aria-hidden="true">arrow_back</mat-icon> Volver al inventario</a>
+
+  @if (recurso.isLoading() && !ficha()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando la ficha" />
+  }
+
+  @if (error(); as e) {
+    <app-aviso>{{ e }}</app-aviso>
+  }
+
+  @if (ficha(); as f) {
+    <section class="tarjeta cabecera">
+      <div class="identidad">
+        <div class="titulo">
+          <h1 class="mono">{{ f.generales.codigoPatrimonial }}</h1>
+          <span class="modelo">{{ f.generales.marca.nombre }} {{ f.generales.modelo }}</span>
+          <span class="pastilla neutra">{{ f.generales.tipoActivo.nombre }}</span>
+        </div>
+        <div class="chips">
+          <span class="pastilla" [class]="tonoEstado(f.generales.estado.nombre)">{{ f.generales.estado.nombre }}</span>
+          <span class="pastilla neutra">Conservación: {{ textoConservacion(f.generales.conservacion) }}</span>
+          @if (f.generales.criticidad; as c) {
+            <span class="pastilla neutra">Criticidad {{ textoCriticidad(c).toLowerCase() }}</span>
+          }
+          @if (f.situacion.renovacion !== 'SinDato') {
+            <span class="pastilla" [class]="tonoRenovacion(f.situacion.renovacion)">{{ textoRenovacion(f.situacion.renovacion) }}</span>
+          }
+        </div>
+      </div>
+      <div class="acciones">
+        <button
+          *siTienePermiso="permisos.Activos.Eliminar"
+          mat-stroked-button
+          type="button"
+          class="eliminar"
+          [disabled]="eliminando()"
+          (click)="eliminar(f)"
+        >
+          <mat-icon>delete</mat-icon> Eliminar
+        </button>
+        <a *siTienePermiso="permisos.Activos.Editar" mat-flat-button routerLink="editar"><mat-icon>edit</mat-icon> Editar</a>
+      </div>
+    </section>
+
+    <div class="columnas">
+      <div class="columna">
+        <section class="tarjeta">
+          <h2>Establecimiento</h2>
+          <div class="establecimiento">
+            <span class="pastilla neutra mono">Cód. único {{ f.establecimiento.codigoUnico }}</span>
+            <div class="dos-lineas">
+              <span class="principal">{{ f.establecimiento.nombre }}</span>
+              <span class="atenuado">{{ establecimiento() }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="tarjeta">
+          <h2>Datos generales</h2>
+          <dl class="datos">
+            <div><dt>Tipo de activo</dt><dd>{{ f.generales.tipoActivo.nombre }}</dd></div>
+            <div><dt>Marca y modelo</dt><dd>{{ f.generales.marca.nombre }} · {{ f.generales.modelo }}</dd></div>
+            <div>
+              <dt>N° de serie</dt>
+              <dd class="mono">{{ f.generales.numeroSerie ?? '—' }}</dd>
+            </div>
+            <div><dt>Área</dt><dd>{{ f.generales.area.nombre }}</dd></div>
+            <div><dt>Ubicación física</dt><dd>{{ f.generales.ubicacionFisica ?? '—' }}</dd></div>
+            <div><dt>Responsable</dt><dd>{{ f.generales.responsable ?? '—' }}</dd></div>
+            @if (f.generales.descripcion) {
+              <div class="ancho"><dt>Descripción</dt><dd>{{ f.generales.descripcion }}</dd></div>
+            }
+            @if (f.generales.observaciones) {
+              <div class="ancho"><dt>Observaciones</dt><dd>{{ f.generales.observaciones }}</dd></div>
+            }
+          </dl>
+        </section>
+
+        @if (f.ficha !== 'Ninguna') {
+          <section class="tarjeta">
+            <h2>{{ f.ficha === 'Red' ? 'Datos de red' : 'Características técnicas' }}</h2>
+            @if (tecnicos().length > 0) {
+              <dl class="datos">
+                @for (d of tecnicos(); track d.etiqueta) {
+                  <div>
+                    <dt>{{ d.etiqueta }}</dt>
+                    <dd [class.mono]="d.mono">
+                      {{ d.valor }}
+                      @if (d.detalle) {
+                        <span class="atenuado">{{ d.detalle }}</span>
+                      }
+                    </dd>
+                  </div>
+                }
+              </dl>
+            } @else {
+              <p class="sin-datos">Todavía no se registraron estos datos.</p>
+            }
+          </section>
+        }
+
+        @if (f.ficha === 'Computo') {
+          <section class="tarjeta">
+            <h2>
+              Discos
+              @if (f.discos.length > 0) {
+                <span class="atenuado">· {{ cantidad(f.discos.length, 'disco', 'discos') }}, {{ formatoGb(f.almacenamientoTotalGb) }} en total</span>
+              }
+            </h2>
+            @if (f.discos.length > 0) {
+              <div class="tabla-contenedor">
+                <table class="tabla">
+                  <thead>
+                    <tr>
+                      <th scope="col">Ranura</th>
+                      <th scope="col">Tipo</th>
+                      <th scope="col" class="numero">Capacidad</th>
+                      <th scope="col">Marca y modelo</th>
+                      <th scope="col">N° de serie</th>
+                      <th scope="col">Uso</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (d of f.discos; track $index) {
+                      <tr>
+                        <td>{{ d.ranura ?? '—' }}</td>
+                        <td>{{ textoTipoDisco(d.tipo) }}</td>
+                        <td class="numero">{{ formatoGb(d.capacidadGb) }}</td>
+                        <td>{{ d.marcaModelo ?? '—' }}</td>
+                        <td class="mono">{{ d.numeroSerie ?? '—' }}</td>
+                        <td>{{ textoUsoDisco(d.uso) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="sin-datos">No hay discos registrados.</p>
+            }
+          </section>
+
+          <section class="tarjeta">
+            <h2>
+              Memoria RAM
+              @if (f.modulosRam.length > 0) {
+                <span class="atenuado">· {{ cantidad(f.modulosRam.length, 'módulo', 'módulos') }}, {{ formatoGb(f.ramTotalGb) }} en total</span>
+              }
+            </h2>
+            @if (f.modulosRam.length > 0) {
+              <div class="tabla-contenedor">
+                <table class="tabla">
+                  <thead>
+                    <tr>
+                      <th scope="col">Ranura</th>
+                      <th scope="col">Tipo</th>
+                      <th scope="col" class="numero">Capacidad</th>
+                      <th scope="col" class="numero">Velocidad</th>
+                      <th scope="col">Marca y modelo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (m of f.modulosRam; track $index) {
+                      <tr>
+                        <td>{{ m.ranura ?? '—' }}</td>
+                        <td>{{ textoTipoRam(m.tipo) }}</td>
+                        <td class="numero">{{ formatoGb(m.capacidadGb) }}</td>
+                        <td class="numero">{{ aNumero(m.velocidadMhz) === null ? '—' : m.velocidadMhz + ' MHz' }}</td>
+                        <td>{{ m.marcaModelo ?? '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="sin-datos">No hay módulos de memoria registrados.</p>
+            }
+          </section>
+        }
+      </div>
+
+      <div class="columna lateral">
+        @if (ciclo(); as c) {
+          <section class="tarjeta">
+            <h2>Ciclo de vida</h2>
+            @if (c.porcentaje !== null) {
+              <div class="ciclo">
+                <div class="ciclo-cifras">
+                  <span>Antigüedad</span>
+                  <span><strong>{{ c.antiguedad }}</strong> de {{ c.vidaUtil }} años</span>
+                </div>
+                <div
+                  class="barra"
+                  role="img"
+                  [attr.aria-label]="'Lleva ' + c.antiguedad + ' de ' + c.vidaUtil + ' años de vida útil'"
+                >
+                  <div class="relleno" [class]="tonoRenovacion(f.situacion.renovacion)" [style.width.%]="c.porcentaje"></div>
+                </div>
+                @if (c.mensaje) {
+                  <span class="atenuado">{{ c.mensaje }}</span>
+                }
+              </div>
+            } @else {
+              <p class="sin-datos">Registre la fecha de adquisición y la vida útil para calcular la renovación.</p>
+            }
+            <dl class="datos una-columna">
+              <div class="fila"><dt>Adquirido</dt><dd>{{ formatoFecha(f.adquisicion.fechaAdquisicion) }}</dd></div>
+              <div class="fila">
+                <dt>Fin de garantía</dt>
+                <dd>
+                  {{ formatoFecha(f.adquisicion.finGarantia) }}
+                  @if (f.situacion.garantia !== 'SinDato') {
+                    <span class="pastilla" [class]="tonoGarantia(f.situacion.garantia)">{{ textoGarantia(f.situacion.garantia) }}</span>
+                  }
+                </dd>
+              </div>
+              <div class="fila">
+                <dt>Renovación prevista</dt>
+                <dd>
+                  {{ formatoFecha(c.fechaRenovacion) }}
+                  @if (f.situacion.renovacion !== 'SinDato' && f.situacion.renovacion !== 'Vigente') {
+                    <span class="pastilla" [class]="tonoRenovacion(f.situacion.renovacion)">{{ textoRenovacion(f.situacion.renovacion) }}</span>
+                  }
+                </dd>
+              </div>
+            </dl>
+          </section>
+        }
+
+        <section class="tarjeta">
+          <h2>Adquisición</h2>
+          @if (tieneAdquisicion()) {
+            <dl class="datos una-columna">
+              <div class="fila">
+                <dt>Tipo</dt>
+                <dd>{{ f.adquisicion.tipoAdquisicion ? textoAdquisicion(f.adquisicion.tipoAdquisicion) : '—' }}</dd>
+              </div>
+              <div class="fila"><dt>Valor</dt><dd>{{ formatoSoles(f.adquisicion.valorAdquisicion) }}</dd></div>
+              <div class="fila"><dt>N° de OC o factura</dt><dd>{{ f.adquisicion.numeroOrdenCompra ?? '—' }}</dd></div>
+              <div class="fila"><dt>Proveedor</dt><dd>{{ f.adquisicion.proveedor ?? '—' }}</dd></div>
+            </dl>
+          } @else {
+            <p class="sin-datos">Sin datos de adquisición.</p>
+          }
+        </section>
+
+        <p class="registro atenuado">
+          Registrado el {{ formatoFecha(f.creadoEn) }}
+          @if (f.modificadoEn) {
+            · Modificado el {{ formatoFecha(f.modificadoEn) }}
+          }
+        </p>
+      </div>
+    </div>
+  }
+</div>

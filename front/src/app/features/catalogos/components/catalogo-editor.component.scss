@@ -44,3 +44,25 @@
 tr.inactivo td {
   color: var(--inv-atenuado);
 }
+
+// Ficha técnica de cada tipo de activo (D43).
+.boton-ficha {
+  --mat-button-text-horizontal-padding: 8px;
+  margin-left: -8px;
+}
+
+// Opciones del menú: aunque se muestra en la capa de Material, su contenido sale de esta plantilla y recibe estos estilos.
+.opcion-ficha {
+  height: auto;
+  min-height: 56px;
+}
+
+.dos-lineas-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0;
+
+  .atenuado {
+    font-size: 12px;
+  }
+}

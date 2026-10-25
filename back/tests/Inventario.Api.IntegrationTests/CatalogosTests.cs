@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Inventario.Api.IntegrationTests.Infraestructura;
 using Inventario.Application.Catalogos;
 using Inventario.Application.Common.Resultados;
@@ -15,6 +17,9 @@ namespace Inventario.Api.IntegrationTests;
 [Collection(ColeccionApi.Nombre)]
 public sealed class CatalogosTests(FabricaApi api)
 {
+    /// <summary>La API envía las listas fijas como texto (la ficha de los tipos de activo: "Computo").</summary>
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private static string NombreUnico(string prefijo) => $"{prefijo} {Guid.NewGuid().ToString("N")[..12]}";
@@ -24,7 +29,7 @@ public sealed class CatalogosTests(FabricaApi api)
     {
         using var editor = await api.CrearClienteConSesionAsync(DatosPrueba.EditorHuanta);
 
-        var tipos = await editor.GetFromJsonAsync<List<ElementoCatalogoDto>>("/api/catalogos/tipos-activo", Ct);
+        var tipos = await editor.GetFromJsonAsync<List<ElementoCatalogoDto>>("/api/catalogos/tipos-activo", Json, Ct);
 
         Assert.NotNull(tipos);
         Assert.Contains(tipos, t => t.Nombre == "Laptop");
@@ -51,8 +56,8 @@ public sealed class CatalogosTests(FabricaApi api)
         var nombre = NombreUnico("Área");
 
         var crear = await admin.PostAsJsonAsync("/api/catalogos/areas", new { nombre }, Ct);
-        var areasHuanta = await admin.GetFromJsonAsync<List<ElementoCatalogoDto>>("/api/catalogos/areas", Ct);
-        var areasPuquio = await puquio.GetFromJsonAsync<List<ElementoCatalogoDto>>("/api/catalogos/areas", Ct);
+        var areasHuanta = await admin.GetFromJsonAsync<List<ElementoCatalogoDto>>("/api/catalogos/areas", Json, Ct);
+        var areasPuquio = await puquio.GetFromJsonAsync<List<ElementoCatalogoDto>>("/api/catalogos/areas", Json, Ct);
 
         Assert.Equal(HttpStatusCode.Created, crear.StatusCode);
         Assert.Contains(areasHuanta!, a => a.Nombre == nombre);
@@ -142,10 +147,10 @@ public sealed class CatalogosTests(FabricaApi api)
         var creado = await crear.Content.ReadFromJsonAsync<IdCreado>(Ct);
 
         var desactivar = await superAdmin.PostAsync($"/api/catalogos/sistemas-operativos/{creado!.Id}/desactivar", content: null, Ct);
-        var activos = await superAdmin.GetFromJsonAsync<List<ElementoCatalogoDto>>("/api/catalogos/sistemas-operativos", Ct);
+        var activos = await superAdmin.GetFromJsonAsync<List<ElementoCatalogoDto>>("/api/catalogos/sistemas-operativos", Json, Ct);
         var todos = await superAdmin.GetFromJsonAsync<List<ElementoCatalogoDto>>(
             "/api/catalogos/sistemas-operativos?incluirInactivos=true",
-            Ct);
+            Json, Ct);
 
         Assert.Equal(HttpStatusCode.NoContent, desactivar.StatusCode);
         Assert.DoesNotContain(activos!, e => e.Id == creado.Id);

@@ -2,11 +2,16 @@ using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Catalogos;
 
 namespace Inventario.Application.Catalogos;
 
 /// <summary>Elemento de un catálogo.</summary>
-public sealed record ElementoCatalogoDto(Guid Id, string Nombre, bool Activo);
+/// <param name="Id">Identificador.</param>
+/// <param name="Nombre">Nombre.</param>
+/// <param name="Activo">Falso si ya no se ofrece al registrar.</param>
+/// <param name="Ficha">Solo en tipos de activo: qué características técnicas lleva (D43). Nulo en los demás catálogos.</param>
+public sealed record ElementoCatalogoDto(Guid Id, string Nombre, bool Activo, FichaTecnica? Ficha);
 
 /// <summary>
 /// Elementos de un catálogo, ordenados por nombre. Cualquier usuario con sesión puede consultarlos
