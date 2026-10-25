@@ -40,7 +40,8 @@ public sealed class ActivosTests(FabricaApi api)
         Guid Marca,
         Guid Estado,
         Guid SistemaOperativo,
-        Guid Procesador);
+        Guid Procesador,
+        Guid Antivirus);
 
     private async Task<Referencias> PrepararAsync()
     {
@@ -76,7 +77,8 @@ public sealed class ActivosTests(FabricaApi api)
             await Elemento("marcas", "Dell"),
             await Elemento("estados-activo", "Operativo"),
             await Elemento("sistemas-operativos", "Windows 11 Pro"),
-            await Elemento("procesadores", "Intel Core i7"));
+            await Elemento("procesadores", "Intel Core i7"),
+            await Elemento("antivirus", "Microsoft Defender"));
     }
 
     /// <summary>Ficha como la enviaría la interfaz.</summary>
@@ -90,7 +92,8 @@ public sealed class ActivosTests(FabricaApi api)
         string finGarantia = "2024-03-14",
         object[]? modulosRam = null,
         string ip = "192.168.10.45",
-        string nombreEquipo = "ADM-LT-001") =>
+        string nombreEquipo = "ADM-LT-001",
+        string modelo = "Latitude 5440") =>
         new
         {
             establecimientoId = establecimiento ?? r.EstablecimientoHuanta,
@@ -99,7 +102,7 @@ public sealed class ActivosTests(FabricaApi api)
                 codigoPatrimonial = codigo,
                 tipoActivoId = r.Tipo,
                 marcaId = r.Marca,
-                modelo = "Latitude 5440",
+                modelo,
                 numeroSerie = serie,
                 areaId = area ?? r.AreaHuanta,
                 ubicacionFisica = "Piso 2, oficina 204",
@@ -126,6 +129,11 @@ public sealed class ActivosTests(FabricaApi api)
                 direccionIp = ip,
                 direccionMac = "a4-bb-6d-12-34-56",
                 discoCifrado = true,
+                antivirusId = r.Antivirus,
+                tipoGrafica = "Dedicada",
+                modeloGrafica = "NVIDIA T550",
+                puertos = new[] { "Hdmi", "UsbA", "UsbA" },
+                accesorios = new[] { "Cargador" },
             },
             discos = new object[]
             {
@@ -166,6 +174,10 @@ public sealed class ActivosTests(FabricaApi api)
         Assert.Equal("Windows 11 Pro", ficha.Tecnicos.SistemaOperativo?.Nombre);
         Assert.Equal("Intel Core i7", ficha.Tecnicos.Procesador?.Nombre);
         Assert.Equal("13.ª generación", ficha.Tecnicos.Generacion?.Texto);
+        Assert.Equal("Microsoft Defender", ficha.Tecnicos.Antivirus?.Nombre);
+        Assert.Equal(TipoGrafica.Dedicada, ficha.Tecnicos.TipoGrafica);
+        Assert.Equal(new[] { "USB-A", "HDMI" }, ficha.Tecnicos.Puertos.Select(p => p.Texto));
+        Assert.Equal("Cargador", Assert.Single(ficha.Tecnicos.Accesorios).Valor);
         Assert.Equal("A4:BB:6D:12:34:56", ficha.Tecnicos.DireccionMac);
         Assert.Equal(1536, ficha.AlmacenamientoTotalGb);
         Assert.Equal(16, ficha.RamTotalGb);
@@ -300,6 +312,41 @@ public sealed class ActivosTests(FabricaApi api)
 
         Assert.Equal(porIp, Assert.Single(conIp!.Activos).Id);
         Assert.Equal(porEquipo, Assert.Single(conEquipo!.Activos).Id);
+    }
+
+    [Fact]
+    public async Task Sugerencias_DevuelvenLoYaRegistradoEnLaRed()
+    {
+        var r = await PrepararAsync();
+        using var editor = await api.CrearClienteConSesionAsync(DatosPrueba.EditorHuanta);
+        using var puquio = await api.CrearClienteConSesionAsync(DatosPrueba.EditorPuquio);
+        var modelo = CodigoUnico("Latitude");
+        await CrearAsync(editor, Ficha(r, CodigoUnico(), modelo: modelo));
+
+        var modelos = await editor.GetFromJsonAsync<List<string>>(
+            $"/api/activos/sugerencias?campo=Modelo&texto={EnMinusculas(modelo)}&marcaId={r.Marca}", Json, Ct);
+        var proveedores = await editor.GetFromJsonAsync<List<string>>("/api/activos/sugerencias?campo=Proveedor&texto=tecno", Json, Ct);
+        var discos = await editor.GetFromJsonAsync<List<string>>("/api/activos/sugerencias?campo=MarcaModeloDisco&texto=samsung", Json, Ct);
+        var deOtraRed = await puquio.GetFromJsonAsync<List<string>>($"/api/activos/sugerencias?campo=Modelo&texto={modelo}", Json, Ct);
+
+        Assert.Equal(modelo, Assert.Single(modelos!));
+        Assert.Contains("Proveedor Tecnológico S.A.C.", proveedores!);
+        Assert.Contains("Samsung PM9B1", discos!);
+        Assert.Empty(deOtraRed!);
+    }
+
+    [Fact]
+    public async Task UnaImpresoraNoLlevaPuertosNiAntivirus()
+    {
+        var r = await PrepararAsync();
+        using var editor = await api.CrearClienteConSesionAsync(DatosPrueba.EditorHuanta);
+        var impresora = await TipoAsync(editor, "Impresora");
+
+        var conPuertos = await editor.PostAsJsonAsync("/api/activos", FichaDeTipo(r, impresora, new { puertos = new[] { "UsbA" } }), Ct);
+        var conAntivirus = await editor.PostAsJsonAsync("/api/activos", FichaDeTipo(r, impresora, new { antivirusId = r.Antivirus }), Ct);
+
+        Assert.Equal("Activos.DatosNoCorresponden", await conPuertos.LeerCodigoAsync());
+        Assert.Equal("Activos.DatosNoCorresponden", await conAntivirus.LeerCodigoAsync());
     }
 
     [Fact]

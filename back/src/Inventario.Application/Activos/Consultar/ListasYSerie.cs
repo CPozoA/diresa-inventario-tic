@@ -29,7 +29,11 @@ public sealed record ListasActivoDto(
     IReadOnlyList<int> CapacidadesRamGb,
     IReadOnlyList<VelocidadesRamDto> VelocidadesRam,
     int CapacidadMaximaDiscoGb,
-    IReadOnlyList<GeneracionesDto> GeneracionesProcesador);
+    IReadOnlyList<GeneracionesDto> GeneracionesProcesador,
+    IReadOnlyList<OpcionDto> TiposGrafica,
+    IReadOnlyList<OpcionDto> Puertos,
+    IReadOnlyList<OpcionDto> Accesorios,
+    IReadOnlyList<decimal> PantallasPulgadas);
 
 /// <summary>Listas fijas de la ficha técnica.</summary>
 /// <remarks>Requiere Activos.Ver.</remarks>
@@ -69,7 +73,11 @@ internal sealed class ObtenerListasActivoHandler : IQueryHandler<ObtenerListasAc
             .Select(f => new GeneracionesDto(
                 f.ToString(),
                 GeneracionesDeProcesador.De(f).Select(g => new OpcionDto(g.Codigo, g.Texto)).ToList()))
-            .ToList());
+            .ToList(),
+        Opciones<TipoGrafica>(),
+        Opciones<Puerto>(),
+        Opciones<Accesorio>(),
+        ListasActivo.PantallasPulgadas);
 
     public Task<Result<ListasActivoDto>> Handle(ObtenerListasActivoQuery query, CancellationToken cancellationToken) =>
         Task.FromResult(Result.Exito(Listas));

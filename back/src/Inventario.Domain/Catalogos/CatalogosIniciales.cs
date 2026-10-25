@@ -40,6 +40,12 @@ public static class CatalogosIniciales
         "Qualcomm Snapdragon X", "Otro",
     ];
 
+    public static IReadOnlyList<string> Antivirus { get; } =
+    [
+        "Microsoft Defender", "ESET", "Kaspersky", "Bitdefender", "Sophos", "Trend Micro", "CrowdStrike Falcon",
+        "SentinelOne", "McAfee", "Avast", "Ninguno",
+    ];
+
     public static IReadOnlyList<string> TiposLicencia { get; } =
     [
         "Perpetua", "Suscripción anual", "Suscripción mensual", "OEM", "Volumen", "Software libre",

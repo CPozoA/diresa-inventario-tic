@@ -289,6 +289,27 @@ EF avisa que la migración puede perder datos: es lo esperado. Al arrancar, la A
 En la ficha, `tecnicos` lleva `procesadorId` y `generacionProcesador` (el código: `"13"`, `"5000"`). La búsqueda del
 inventario (`?buscar=`) también encuentra por IP y por nombre de equipo.
 
+## Paso 7C-4: más listas y sugerencias en la ficha (D45)
+
+Este paso **cambia el modelo**: agrega el catálogo `catalogos.Antivirus` y, en `inventario.Activos`, reemplaza las columnas de
+texto `TarjetaGrafica`, `Antivirus`, `PuertosPrincipales` y `AccesoriosIncluidos` por `TipoGrafica`, `ModeloGrafica`,
+`AntivirusId`, `Puertos` y `Accesorios`. **Lo escrito en esas cuatro columnas se pierde** (solo había datos de prueba).
+Desde `back`, con la API detenida:
+
+```powershell
+dotnet ef migrations add ListasFicha --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/catalogos/antivirus` | Con sesión | Catálogo general de antivirus o EDR |
+| `GET /api/activos/sugerencias?campo=&texto=&marcaId=&sistemaOperativoId=&establecimientoId=` | `Activos.Ver` | Hasta 10 valores ya registrados en la red, los más usados primero. `campo`: `Modelo`, `Proveedor`, `DominioGrupo`, `VersionSistemaOperativo`, `UbicacionFisica`, `MarcaModeloDisco` o `MarcaModeloRam` |
+| `GET /api/activos/listas` | `Activos.Ver` | Incluye `tiposGrafica`, `puertos`, `accesorios` y `pantallasPulgadas` |
+
+En la ficha, `tecnicos` lleva `tipoGrafica` (`Integrada` o `Dedicada`), `modeloGrafica` (solo si es dedicada),
+`antivirusId`, y `puertos` y `accesorios` como listas (`["UsbA", "Hdmi"]`).
+
 ### Correo en producción
 
 En el servidor se configura `Correo:Modo = Smtp` y los datos del SMTP (`Servidor`, `Puerto`, `Remitente`, `Usuario`,

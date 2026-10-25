@@ -55,6 +55,31 @@ public sealed class ActivoTests
         Assert.Throws<DominioException>(() => Activo.Crear(Sede, Guid.Empty, Generales(), Adquisicion(), Tecnicos(), [], []));
 
     [Fact]
+    public void PuertosYAccesorios_SeGuardanSinRepetirYEnElOrdenDeLaLista()
+    {
+        var activo = Crear(tecnicos: DatosTecnicosActivo.Vacios with
+        {
+            Puertos = [Puerto.Rj45, Puerto.UsbA, Puerto.Hdmi, Puerto.UsbA],
+            Accesorios = [Accesorio.Maletin, Accesorio.Cargador],
+        });
+
+        Assert.Equal("UsbA,Hdmi,Rj45", activo.PuertosGuardados);
+        Assert.Equal(new[] { Puerto.UsbA, Puerto.Hdmi, Puerto.Rj45 }, activo.Puertos.AsEnumerable());
+        Assert.Equal(new[] { Accesorio.Cargador, Accesorio.Maletin }, activo.Accesorios.AsEnumerable());
+        Assert.Null(Crear().PuertosGuardados);
+    }
+
+    [Fact]
+    public void ElModeloDeGraficaSoloSiEsDedicada()
+    {
+        var dedicada = Crear(tecnicos: DatosTecnicosActivo.Vacios with { TipoGrafica = TipoGrafica.Dedicada, ModeloGrafica = " NVIDIA T550 " });
+
+        Assert.Equal("NVIDIA T550", dedicada.ModeloGrafica);
+        Assert.Throws<DominioException>(() =>
+            Crear(tecnicos: DatosTecnicosActivo.Vacios with { TipoGrafica = TipoGrafica.Integrada, ModeloGrafica = "Intel UHD" }));
+    }
+
+    [Fact]
     public void LaGeneracionSinProcesador_Rechaza() =>
         Assert.Throws<DominioException>(() =>
             Crear(tecnicos: DatosTecnicosActivo.Vacios with { GeneracionProcesador = "13" }));

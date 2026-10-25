@@ -77,7 +77,7 @@ src/app/
 | `/sedes` | `Sedes.Gestionar` | Solo el superadmin. |
 | `/areas` | `Catalogos.GestionarSede` | Áreas de la sede (buscar o agregar en un solo campo); el superadmin elige la sede arriba. |
 | `/establecimientos` | `Establecimientos.Gestionar` | Solo el superadmin. Lista con búsqueda y filtro por estado, registro y corrección, e importación desde Excel con la lista de filas a corregir. |
-| `/catalogos` | `Catalogos.GestionarGlobales` | Tipos de activo (con la ficha técnica de cada uno), marcas, estados, sistemas operativos, procesadores (con sus generaciones) y tipos de licencia. |
+| `/catalogos` | `Catalogos.GestionarGlobales` | Tipos de activo (con la ficha técnica de cada uno), marcas, estados, sistemas operativos, procesadores (con sus generaciones), antivirus o EDR y tipos de licencia. |
 | `/inventario` | `Activos.Ver` | Lista paginada en la API, con búsqueda y filtros que quedan en la dirección. En celular, tarjetas. |
 | `/inventario/{id}` | `Activos.Ver` (Editar y Eliminar según permiso) | Ficha técnica de solo lectura; las secciones dependen de la ficha del tipo. |
 | `/inventario/nuevo`, `/inventario/{id}/editar` | `Activos.Crear`, `Activos.Editar` | Formulario de la ficha: establecimiento por búsqueda, secciones según el tipo, discos y RAM. Pregunta antes de salir con cambios sin guardar. |

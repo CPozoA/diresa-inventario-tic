@@ -1463,6 +1463,71 @@
         }
       }
     },
+    "/api/activos/sugerencias": {
+      "get": {
+        "tags": [
+          "Activos"
+        ],
+        "summary": "Valores ya registrados en la red para un campo escrito (modelo, proveedor, dominio…), los más usados primero.",
+        "operationId": "SugerenciasActivo",
+        "parameters": [
+          {
+            "name": "campo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/CampoSugerencia"
+            }
+          },
+          {
+            "name": "texto",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "marcaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sistemaOperativoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "establecimientoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/activos/{id}": {
       "get": {
         "tags": [
@@ -1554,6 +1619,22 @@
   },
   "components": {
     "schemas": {
+      "Accesorio": {
+        "enum": [
+          "Cargador",
+          "CablePoder",
+          "Maletin",
+          "Funda",
+          "Mouse",
+          "Teclado",
+          "Docking",
+          "Adaptador",
+          "CableRed",
+          "CableVideo",
+          "Lapiz",
+          "ControlRemoto"
+        ]
+      },
       "ActivoConSerieDto": {
         "required": [
           "id",
@@ -1706,6 +1787,17 @@
             "$ref": "#/components/schemas/GeneracionesProcesador"
           }
         }
+      },
+      "CampoSugerencia": {
+        "enum": [
+          "Modelo",
+          "Proveedor",
+          "DominioGrupo",
+          "VersionSistemaOperativo",
+          "UbicacionFisica",
+          "MarcaModeloDisco",
+          "MarcaModeloRam"
+        ]
       },
       "Conservacion": {
         "enum": [
@@ -2169,7 +2261,8 @@
           "procesadorId",
           "generacionProcesador",
           "nucleos",
-          "tarjetaGrafica",
+          "tipoGrafica",
+          "modeloGrafica",
           "pantallaPulgadas",
           "sistemaOperativoId",
           "versionSistemaOperativo",
@@ -2177,10 +2270,10 @@
           "dominioGrupo",
           "direccionIp",
           "direccionMac",
-          "antivirus",
+          "antivirusId",
           "discoCifrado",
-          "puertosPrincipales",
-          "accesoriosIncluidos"
+          "puertos",
+          "accesorios"
         ],
         "type": "object",
         "properties": {
@@ -2206,7 +2299,17 @@
             ],
             "format": "int32"
           },
-          "tarjetaGrafica": {
+          "tipoGrafica": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TipoGrafica"
+              }
+            ]
+          },
+          "modeloGrafica": {
             "type": [
               "null",
               "string"
@@ -2258,11 +2361,12 @@
               "string"
             ]
           },
-          "antivirus": {
+          "antivirusId": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "format": "uuid"
           },
           "discoCifrado": {
             "type": [
@@ -2270,17 +2374,23 @@
               "boolean"
             ]
           },
-          "puertosPrincipales": {
+          "puertos": {
             "type": [
               "null",
-              "string"
-            ]
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Puerto"
+            }
           },
-          "accesoriosIncluidos": {
+          "accesorios": {
             "type": [
               "null",
-              "string"
-            ]
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Accesorio"
+            }
           }
         }
       },
@@ -2925,7 +3035,11 @@
           "capacidadesRamGb",
           "velocidadesRam",
           "capacidadMaximaDiscoGb",
-          "generacionesProcesador"
+          "generacionesProcesador",
+          "tiposGrafica",
+          "puertos",
+          "accesorios",
+          "pantallasPulgadas"
         ],
         "type": "object",
         "properties": {
@@ -3012,6 +3126,35 @@
             "items": {
               "$ref": "#/components/schemas/GeneracionesDto"
             }
+          },
+          "tiposGrafica": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
+          },
+          "puertos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
+          },
+          "accesorios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
+          },
+          "pantallasPulgadas": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+              "type": [
+                "number",
+                "string"
+              ],
+              "format": "double"
+            }
           }
         }
       },
@@ -3093,6 +3236,23 @@
             "type": "boolean"
           }
         }
+      },
+      "Puerto": {
+        "enum": [
+          "UsbA",
+          "UsbC",
+          "Thunderbolt",
+          "Hdmi",
+          "DisplayPort",
+          "Vga",
+          "Dvi",
+          "Rj45",
+          "Serial",
+          "Audio",
+          "LectorTarjetas",
+          "WiFi",
+          "Bluetooth"
+        ]
       },
       "ReferenciaDto": {
         "required": [
@@ -3434,7 +3594,8 @@
           "procesador",
           "generacion",
           "nucleos",
-          "tarjetaGrafica",
+          "tipoGrafica",
+          "modeloGrafica",
           "pantallaPulgadas",
           "sistemaOperativo",
           "versionSistemaOperativo",
@@ -3444,8 +3605,8 @@
           "direccionMac",
           "antivirus",
           "discoCifrado",
-          "puertosPrincipales",
-          "accesoriosIncluidos"
+          "puertos",
+          "accesorios"
         ],
         "type": "object",
         "properties": {
@@ -3478,7 +3639,17 @@
             ],
             "format": "int32"
           },
-          "tarjetaGrafica": {
+          "tipoGrafica": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TipoGrafica"
+              }
+            ]
+          },
+          "modeloGrafica": {
             "type": [
               "null",
               "string"
@@ -3534,9 +3705,13 @@
             ]
           },
           "antivirus": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReferenciaDto"
+              }
             ]
           },
           "discoCifrado": {
@@ -3545,17 +3720,17 @@
               "boolean"
             ]
           },
-          "puertosPrincipales": {
-            "type": [
-              "null",
-              "string"
-            ]
+          "puertos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
           },
-          "accesoriosIncluidos": {
-            "type": [
-              "null",
-              "string"
-            ]
+          "accesorios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OpcionDto"
+            }
           }
         }
       },
@@ -3602,6 +3777,13 @@
           "Nvme",
           "Hdd",
           "Hibrido"
+        ]
+      },
+      "TipoGrafica": {
+        "enum": [
+          "Integrada",
+          "Dedicada",
+          null
         ]
       },
       "TipoRam": {

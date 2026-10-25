@@ -93,6 +93,8 @@ export type { ObtenerListasActivo$Params as ObtenerListasActivo$Params } from '.
 export { obtenerListasActivo as obtenerListasActivo } from './fn/activos/obtener-listas-activo';
 export type { BuscarSerieActivo$Params as BuscarSerieActivo$Params } from './fn/activos/buscar-serie-activo';
 export { buscarSerieActivo as buscarSerieActivo } from './fn/activos/buscar-serie-activo';
+export type { SugerenciasActivo$Params as SugerenciasActivo$Params } from './fn/activos/sugerencias-activo';
+export { sugerenciasActivo as sugerenciasActivo } from './fn/activos/sugerencias-activo';
 export type { ObtenerFichaActivo$Params as ObtenerFichaActivo$Params } from './fn/activos/obtener-ficha-activo';
 export { obtenerFichaActivo as obtenerFichaActivo } from './fn/activos/obtener-ficha-activo';
 export type { EditarActivo$Params as EditarActivo$Params } from './fn/activos/editar-activo';

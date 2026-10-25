@@ -13,8 +13,10 @@ import {
 import { NgTemplateOutlet } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -56,6 +58,7 @@ import {
   totalRamGb,
 } from '../data/formulario-activo';
 import { aNumero, fechaRenovacion, formatoFecha, formatoGb, textoFicha } from '../data/textos-activo';
+import { crearSugeridor } from '../data/sugerencias';
 import { decimales, entero, ipValida, macValida, noAnteriorA, noPosteriorA } from '../data/validadores-activo';
 
 const MAXIMO_DISCOS = 16;
@@ -76,8 +79,10 @@ const CAMPOS_DE_RED = ['nombreEquipo', 'direccionIp', 'direccionMac'] as const;
     NgTemplateOutlet,
     ReactiveFormsModule,
     RouterLink,
+    MatAutocompleteModule,
     MatButtonModule,
     MatButtonToggleModule,
+    MatChipsModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -142,18 +147,20 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
       procesadorId: new FormControl<string | null>(null),
       generacionProcesador: new FormControl<string | null>(null),
       nucleos: new FormControl<number | null>(null, [Validators.min(1), Validators.max(512), entero]),
-      tarjetaGrafica: ['', Validators.maxLength(100)],
-      pantallaPulgadas: new FormControl<number | null>(null, [Validators.min(1), Validators.max(150), decimales(1)]),
+      tipoGrafica: new FormControl<string | null>(null),
+      modeloGrafica: ['', Validators.maxLength(100)],
+      pantalla: new FormControl<number | 'otra' | null>(null),
+      pantallaOtra: new FormControl<number | null>(null),
       sistemaOperativoId: new FormControl<string | null>(null),
       versionSistemaOperativo: ['', Validators.maxLength(50)],
       nombreEquipo: ['', [Validators.maxLength(63), Validators.pattern(/^[A-Za-z0-9][A-Za-z0-9.-]*$/)]],
       dominioGrupo: ['', Validators.maxLength(100)],
       direccionIp: ['', ipValida],
       direccionMac: ['', macValida],
-      antivirus: ['', Validators.maxLength(100)],
+      antivirusId: new FormControl<string | null>(null),
       discoCifrado: new FormControl<boolean | null>(null),
-      puertosPrincipales: ['', Validators.maxLength(250)],
-      accesoriosIncluidos: ['', Validators.maxLength(250)],
+      puertos: new FormControl<string[]>([], { nonNullable: true }),
+      accesorios: new FormControl<string[]>([], { nonNullable: true }),
     }),
     discos: this.fb.array<FormGroup>([]),
     modulosRam: this.fb.array<FormGroup>([]),
@@ -193,6 +200,18 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   private readonly estados = this.catalogo('estados-activo');
   private readonly sistemas = this.catalogo('sistemas-operativos');
   private readonly procesadores = this.catalogo('procesadores');
+  private readonly antivirus = this.catalogo('antivirus');
+
+  // Sugerencias de lo ya registrado en la red (D45).
+  protected readonly sModelo = crearSugeridor('Modelo', () => ({ marcaId: this.generales.marcaId.value ?? undefined }));
+  protected readonly sUbicacion = crearSugeridor('UbicacionFisica', () => ({ establecimientoId: this.establecimiento()?.id }));
+  protected readonly sProveedor = crearSugeridor('Proveedor');
+  protected readonly sVersion = crearSugeridor('VersionSistemaOperativo', () => ({
+    sistemaOperativoId: this.tecnicos.sistemaOperativoId.value ?? undefined,
+  }));
+  protected readonly sDominio = crearSugeridor('DominioGrupo');
+  protected readonly sDisco = crearSugeridor('MarcaModeloDisco');
+  protected readonly sRam = crearSugeridor('MarcaModeloRam');
 
   /** Áreas de la red del establecimiento elegido. */
   private readonly areas = resource({
@@ -218,6 +237,10 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
     const familia = this.procesadores.value()?.find((p) => p.id === id)?.generaciones ?? 'Ninguna';
     return id ? (this.listas.value()?.generacionesProcesador.find((g) => g.familia === familia)?.opciones ?? []) : [];
   });
+
+  protected readonly opcionesAntivirus = computed(() =>
+    this.opciones(this.antivirus.value(), this.valor().tecnicos.antivirusId),
+  );
 
   protected readonly opcionesSistema = computed(() =>
     this.opciones(this.sistemas.value(), this.valor().tecnicos.sistemaOperativoId),
@@ -278,6 +301,9 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
 
   protected readonly capacidadesDisco = computed(() => this.numeros(this.listas.value()?.capacidadesDiscoGb));
   protected readonly capacidadesRam = computed(() => this.numeros(this.listas.value()?.capacidadesRamGb));
+  protected readonly pantallas = computed(() => this.numeros(this.listas.value()?.pantallasPulgadas));
+  protected readonly esDedicada = computed(() => this.valor().tecnicos.tipoGrafica === 'Dedicada');
+  protected readonly esOtraPantalla = computed(() => this.valor().tecnicos.pantalla === 'otra');
   protected readonly capacidadMaximaDisco = computed(() => aNumero(this.listas.value()?.capacidadMaximaDiscoGb) ?? 100_000);
 
   /** Activos de la red que ya usan el número de serie escrito (no es un error: puede ser el mismo equipo). */
@@ -306,12 +332,17 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
         return;
       }
       untracked(() => {
-        const valor = formularioDesdeFicha(ficha, this.numeros(listas.capacidadesDiscoGb));
+        const valor = formularioDesdeFicha(
+          ficha,
+          this.numeros(listas.capacidadesDiscoGb),
+          this.numeros(listas.pantallasPulgadas),
+        );
         this.discos.clear({ emitEvent: false });
         valor.discos.forEach((d) => this.discos.push(this.grupoDisco(d), { emitEvent: false }));
         this.modulosRam.clear({ emitEvent: false });
         valor.modulosRam.forEach((m) => this.modulosRam.push(this.grupoModulo(m), { emitEvent: false }));
         this.formulario.patchValue(valor);
+        this.alCambiarPantalla();
         const e = ficha.establecimiento;
         this.establecimiento.set({
           id: e.id,
@@ -428,6 +459,18 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
     } else {
       otra.clearValidators();
       otra.setValue(null);
+    }
+    otra.updateValueAndValidity();
+  }
+
+  /** Pantalla "Otra…": el campo para escribir las pulgadas solo es obligatorio cuando se elige. */
+  protected alCambiarPantalla(): void {
+    const otra = this.tecnicos.pantallaOtra;
+    if (this.tecnicos.pantalla.value === 'otra') {
+      otra.setValidators([Validators.required, Validators.min(1), Validators.max(150), decimales(1)]);
+    } else {
+      otra.clearValidators();
+      otra.setValue(null, { emitEvent: false });
     }
     otra.updateValueAndValidity();
   }

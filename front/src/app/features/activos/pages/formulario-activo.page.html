@@ -70,7 +70,21 @@
           </mat-form-field>
           <mat-form-field>
             <mat-label>Modelo</mat-label>
-            <input matInput formControlName="modelo" maxlength="100" required />
+            <input
+              matInput
+              formControlName="modelo"
+              maxlength="100"
+              required
+              autocomplete="off"
+              [matAutocomplete]="acModelo"
+              (input)="sModelo.buscar(generales.modelo.value)"
+              (focus)="sModelo.buscar(generales.modelo.value)"
+            />
+            <mat-autocomplete #acModelo="matAutocomplete">
+              @for (o of sModelo.opciones(); track o) {
+                <mat-option [value]="o">{{ o }}</mat-option>
+              }
+            </mat-autocomplete>
             <mat-error>Escriba el modelo.</mat-error>
           </mat-form-field>
           <mat-form-field>
@@ -111,7 +125,21 @@
           </mat-form-field>
           <mat-form-field>
             <mat-label>Ubicación física</mat-label>
-            <input matInput formControlName="ubicacionFisica" maxlength="150" placeholder="Por ejemplo: piso 2, oficina 204" />
+            <input
+              matInput
+              formControlName="ubicacionFisica"
+              maxlength="150"
+              placeholder="Por ejemplo: piso 2, oficina 204"
+              autocomplete="off"
+              [matAutocomplete]="acUbicacion"
+              (input)="sUbicacion.buscar(generales.ubicacionFisica.value)"
+              (focus)="sUbicacion.buscar(generales.ubicacionFisica.value)"
+            />
+            <mat-autocomplete #acUbicacion="matAutocomplete">
+              @for (o of sUbicacion.opciones(); track o) {
+                <mat-option [value]="o">{{ o }}</mat-option>
+              }
+            </mat-autocomplete>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Responsable o usuario</mat-label>
@@ -190,7 +218,20 @@
           </mat-form-field>
           <mat-form-field class="ancho">
             <mat-label>Proveedor</mat-label>
-            <input matInput formControlName="proveedor" maxlength="150" />
+            <input
+              matInput
+              formControlName="proveedor"
+              maxlength="150"
+              autocomplete="off"
+              [matAutocomplete]="acProveedor"
+              (input)="sProveedor.buscar(adquisicion.proveedor.value)"
+              (focus)="sProveedor.buscar(adquisicion.proveedor.value)"
+            />
+            <mat-autocomplete #acProveedor="matAutocomplete">
+              @for (o of sProveedor.opciones(); track o) {
+                <mat-option [value]="o">{{ o }}</mat-option>
+              }
+            </mat-autocomplete>
           </mat-form-field>
         </div>
         <p class="nota" aria-live="polite">
@@ -269,16 +310,48 @@
               </mat-form-field>
               <mat-form-field>
                 <mat-label>Versión del sistema operativo</mat-label>
-                <input matInput formControlName="versionSistemaOperativo" maxlength="50" placeholder="23H2" />
+                <input
+                  matInput
+                  formControlName="versionSistemaOperativo"
+                  maxlength="50"
+                  placeholder="24H2"
+                  autocomplete="off"
+                  [matAutocomplete]="acVersion"
+                  (input)="sVersion.buscar(tecnicos.versionSistemaOperativo.value)"
+                  (focus)="sVersion.buscar(tecnicos.versionSistemaOperativo.value)"
+                />
+                <mat-autocomplete #acVersion="matAutocomplete">
+              @for (o of sVersion.opciones(); track o) {
+                <mat-option [value]="o">{{ o }}</mat-option>
+              }
+            </mat-autocomplete>
               </mat-form-field>
               <ng-container *ngTemplateOutlet="camposDeRed" />
               <mat-form-field>
                 <mat-label>Dominio o grupo de trabajo</mat-label>
-                <input matInput formControlName="dominioGrupo" maxlength="100" />
+                <input
+                  matInput
+                  formControlName="dominioGrupo"
+                  maxlength="100"
+                  autocomplete="off"
+                  [matAutocomplete]="acDominio"
+                  (input)="sDominio.buscar(tecnicos.dominioGrupo.value)"
+                  (focus)="sDominio.buscar(tecnicos.dominioGrupo.value)"
+                />
+                <mat-autocomplete #acDominio="matAutocomplete">
+              @for (o of sDominio.opciones(); track o) {
+                <mat-option [value]="o">{{ o }}</mat-option>
+              }
+            </mat-autocomplete>
               </mat-form-field>
               <mat-form-field>
                 <mat-label>Antivirus o EDR</mat-label>
-                <input matInput formControlName="antivirus" maxlength="100" />
+                <mat-select formControlName="antivirusId">
+                  <mat-option [value]="null">Sin dato</mat-option>
+                  @for (a of opcionesAntivirus(); track a.id) {
+                    <mat-option [value]="a.id">{{ a.nombre }}{{ a.activo ? '' : ' (desactivado)' }}</mat-option>
+                  }
+                </mat-select>
               </mat-form-field>
               <mat-form-field>
                 <mat-label>Disco cifrado</mat-label>
@@ -290,21 +363,52 @@
               </mat-form-field>
               <mat-form-field>
                 <mat-label>Tarjeta gráfica</mat-label>
-                <input matInput formControlName="tarjetaGrafica" maxlength="100" />
+                <mat-select formControlName="tipoGrafica">
+                  <mat-option [value]="null">Sin dato</mat-option>
+                  @for (t of listas.value()?.tiposGrafica ?? []; track t.valor) {
+                    <mat-option [value]="t.valor">{{ t.texto }}</mat-option>
+                  }
+                </mat-select>
               </mat-form-field>
+              @if (esDedicada()) {
+                <mat-form-field>
+                  <mat-label>Modelo de la tarjeta gráfica</mat-label>
+                  <input matInput formControlName="modeloGrafica" maxlength="100" placeholder="NVIDIA T550" />
+                </mat-form-field>
+              }
               <mat-form-field>
-                <mat-label>Pantalla (pulgadas)</mat-label>
-                <input matInput type="number" formControlName="pantallaPulgadas" min="1" max="150" step="0.1" inputmode="decimal" />
-                <mat-error>Entre 1 y 150, con hasta 1 decimal.</mat-error>
+                <mat-label>Pantalla</mat-label>
+                <mat-select formControlName="pantalla" (selectionChange)="alCambiarPantalla()">
+                  <mat-option [value]="null">Sin pantalla o sin dato</mat-option>
+                  @for (p of pantallas(); track p) {
+                    <mat-option [value]="p">{{ p }}″</mat-option>
+                  }
+                  <mat-option value="otra">Otra…</mat-option>
+                </mat-select>
               </mat-form-field>
-              <mat-form-field class="ancho">
-                <mat-label>Puertos principales</mat-label>
-                <input matInput formControlName="puertosPrincipales" maxlength="250" placeholder="2 USB-C, 2 USB-A, HDMI, RJ-45" />
-              </mat-form-field>
-              <mat-form-field class="ancho">
-                <mat-label>Accesorios incluidos</mat-label>
-                <input matInput formControlName="accesoriosIncluidos" maxlength="250" placeholder="Cargador, maletín" />
-              </mat-form-field>
+              @if (esOtraPantalla()) {
+                <mat-form-field>
+                  <mat-label>Pulgadas</mat-label>
+                  <input matInput type="number" formControlName="pantallaOtra" min="1" max="150" step="0.1" inputmode="decimal" required />
+                  <mat-error>Entre 1 y 150, con hasta 1 decimal.</mat-error>
+                </mat-form-field>
+              }
+            </div>
+            <div class="grupo-chips">
+              <span class="etiqueta" id="etiqueta-puertos">Puertos y conectividad</span>
+              <mat-chip-listbox formControlName="puertos" multiple aria-labelledby="etiqueta-puertos">
+                @for (p of listas.value()?.puertos ?? []; track p.valor) {
+                  <mat-chip-option [value]="p.valor">{{ p.texto }}</mat-chip-option>
+                }
+              </mat-chip-listbox>
+            </div>
+            <div class="grupo-chips">
+              <span class="etiqueta" id="etiqueta-accesorios">Accesorios incluidos</span>
+              <mat-chip-listbox formControlName="accesorios" multiple aria-labelledby="etiqueta-accesorios">
+                @for (a of listas.value()?.accesorios ?? []; track a.valor) {
+                  <mat-chip-option [value]="a.valor">{{ a.texto }}</mat-chip-option>
+                }
+              </mat-chip-listbox>
             </div>
           </section>
 
@@ -358,7 +462,16 @@
                 </mat-form-field>
                 <mat-form-field>
                   <mat-label>Marca y modelo</mat-label>
-                  <input matInput formControlName="marcaModelo" maxlength="100" />
+                  <input
+                    #marcaDisco
+                    matInput
+                    formControlName="marcaModelo"
+                    maxlength="100"
+                    autocomplete="off"
+                    [matAutocomplete]="acDisco"
+                    (input)="sDisco.buscar(marcaDisco.value)"
+                    (focus)="sDisco.buscar(marcaDisco.value)"
+                  />
                 </mat-form-field>
                 <mat-form-field>
                   <mat-label>N° de serie</mat-label>
@@ -419,7 +532,16 @@
                 </mat-form-field>
                 <mat-form-field>
                   <mat-label>Marca y modelo</mat-label>
-                  <input matInput formControlName="marcaModelo" maxlength="100" />
+                  <input
+                    #marcaRam
+                    matInput
+                    formControlName="marcaModelo"
+                    maxlength="100"
+                    autocomplete="off"
+                    [matAutocomplete]="acRam"
+                    (input)="sRam.buscar(marcaRam.value)"
+                    (focus)="sRam.buscar(marcaRam.value)"
+                  />
                 </mat-form-field>
                 <button mat-icon-button type="button" class="quitar" [attr.aria-label]="'Quitar el módulo ' + (i + 1)" (click)="quitarModulo(i)">
                   <mat-icon>delete</mat-icon>
@@ -443,6 +565,18 @@
           </section>
         }
       }
+
+      <!-- Sugerencias compartidas por todas las filas de discos y de RAM. -->
+      <mat-autocomplete #acDisco="matAutocomplete">
+      @for (o of sDisco.opciones(); track o) {
+        <mat-option [value]="o">{{ o }}</mat-option>
+      }
+      </mat-autocomplete>
+      <mat-autocomplete #acRam="matAutocomplete">
+      @for (o of sRam.opciones(); track o) {
+        <mat-option [value]="o">{{ o }}</mat-option>
+      }
+      </mat-autocomplete>
 
       <!-- Campos de red: los usan las fichas Red y Cómputo. -->
       <ng-template #camposDeRed>

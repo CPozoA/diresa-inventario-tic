@@ -39,18 +39,24 @@ export interface ValorTecnicos {
   /** Código de la generación ("13"), de la lista de la familia del procesador (D44). */
   generacionProcesador: string | null;
   nucleos: number | null;
-  tarjetaGrafica: string;
-  pantallaPulgadas: number | null;
+  tipoGrafica: string | null;
+  /** Solo si la gráfica es dedicada. */
+  modeloGrafica: string;
+  /** Medida de la lista, u "otra" (se escribe en pantallaOtra). */
+  pantalla: number | 'otra' | null;
+  pantallaOtra: number | null;
   sistemaOperativoId: string | null;
   versionSistemaOperativo: string;
   nombreEquipo: string;
   dominioGrupo: string;
   direccionIp: string;
   direccionMac: string;
-  antivirus: string;
+  antivirusId: string | null;
   discoCifrado: boolean | null;
-  puertosPrincipales: string;
-  accesoriosIncluidos: string;
+  /** Valores de la lista de puertos ("UsbA", "Hdmi"…). */
+  puertos: string[];
+  /** Valores de la lista de accesorios ("Cargador"…). */
+  accesorios: string[];
 }
 
 /** Capacidad elegida de la lista, u "otra" (se escribe en capacidadOtra). */
@@ -93,6 +99,11 @@ const texto = (valor: string | null | undefined): string | null => {
 const numero = (valor: number | null | undefined): number | null =>
   valor === null || valor === undefined || Number.isNaN(valor) ? null : valor;
 
+/** Pulgadas de la pantalla (de la lista o escritas). */
+export function pulgadasPantalla(t: Pick<ValorTecnicos, 'pantalla' | 'pantallaOtra'>): number | null {
+  return t.pantalla === 'otra' ? numero(t.pantallaOtra) : numero(t.pantalla);
+}
+
 /** Capacidad en GB de un disco del formulario (de la lista o escrita). */
 export function capacidadDisco(disco: Pick<ValorDisco, 'capacidad' | 'capacidadOtra'>): number | null {
   return disco.capacidad === 'otra' ? numero(disco.capacidadOtra) : numero(disco.capacidad);
@@ -119,32 +130,34 @@ export function fichaDesdeFormulario(valor: ValorFormularioActivo, establecimien
           procesadorId: t.procesadorId,
           generacionProcesador: t.procesadorId ? t.generacionProcesador : null,
           nucleos: numero(t.nucleos),
-          tarjetaGrafica: texto(t.tarjetaGrafica),
-          pantallaPulgadas: numero(t.pantallaPulgadas),
+          tipoGrafica: t.tipoGrafica as NonNullable<FichaActivo['tecnicos']>['tipoGrafica'],
+          modeloGrafica: t.tipoGrafica === 'Dedicada' ? texto(t.modeloGrafica) : null,
+          pantallaPulgadas: pulgadasPantalla(t),
           sistemaOperativoId: t.sistemaOperativoId,
           versionSistemaOperativo: texto(t.versionSistemaOperativo),
           ...deRed,
           dominioGrupo: texto(t.dominioGrupo),
-          antivirus: texto(t.antivirus),
+          antivirusId: t.antivirusId,
           discoCifrado: t.discoCifrado,
-          puertosPrincipales: texto(t.puertosPrincipales),
-          accesoriosIncluidos: texto(t.accesoriosIncluidos),
+          puertos: t.puertos as NonNullable<NonNullable<FichaActivo['tecnicos']>['puertos']>,
+          accesorios: t.accesorios as NonNullable<NonNullable<FichaActivo['tecnicos']>['accesorios']>,
         }
       : ficha === 'Red'
         ? {
             procesadorId: null,
             generacionProcesador: null,
             nucleos: null,
-            tarjetaGrafica: null,
+            tipoGrafica: null,
+            modeloGrafica: null,
             pantallaPulgadas: null,
             sistemaOperativoId: null,
             versionSistemaOperativo: null,
             ...deRed,
             dominioGrupo: null,
-            antivirus: null,
+            antivirusId: null,
             discoCifrado: null,
-            puertosPrincipales: null,
-            accesoriosIncluidos: null,
+            puertos: null,
+            accesorios: null,
           }
         : null;
 
@@ -200,10 +213,16 @@ export function fichaDesdeFormulario(valor: ValorFormularioActivo, establecimien
 }
 
 /** Valores del formulario para editar una ficha existente. */
-export function formularioDesdeFicha(ficha: FichaActivoDto, capacidadesDisco: readonly number[]): ValorFormularioActivo {
+export function formularioDesdeFicha(
+  ficha: FichaActivoDto,
+  capacidadesDisco: readonly number[],
+  pantallas: readonly number[] = [],
+): ValorFormularioActivo {
   const g = ficha.generales;
   const a = ficha.adquisicion;
   const t = ficha.tecnicos;
+  const pulgadas = aNumero(t.pantallaPulgadas);
+  const pantallaEnLista = pulgadas !== null && pantallas.includes(pulgadas);
   return {
     generales: {
       codigoPatrimonial: g.codigoPatrimonial,
@@ -233,18 +252,20 @@ export function formularioDesdeFicha(ficha: FichaActivoDto, capacidadesDisco: re
       procesadorId: t.procesador?.id ?? null,
       generacionProcesador: t.generacion?.valor ?? null,
       nucleos: aNumero(t.nucleos),
-      tarjetaGrafica: t.tarjetaGrafica ?? '',
-      pantallaPulgadas: aNumero(t.pantallaPulgadas),
+      tipoGrafica: t.tipoGrafica ?? null,
+      modeloGrafica: t.modeloGrafica ?? '',
+      pantalla: pulgadas === null ? null : pantallaEnLista ? pulgadas : 'otra',
+      pantallaOtra: pulgadas !== null && !pantallaEnLista ? pulgadas : null,
       sistemaOperativoId: t.sistemaOperativo?.id ?? null,
       versionSistemaOperativo: t.versionSistemaOperativo ?? '',
       nombreEquipo: t.nombreEquipo ?? '',
       dominioGrupo: t.dominioGrupo ?? '',
       direccionIp: t.direccionIp ?? '',
       direccionMac: t.direccionMac ?? '',
-      antivirus: t.antivirus ?? '',
+      antivirusId: t.antivirus?.id ?? null,
       discoCifrado: t.discoCifrado ?? null,
-      puertosPrincipales: t.puertosPrincipales ?? '',
-      accesoriosIncluidos: t.accesoriosIncluidos ?? '',
+      puertos: (t.puertos ?? []).map((p) => p.valor),
+      accesorios: (t.accesorios ?? []).map((a) => a.valor),
     },
     discos: ficha.discos.map((d) => {
       const gb = aNumero(d.capacidadGb);
@@ -275,18 +296,15 @@ export function hayDatosQueSeDescartan(valor: ValorFormularioActivo, ficha: Fich
     return false;
   }
   const t = valor.tecnicos;
-  const deComputo = [
-    t.tarjetaGrafica,
-    t.versionSistemaOperativo,
-    t.dominioGrupo,
-    t.antivirus,
-    t.puertosPrincipales,
-    t.accesoriosIncluidos,
-  ].some((x) => x.trim() !== '');
+  const deComputo = [t.modeloGrafica, t.versionSistemaOperativo, t.dominioGrupo].some((x) => x.trim() !== '');
   const otros =
     t.procesadorId !== null ||
     t.nucleos !== null ||
-    t.pantallaPulgadas !== null ||
+    t.tipoGrafica !== null ||
+    pulgadasPantalla(t) !== null ||
+    t.antivirusId !== null ||
+    t.puertos.length > 0 ||
+    t.accesorios.length > 0 ||
     t.sistemaOperativoId !== null ||
     t.discoCifrado !== null ||
     valor.discos.length > 0 ||

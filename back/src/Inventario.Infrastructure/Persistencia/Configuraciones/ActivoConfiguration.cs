@@ -34,16 +34,19 @@ internal sealed class ActivoConfiguration : IEntityTypeConfiguration<Activo>
         builder.Property(a => a.ValorAdquisicion).HasPrecision(12, 2);
 
         builder.Property(a => a.GeneracionProcesador).HasMaxLength(GeneracionesDeProcesador.LongitudMaximaCodigo);
-        builder.Property(a => a.TarjetaGrafica).HasMaxLength(Activo.LongitudMaximaTextoTecnico);
+        builder.Property(a => a.TipoGrafica).HasConversion<string>().HasMaxLength(20);
+        builder.Property(a => a.ModeloGrafica).HasMaxLength(Activo.LongitudMaximaTextoTecnico);
         builder.Property(a => a.PantallaPulgadas).HasPrecision(4, 1);
         builder.Property(a => a.VersionSistemaOperativo).HasMaxLength(Activo.LongitudMaximaTextoCorto);
         builder.Property(a => a.NombreEquipo).HasMaxLength(Activo.LongitudMaximaNombreEquipo);
         builder.Property(a => a.DominioGrupo).HasMaxLength(Activo.LongitudMaximaTextoTecnico);
         builder.Property(a => a.DireccionIp).HasMaxLength(Activo.LongitudMaximaIp);
         builder.Property(a => a.DireccionMac).HasMaxLength(Activo.LongitudMac);
-        builder.Property(a => a.Antivirus).HasMaxLength(Activo.LongitudMaximaTextoTecnico);
-        builder.Property(a => a.PuertosPrincipales).HasMaxLength(Activo.LongitudMaximaTextoLargo);
-        builder.Property(a => a.AccesoriosIncluidos).HasMaxLength(Activo.LongitudMaximaTextoLargo);
+        // D45: listas marcadas, guardadas como nombres separados por comas ("UsbA,Hdmi").
+        builder.Property(a => a.PuertosGuardados).HasColumnName("Puertos").HasMaxLength(300);
+        builder.Property(a => a.AccesoriosGuardados).HasColumnName("Accesorios").HasMaxLength(300);
+        builder.Ignore(a => a.Puertos);
+        builder.Ignore(a => a.Accesorios);
 
         // Totales calculados en memoria a partir de discos y RAM.
         builder.Ignore(a => a.RamTotalGb);
@@ -67,6 +70,7 @@ internal sealed class ActivoConfiguration : IEntityTypeConfiguration<Activo>
         builder.HasOne<EstadoActivo>().WithMany().HasForeignKey(a => a.EstadoActivoId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<SistemaOperativo>().WithMany().HasForeignKey(a => a.SistemaOperativoId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<Procesador>().WithMany().HasForeignKey(a => a.ProcesadorId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Antivirus>().WithMany().HasForeignKey(a => a.AntivirusId).OnDelete(DeleteBehavior.Restrict);
 
         // Discos y RAM forman parte del activo: se borran con él.
         builder.HasMany(a => a.Discos).WithOne().HasForeignKey(d => d.ActivoId).OnDelete(DeleteBehavior.Cascade);

@@ -47,7 +47,8 @@ function ficha(tipo: FichaTecnica, cambios: Partial<FichaActivoDto> = {}): Ficha
       procesador: ref('Intel Core i7'),
       generacion: { valor: '13', texto: '13.ª generación' },
       nucleos: 10,
-      tarjetaGrafica: null,
+      tipoGrafica: 'Dedicada',
+      modeloGrafica: 'NVIDIA T550',
       pantallaPulgadas: '14',
       sistemaOperativo: ref('Windows 11 Pro'),
       versionSistemaOperativo: '23H2',
@@ -55,10 +56,13 @@ function ficha(tipo: FichaTecnica, cambios: Partial<FichaActivoDto> = {}): Ficha
       dominioGrupo: null,
       direccionIp: '192.168.10.45',
       direccionMac: 'A4:BB:6D:12:34:56',
-      antivirus: null,
+      antivirus: { id: 'av1', nombre: 'Microsoft Defender' },
       discoCifrado: true,
-      puertosPrincipales: null,
-      accesoriosIncluidos: null,
+      puertos: [
+        { valor: 'UsbA', texto: 'USB-A' },
+        { valor: 'Hdmi', texto: 'HDMI' },
+      ],
+      accesorios: [],
     },
     discos: [{ ranura: 'M.2 #1', tipo: 'Nvme', capacidadGb: 512, marcaModelo: null, numeroSerie: null, uso: 'Sistema' }],
     modulosRam: [
@@ -87,9 +91,14 @@ describe('presentación de la ficha', () => {
       'Nombre de equipo',
       'Dirección IP',
       'Dirección MAC',
+      'Antivirus o EDR',
       'Disco cifrado',
       'Pantalla',
+      'Tarjeta gráfica',
+      'Puertos y conectividad',
     ]);
+    expect(datos.find((d) => d.etiqueta === 'Tarjeta gráfica')?.valor).toBe('Dedicada · NVIDIA T550');
+    expect(datos.find((d) => d.etiqueta === 'Puertos y conectividad')?.valor).toBe('USB-A, HDMI');
     expect(datos[0].valor).toBe('Intel Core i7 · 13.ª generación · 10 núcleos');
     expect(datos[1]).toMatchObject({ valor: '16 GB', detalle: '(2 módulos)' });
     expect(datos[2]).toMatchObject({ valor: '512 GB', detalle: '(1 disco)' });

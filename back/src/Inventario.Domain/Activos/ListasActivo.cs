@@ -72,6 +72,48 @@ public enum SituacionRenovacion
     Renovar,
 }
 
+/// <summary>Tarjeta gráfica integrada en el procesador o dedicada (D45).</summary>
+public enum TipoGrafica
+{
+    Integrada,
+    Dedicada,
+}
+
+/// <summary>Puertos y conectividad del equipo (D45). Se marcan varios.</summary>
+public enum Puerto
+{
+    UsbA,
+    UsbC,
+    Thunderbolt,
+    Hdmi,
+    DisplayPort,
+    Vga,
+    Dvi,
+    Rj45,
+    Serial,
+    Audio,
+    LectorTarjetas,
+    WiFi,
+    Bluetooth,
+}
+
+/// <summary>Accesorios que se entregan con el equipo (D45). Se marcan varios.</summary>
+public enum Accesorio
+{
+    Cargador,
+    CablePoder,
+    Maletin,
+    Funda,
+    Mouse,
+    Teclado,
+    Docking,
+    Adaptador,
+    CableRed,
+    CableVideo,
+    Lapiz,
+    ControlRemoto,
+}
+
 /// <summary>
 /// Listas fijas de la ficha técnica (docs/ARQUITECTURA.md D41): se eligen, no se escriben, para evitar errores
 /// de registro. La API las entrega a la interfaz con sus textos.
@@ -106,6 +148,10 @@ public static class ListasActivo
             [TipoRam.Lpddr5] = [5500, 6400],
         };
 
+    /// <summary>Tamaños de pantalla habituales, en pulgadas. La interfaz ofrece además "Otra" para escribir un valor.</summary>
+    public static IReadOnlyList<decimal> PantallasPulgadas { get; } =
+        [10.1m, 11.6m, 12.5m, 13.3m, 14m, 15.6m, 16m, 17.3m, 18.5m, 19.5m, 21.5m, 23.8m, 24m, 27m, 32m];
+
     /// <summary>Texto para mostrar de cada valor.</summary>
     public static string Texto(Enum valor) =>
         (object)valor switch
@@ -124,6 +170,23 @@ public static class ListasActivo
             TipoRam.Lpddr5 => "LPDDR5",
             EstadoGarantia.SinDato or SituacionRenovacion.SinDato => "Sin dato",
             SituacionRenovacion.ProximoARenovar => "Próximo a renovar",
+            Puerto.UsbA => "USB-A",
+            Puerto.UsbC => "USB-C",
+            Puerto.Hdmi => "HDMI",
+            Puerto.Vga => "VGA",
+            Puerto.Dvi => "DVI",
+            Puerto.Rj45 => "RJ-45 (red)",
+            Puerto.Serial => "Serial (RS-232)",
+            Puerto.Audio => "Audio 3.5 mm",
+            Puerto.LectorTarjetas => "Lector de tarjetas",
+            Puerto.WiFi => "Wi-Fi",
+            Accesorio.CablePoder => "Cable de poder",
+            Accesorio.Maletin => "Maletín",
+            Accesorio.Docking => "Docking station",
+            Accesorio.CableRed => "Cable de red",
+            Accesorio.CableVideo => "Cable de video",
+            Accesorio.Lapiz => "Lápiz digital",
+            Accesorio.ControlRemoto => "Control remoto",
             _ => valor.ToString(),
         };
 }

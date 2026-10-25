@@ -41,7 +41,8 @@ public sealed record TecnicosActivoDto(
     ReferenciaDto? Procesador,
     OpcionDto? Generacion,
     int? Nucleos,
-    string? TarjetaGrafica,
+    TipoGrafica? TipoGrafica,
+    string? ModeloGrafica,
     decimal? PantallaPulgadas,
     ReferenciaDto? SistemaOperativo,
     string? VersionSistemaOperativo,
@@ -49,10 +50,10 @@ public sealed record TecnicosActivoDto(
     string? DominioGrupo,
     string? DireccionIp,
     string? DireccionMac,
-    string? Antivirus,
+    ReferenciaDto? Antivirus,
     bool? DiscoCifrado,
-    string? PuertosPrincipales,
-    string? AccesoriosIncluidos);
+    IReadOnlyList<OpcionDto> Puertos,
+    IReadOnlyList<OpcionDto> Accesorios);
 
 /// <summary>Ficha técnica completa de un activo, con los datos calculados a hoy.</summary>
 /// <remarks><c>Ficha</c> es la del tipo de activo (D43): indica qué secciones técnicas se muestran.</remarks>
@@ -131,6 +132,12 @@ internal sealed class ObtenerFichaActivoHandler(IAppDbContext db, TimeProvider r
             }
         }
 
+        var antivirus = activo.AntivirusId is Guid antivirusId
+            ? new ReferenciaDto(
+                antivirusId,
+                await NombreAsync(db.Antivirus.AsNoTracking().Where(a => a.Id == antivirusId).Select(a => a.Nombre), cancellationToken))
+            : null;
+
         var hoy = DateOnly.FromDateTime(reloj.GetLocalNow().DateTime);
 
         return new FichaActivoDto(
@@ -165,7 +172,8 @@ internal sealed class ObtenerFichaActivoHandler(IAppDbContext db, TimeProvider r
                 procesador,
                 generacion,
                 activo.Nucleos,
-                activo.TarjetaGrafica,
+                activo.TipoGrafica,
+                activo.ModeloGrafica,
                 activo.PantallaPulgadas,
                 sistema,
                 activo.VersionSistemaOperativo,
@@ -173,10 +181,10 @@ internal sealed class ObtenerFichaActivoHandler(IAppDbContext db, TimeProvider r
                 activo.DominioGrupo,
                 activo.DireccionIp,
                 activo.DireccionMac,
-                activo.Antivirus,
+                antivirus,
                 activo.DiscoCifrado,
-                activo.PuertosPrincipales,
-                activo.AccesoriosIncluidos),
+                activo.Puertos.Select(p => new OpcionDto(p.ToString(), ListasActivo.Texto(p))).ToList(),
+                activo.Accesorios.Select(a => new OpcionDto(a.ToString(), ListasActivo.Texto(a))).ToList()),
             activo.Discos
                 .OrderBy(d => d.Orden)
                 .Select(d => new DatosDisco(d.Ranura, d.Tipo, d.CapacidadGb, d.MarcaModelo, d.NumeroSerie, d.Uso))

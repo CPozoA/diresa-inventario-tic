@@ -6,6 +6,7 @@ import { GeneracionesProcesador } from '../../../api/models/generaciones-procesa
 import { SituacionRenovacion } from '../../../api/models/situacion-renovacion';
 import { TipoAdquisicion } from '../../../api/models/tipo-adquisicion';
 import { TipoDisco } from '../../../api/models/tipo-disco';
+import { TipoGrafica } from '../../../api/models/tipo-grafica';
 import { TipoRam } from '../../../api/models/tipo-ram';
 import { UsoDisco } from '../../../api/models/uso-disco';
 import { normalizarTexto } from '../../../shared/util/texto';
@@ -74,6 +75,8 @@ export const TEXTO_TIPO_RAM: Readonly<Record<NonNullable<TipoRam>, string>> = {
   Lpddr5: 'LPDDR5',
 };
 
+export const TEXTO_TIPO_GRAFICA: Readonly<Record<NonNullable<TipoGrafica>, string>> = { Integrada: 'Integrada', Dedicada: 'Dedicada' };
+
 /** Qué características técnicas lleva cada tipo de activo (D43). */
 export const TEXTO_FICHA: Readonly<Record<NonNullable<FichaTecnica>, string>> = {
   Computo: 'Cómputo',
@@ -123,6 +126,7 @@ export const textoAdquisicion = lector(TEXTO_ADQUISICION, '—');
 export const textoTipoDisco = lector(TEXTO_TIPO_DISCO, '—');
 export const textoUsoDisco = lector(TEXTO_USO_DISCO, '—');
 export const textoTipoRam = lector(TEXTO_TIPO_RAM, '—');
+export const textoTipoGrafica = lector(TEXTO_TIPO_GRAFICA, '—');
 export const textoFicha = lector(TEXTO_FICHA, TEXTO_FICHA.Ninguna);
 export const descripcionFicha = lector(DESCRIPCION_FICHA, DESCRIPCION_FICHA.Ninguna);
 export const textoGeneraciones = lector(TEXTO_GENERACIONES, TEXTO_GENERACIONES.Ninguna);

@@ -117,6 +117,8 @@ internal static class DefinicionesCatalogo
             db => db.Procesadores,
             (_, n) => Procesador.Crear(n),
             p => new ElementoCatalogoDto(p.Id, p.Nombre, p.Activo, null, p.Generaciones)),
+        new DefinicionCatalogo<Antivirus>(
+            "antivirus", "Antivirus o EDR", "Antivirus o EDR", db => db.Antivirus, (_, n) => Antivirus.Crear(n)),
         new DefinicionCatalogo<TipoLicencia>(
             "tipos-licencia", "Tipos de licencia", "Tipo de licencia", db => db.TiposLicencia, (_, n) => TipoLicencia.Crear(n)),
     ];

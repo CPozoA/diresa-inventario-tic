@@ -36,6 +36,11 @@ internal static class ActivosEndpoints
             .WithName("BuscarSerieActivo")
             .WithSummary("Activos de la sede que ya usan ese número de serie (para avisar antes de guardar).");
 
+        grupo.MapGet("/sugerencias", SugerenciasAsync)
+            .RequirePermiso(Permisos.Activos.Ver)
+            .WithName("SugerenciasActivo")
+            .WithSummary("Valores ya registrados en la red para un campo escrito (modelo, proveedor, dominio…), los más usados primero.");
+
         grupo.MapGet("/{id:guid}", ObtenerAsync)
             .RequirePermiso(Permisos.Activos.Ver)
             .WithName("ObtenerFichaActivo")
@@ -89,6 +94,17 @@ internal static class ActivosEndpoints
         IQueryHandler<BuscarSerieActivoQuery, IReadOnlyList<ActivoConSerieDto>> handler,
         CancellationToken cancellationToken) =>
         (await handler.Handle(new BuscarSerieActivoQuery(numero, excluirId), cancellationToken)).ToHttpResult();
+
+    private static async Task<Results<Ok<IReadOnlyList<string>>, ProblemHttpResult>> SugerenciasAsync(
+        CampoSugerencia campo,
+        string? texto,
+        Guid? marcaId,
+        Guid? sistemaOperativoId,
+        Guid? establecimientoId,
+        IQueryHandler<SugerenciasActivoQuery, IReadOnlyList<string>> handler,
+        CancellationToken cancellationToken) =>
+        (await handler.Handle(new SugerenciasActivoQuery(campo, texto, marcaId, sistemaOperativoId, establecimientoId), cancellationToken))
+            .ToHttpResult();
 
     private static async Task<Results<Ok<FichaActivoDto>, ProblemHttpResult>> ObtenerAsync(
         Guid id,

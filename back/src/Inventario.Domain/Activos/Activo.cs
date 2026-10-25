@@ -59,7 +59,8 @@ public sealed record DatosAdquisicionActivo(
 /// <param name="ProcesadorId">Catálogo de procesadores (familia: Intel Core i7, AMD Ryzen 5…).</param>
 /// <param name="GeneracionProcesador">Código de la generación, de la lista de su familia ("13", "5000"…; D44).</param>
 /// <param name="Nucleos">Número de núcleos.</param>
-/// <param name="TarjetaGrafica">Tarjeta gráfica.</param>
+/// <param name="TipoGrafica">Tarjeta gráfica integrada o dedicada.</param>
+/// <param name="ModeloGrafica">Modelo de la tarjeta gráfica dedicada.</param>
 /// <param name="PantallaPulgadas">Tamaño de pantalla.</param>
 /// <param name="SistemaOperativoId">Catálogo de sistemas operativos.</param>
 /// <param name="VersionSistemaOperativo">Versión del sistema operativo (23H2…).</param>
@@ -67,15 +68,16 @@ public sealed record DatosAdquisicionActivo(
 /// <param name="DominioGrupo">Dominio o grupo de trabajo.</param>
 /// <param name="DireccionIp">Dirección IP.</param>
 /// <param name="DireccionMac">Dirección MAC.</param>
-/// <param name="Antivirus">Antivirus o EDR.</param>
+/// <param name="AntivirusId">Catálogo de antivirus o EDR.</param>
 /// <param name="DiscoCifrado">Si el disco está cifrado.</param>
-/// <param name="PuertosPrincipales">Puertos principales.</param>
-/// <param name="AccesoriosIncluidos">Accesorios incluidos.</param>
+/// <param name="Puertos">Puertos y conectividad (se marcan varios).</param>
+/// <param name="Accesorios">Accesorios incluidos (se marcan varios).</param>
 public sealed record DatosTecnicosActivo(
     Guid? ProcesadorId,
     string? GeneracionProcesador,
     int? Nucleos,
-    string? TarjetaGrafica,
+    TipoGrafica? TipoGrafica,
+    string? ModeloGrafica,
     decimal? PantallaPulgadas,
     Guid? SistemaOperativoId,
     string? VersionSistemaOperativo,
@@ -83,13 +85,13 @@ public sealed record DatosTecnicosActivo(
     string? DominioGrupo,
     string? DireccionIp,
     string? DireccionMac,
-    string? Antivirus,
+    Guid? AntivirusId,
     bool? DiscoCifrado,
-    string? PuertosPrincipales,
-    string? AccesoriosIncluidos)
+    IReadOnlyList<Puerto>? Puertos,
+    IReadOnlyList<Accesorio>? Accesorios)
 {
     public static DatosTecnicosActivo Vacios { get; } =
-        new(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        new(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 }
 
 /// <summary>Datos que se calculan a una fecha; no se guardan.</summary>
@@ -200,7 +202,10 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
 
     public int? Nucleos { get; private set; }
 
-    public string? TarjetaGrafica { get; private set; }
+    public TipoGrafica? TipoGrafica { get; private set; }
+
+    /// <summary>Modelo de la tarjeta dedicada (solo si es dedicada).</summary>
+    public string? ModeloGrafica { get; private set; }
 
     public decimal? PantallaPulgadas { get; private set; }
 
@@ -216,13 +221,21 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
 
     public string? DireccionMac { get; private set; }
 
-    public string? Antivirus { get; private set; }
+    public Guid? AntivirusId { get; private set; }
 
     public bool? DiscoCifrado { get; private set; }
 
-    public string? PuertosPrincipales { get; private set; }
+    /// <summary>Puertos y conectividad marcados, en el orden de la lista (D45).</summary>
+    public IReadOnlyList<Puerto> Puertos => Leer<Puerto>(PuertosGuardados);
 
-    public string? AccesoriosIncluidos { get; private set; }
+    /// <summary>Accesorios incluidos, en el orden de la lista (D45).</summary>
+    public IReadOnlyList<Accesorio> Accesorios => Leer<Accesorio>(AccesoriosGuardados);
+
+    /// <summary>Puertos tal como se guardan: los nombres separados por comas ("UsbA,Hdmi,Rj45").</summary>
+    public string? PuertosGuardados { get; private set; }
+
+    /// <summary>Accesorios tal como se guardan: los nombres separados por comas ("Cargador,Maletin").</summary>
+    public string? AccesoriosGuardados { get; private set; }
 
     public IReadOnlyCollection<DiscoActivo> Discos => _discos.AsReadOnly();
 
@@ -403,17 +416,20 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
         var procesadorId = t.ProcesadorId == Guid.Empty ? null : t.ProcesadorId;
         var generacion = Guardas.TextoOpcional(
             t.GeneracionProcesador, "La generación del procesador", GeneracionesDeProcesador.LongitudMaximaCodigo);
-        var grafica = Guardas.TextoOpcional(t.TarjetaGrafica, "La tarjeta gráfica", LongitudMaximaTextoTecnico);
+        var modeloGrafica = Guardas.TextoOpcional(t.ModeloGrafica, "El modelo de la tarjeta gráfica", LongitudMaximaTextoTecnico);
         var version = Guardas.TextoOpcional(t.VersionSistemaOperativo, "La versión del sistema operativo", LongitudMaximaTextoCorto);
         var dominio = Guardas.TextoOpcional(t.DominioGrupo, "El dominio o grupo de trabajo", LongitudMaximaTextoTecnico);
-        var antivirus = Guardas.TextoOpcional(t.Antivirus, "El antivirus", LongitudMaximaTextoTecnico);
-        var puertos = Guardas.TextoOpcional(t.PuertosPrincipales, "Los puertos principales", LongitudMaximaTextoLargo);
-        var accesorios = Guardas.TextoOpcional(t.AccesoriosIncluidos, "Los accesorios", LongitudMaximaTextoLargo);
+        var puertos = Guardar(t.Puertos, "Un puerto");
+        var accesorios = Guardar(t.Accesorios, "Un accesorio");
         var nombreEquipo = ValidarNombreEquipo(t.NombreEquipo);
         var ip = ValidarIp(t.DireccionIp);
         var mac = NormalizarMac(t.DireccionMac);
 
         Exigir(generacion is null || procesadorId is not null, "Elija el procesador antes de su generación.");
+        Exigir(!t.TipoGrafica.HasValue || Enum.IsDefined(t.TipoGrafica.Value), "El tipo de tarjeta gráfica no es válido.");
+        Exigir(
+            modeloGrafica is null || t.TipoGrafica == Inventario.Domain.Activos.TipoGrafica.Dedicada,
+            "El modelo de la tarjeta gráfica solo se registra si es dedicada.");
         Exigir(t.Nucleos is not int n || (n >= 1 && n <= 512), "El número de núcleos debe estar entre 1 y 512.");
         Exigir(
             t.PantallaPulgadas is not decimal p || (p >= 1 && p <= 150 && decimal.Round(p, 1) == p),
@@ -424,7 +440,8 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
             a.ProcesadorId = procesadorId;
             a.GeneracionProcesador = generacion;
             a.Nucleos = t.Nucleos;
-            a.TarjetaGrafica = grafica;
+            a.TipoGrafica = t.TipoGrafica;
+            a.ModeloGrafica = modeloGrafica;
             a.PantallaPulgadas = t.PantallaPulgadas;
             a.SistemaOperativoId = t.SistemaOperativoId == Guid.Empty ? null : t.SistemaOperativoId;
             a.VersionSistemaOperativo = version;
@@ -432,12 +449,31 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
             a.DominioGrupo = dominio;
             a.DireccionIp = ip;
             a.DireccionMac = mac;
-            a.Antivirus = antivirus;
+            a.AntivirusId = t.AntivirusId == Guid.Empty ? null : t.AntivirusId;
             a.DiscoCifrado = t.DiscoCifrado;
-            a.PuertosPrincipales = puertos;
-            a.AccesoriosIncluidos = accesorios;
+            a.PuertosGuardados = puertos;
+            a.AccesoriosGuardados = accesorios;
         };
     }
+
+    /// <summary>Lista marcada como texto para guardar: sin repetidos, en el orden de la lista; nula si no hay ninguno.</summary>
+    private static string? Guardar<T>(IReadOnlyList<T>? valores, string campo)
+        where T : struct, Enum
+    {
+        if (valores is null || valores.Count == 0)
+        {
+            return null;
+        }
+
+        Exigir(valores.All(v => Enum.IsDefined(v)), $"{campo} marcado no es válido.");
+        return string.Join(',', valores.Distinct().Order().Select(v => v.ToString()));
+    }
+
+    private static List<T> Leer<T>(string? guardados)
+        where T : struct, Enum =>
+        string.IsNullOrEmpty(guardados)
+            ? []
+            : guardados.Split(',').Select(v => Enum.TryParse<T>(v, out var valor) ? (T?)valor : null).OfType<T>().ToList();
 
     private static string? ValidarNombreEquipo(string? nombre)
     {

@@ -1,5 +1,5 @@
 import { FichaActivoDto } from '../../../api/models/ficha-activo-dto';
-import { aNumero, cantidad, fechaRenovacion, formatoAnios, formatoGb } from './textos-activo';
+import { aNumero, cantidad, fechaRenovacion, formatoAnios, formatoGb, textoTipoGrafica } from './textos-activo';
 
 /** Un dato de la ficha listo para mostrar. */
 export interface DatoFicha {
@@ -55,12 +55,12 @@ export function datosTecnicos(ficha: FichaActivoDto): DatoFicha[] {
     dato('Dominio o grupo de trabajo', t.dominioGrupo),
     deRed[1],
     deRed[2],
-    dato('Antivirus o EDR', t.antivirus),
+    dato('Antivirus o EDR', t.antivirus?.nombre),
     dato('Disco cifrado', cifrado),
     dato('Pantalla', pantalla === null ? null : `${String(pantalla)} pulgadas`),
-    dato('Tarjeta gráfica', t.tarjetaGrafica),
-    dato('Puertos principales', t.puertosPrincipales),
-    dato('Accesorios incluidos', t.accesoriosIncluidos),
+    dato('Tarjeta gráfica', unir(t.tipoGrafica ? textoTipoGrafica(t.tipoGrafica) : null, t.modeloGrafica)),
+    dato('Puertos y conectividad', (t.puertos ?? []).map((p) => p.texto).join(', ')),
+    dato('Accesorios incluidos', (t.accesorios ?? []).map((a) => a.texto).join(', ')),
   ].filter((d): d is DatoFicha => d !== null);
 }
 

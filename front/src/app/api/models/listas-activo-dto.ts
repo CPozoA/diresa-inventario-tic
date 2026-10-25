@@ -5,6 +5,7 @@ import { GeneracionesDto } from '../models/generaciones-dto';
 import { OpcionDto } from '../models/opcion-dto';
 import { VelocidadesRamDto } from '../models/velocidades-ram-dto';
 export interface ListasActivoDto {
+  accesorios: Array<OpcionDto>;
   capacidadMaximaDiscoGb: (number | string);
   capacidadesDiscoGb: Array<(number | string)>;
   capacidadesRamGb: Array<(number | string)>;
@@ -12,8 +13,11 @@ export interface ListasActivoDto {
   criticidades: Array<OpcionDto>;
   fichasTecnicas: Array<OpcionDto>;
   generacionesProcesador: Array<GeneracionesDto>;
+  pantallasPulgadas: Array<(number | string)>;
+  puertos: Array<OpcionDto>;
   tiposAdquisicion: Array<OpcionDto>;
   tiposDisco: Array<OpcionDto>;
+  tiposGrafica: Array<OpcionDto>;
   tiposRam: Array<OpcionDto>;
   usosDisco: Array<OpcionDto>;
   velocidadesRam: Array<VelocidadesRamDto>;

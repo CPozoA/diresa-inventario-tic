@@ -141,6 +141,15 @@ internal sealed class VerificadorFichaActivo(IAppDbContext db, TimeProvider relo
             }
         }
 
+        if (ficha.Tecnicos?.AntivirusId is Guid antivirusId && antivirusId != Guid.Empty)
+        {
+            var antivirus = await BuscarAsync(db.Antivirus, antivirusId, cancellationToken);
+            if (Revisar("El antivirus", antivirus, antivirusId, actual?.AntivirusId) is ErrorAplicacion errorAntivirus)
+            {
+                return errorAntivirus;
+            }
+        }
+
         // D44: la generación debe ser de la lista de la familia del procesador.
         if (ficha.Tecnicos?.ProcesadorId is Guid procesadorId && procesadorId != Guid.Empty)
         {
@@ -201,8 +210,7 @@ internal sealed class VerificadorFichaActivo(IAppDbContext db, TimeProvider relo
         var deRed = new[] { t.NombreEquipo, t.DireccionIp, t.DireccionMac };
         var otros = new[]
         {
-            t.GeneracionProcesador, t.TarjetaGrafica, t.VersionSistemaOperativo, t.DominioGrupo, t.Antivirus,
-            t.PuertosPrincipales, t.AccesoriosIncluidos,
+            t.GeneracionProcesador, t.ModeloGrafica, t.VersionSistemaOperativo, t.DominioGrupo,
         };
 
         var tieneOtros = otros.Any(v => !string.IsNullOrWhiteSpace(v))
@@ -210,6 +218,10 @@ internal sealed class VerificadorFichaActivo(IAppDbContext db, TimeProvider relo
             || t.PantallaPulgadas is not null
             || (t.SistemaOperativoId is Guid so && so != Guid.Empty)
             || (t.ProcesadorId is Guid cpu && cpu != Guid.Empty)
+            || (t.AntivirusId is Guid av && av != Guid.Empty)
+            || t.TipoGrafica is not null
+            || (t.Puertos?.Count ?? 0) > 0
+            || (t.Accesorios?.Count ?? 0) > 0
             || t.DiscoCifrado is not null;
 
         return tipo == FichaTecnica.Red

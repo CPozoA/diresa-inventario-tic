@@ -84,6 +84,11 @@ internal sealed class ProcesadorConfiguration : IEntityTypeConfiguration<Procesa
     }
 }
 
+internal sealed class AntivirusConfiguration : IEntityTypeConfiguration<Antivirus>
+{
+    public void Configure(EntityTypeBuilder<Antivirus> builder) => ConfiguracionCatalogo.General(builder, "Antivirus");
+}
+
 internal sealed class TipoLicenciaConfiguration : IEntityTypeConfiguration<TipoLicencia>
 {
     public void Configure(EntityTypeBuilder<TipoLicencia> builder) => ConfiguracionCatalogo.General(builder, "TiposLicencia");

@@ -27,13 +27,13 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AccesoriosIncluidos")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                    b.Property<string>("AccesoriosGuardados")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)")
+                        .HasColumnName("Accesorios");
 
-                    b.Property<string>("Antivirus")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<Guid?>("AntivirusId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("AreaId")
                         .HasColumnType("uniqueidentifier");
@@ -104,6 +104,10 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("ModeloGrafica")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<DateTimeOffset?>("ModificadoEn")
                         .HasColumnType("datetimeoffset");
 
@@ -140,9 +144,10 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<string>("PuertosPrincipales")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                    b.Property<string>("PuertosGuardados")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)")
+                        .HasColumnName("Puertos");
 
                     b.Property<string>("Responsable")
                         .HasMaxLength(150)
@@ -154,16 +159,16 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.Property<Guid?>("SistemaOperativoId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("TarjetaGrafica")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<Guid>("TipoActivoId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("TipoAdquisicion")
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("TipoGrafica")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("UbicacionFisica")
                         .HasMaxLength(150)
@@ -181,6 +186,8 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AntivirusId");
 
                     b.HasIndex("AreaId");
 
@@ -286,6 +293,39 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.HasIndex("ActivoId");
 
                     b.ToTable("ModulosRam", "inventario");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Catalogos.Antivirus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("Antivirus", "catalogos");
                 });
 
             modelBuilder.Entity("Inventario.Domain.Catalogos.Area", b =>
@@ -906,6 +946,11 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
 
             modelBuilder.Entity("Inventario.Domain.Activos.Activo", b =>
                 {
+                    b.HasOne("Inventario.Domain.Catalogos.Antivirus", null)
+                        .WithMany()
+                        .HasForeignKey("AntivirusId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Inventario.Domain.Catalogos.Area", null)
                         .WithMany()
                         .HasForeignKey("AreaId")

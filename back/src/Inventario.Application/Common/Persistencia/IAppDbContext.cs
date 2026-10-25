@@ -39,6 +39,8 @@ public interface IAppDbContext
 
     DbSet<Procesador> Procesadores { get; }
 
+    DbSet<Antivirus> Antivirus { get; }
+
     DbSet<TipoLicencia> TiposLicencia { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

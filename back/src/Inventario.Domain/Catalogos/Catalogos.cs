@@ -176,6 +176,21 @@ public sealed class Procesador : ElementoCatalogo
     }
 }
 
+/// <summary>Antivirus o EDR instalado en un equipo (D45).</summary>
+public sealed class Antivirus : ElementoCatalogo
+{
+    private Antivirus()
+    {
+    }
+
+    private Antivirus(string nombre)
+        : base(nombre)
+    {
+    }
+
+    public static Antivirus Crear(string nombre) => new(nombre);
+}
+
 /// <summary>Modalidad de una licencia de software (Perpetua, Suscripción anual, OEM…).</summary>
 public sealed class TipoLicencia : ElementoCatalogo
 {

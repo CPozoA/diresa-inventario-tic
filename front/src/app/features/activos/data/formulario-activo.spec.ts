@@ -41,18 +41,20 @@ function valor(): ValorFormularioActivo {
       procesadorId: 'cpu1',
       generacionProcesador: '13',
       nucleos: 10,
-      tarjetaGrafica: '',
-      pantallaPulgadas: null,
+      tipoGrafica: 'Integrada',
+      modeloGrafica: 'Intel UHD',
+      pantalla: 'otra',
+      pantallaOtra: 14.5,
       sistemaOperativoId: 'so1',
       versionSistemaOperativo: '',
       nombreEquipo: 'ADM-LT-014',
       dominioGrupo: '',
       direccionIp: '192.168.10.45',
       direccionMac: '',
-      antivirus: '',
+      antivirusId: 'av1',
       discoCifrado: true,
-      puertosPrincipales: '',
-      accesoriosIncluidos: '',
+      puertos: ['UsbA', 'Hdmi'],
+      accesorios: ['Cargador'],
     },
     discos: [
       { ranura: 'M.2', tipo: 'Nvme', capacidad: 512, capacidadOtra: null, marcaModelo: '', numeroSerie: '', uso: 'Sistema' },
@@ -75,6 +77,20 @@ describe('formulario del activo', () => {
     expect(cuerpo.tecnicos?.procesadorId).toBe('cpu1');
     expect(cuerpo.tecnicos?.generacionProcesador).toBe('13');
     expect(cuerpo.tecnicos?.discoCifrado).toBe(true);
+    expect(cuerpo.tecnicos?.antivirusId).toBe('av1');
+    expect(cuerpo.tecnicos?.puertos).toEqual(['UsbA', 'Hdmi']);
+    expect(cuerpo.tecnicos?.accesorios).toEqual(['Cargador']);
+  });
+
+  it('el modelo de la gráfica solo se envía si es dedicada, y la pantalla "Otra" usa la medida escrita', () => {
+    const integrada = fichaDesdeFormulario(valor(), 'est1', 'Computo');
+    const v = valor();
+    v.tecnicos.tipoGrafica = 'Dedicada';
+    const dedicada = fichaDesdeFormulario(v, 'est1', 'Computo');
+
+    expect(integrada.tecnicos?.modeloGrafica).toBeNull();
+    expect(dedicada.tecnicos?.modeloGrafica).toBe('Intel UHD');
+    expect(integrada.tecnicos?.pantallaPulgadas).toBe(14.5);
   });
 
   it('usa la capacidad escrita cuando se eligió "Otra"', () => {
@@ -91,6 +107,8 @@ describe('formulario del activo', () => {
     expect(cuerpo.tecnicos?.procesadorId).toBeNull();
     expect(cuerpo.tecnicos?.generacionProcesador).toBeNull();
     expect(cuerpo.tecnicos?.sistemaOperativoId).toBeNull();
+    expect(cuerpo.tecnicos?.puertos).toBeNull();
+    expect(cuerpo.tecnicos?.antivirusId).toBeNull();
     expect(cuerpo.discos).toEqual([]);
     expect(cuerpo.modulosRam).toEqual([]);
   });
@@ -108,7 +126,20 @@ describe('formulario del activo', () => {
     expect(hayDatosQueSeDescartan(valor(), 'Red')).toBe(true);
 
     const soloRed = valor();
-    soloRed.tecnicos = { ...soloRed.tecnicos, procesadorId: null, generacionProcesador: null, nucleos: null, sistemaOperativoId: null, discoCifrado: null };
+    soloRed.tecnicos = {
+      ...soloRed.tecnicos,
+      procesadorId: null,
+      generacionProcesador: null,
+      nucleos: null,
+      sistemaOperativoId: null,
+      discoCifrado: null,
+      tipoGrafica: null,
+      modeloGrafica: '',
+      pantalla: null,
+      antivirusId: null,
+      puertos: [],
+      accesorios: [],
+    };
     soloRed.discos = [];
     soloRed.modulosRam = [];
     expect(hayDatosQueSeDescartan(soloRed, 'Red')).toBe(false);
@@ -166,18 +197,19 @@ describe('formulario del activo', () => {
         procesador: { id: 'cpu1', nombre: 'Intel Core i7' },
         generacion: { valor: '13', texto: '13.ª generación' },
         nucleos: null,
-        tarjetaGrafica: null,
-        pantallaPulgadas: null,
+        tipoGrafica: 'Dedicada',
+        modeloGrafica: 'NVIDIA T550',
+        pantallaPulgadas: '15.6',
         sistemaOperativo: { id: 'so1', nombre: 'Windows 11 Pro' },
         versionSistemaOperativo: null,
         nombreEquipo: null,
         dominioGrupo: null,
         direccionIp: null,
         direccionMac: null,
-        antivirus: null,
+        antivirus: { id: 'av1', nombre: 'Microsoft Defender' },
         discoCifrado: null,
-        puertosPrincipales: null,
-        accesoriosIncluidos: null,
+        puertos: [{ valor: 'UsbA', texto: 'USB-A' }],
+        accesorios: [],
       },
       discos: [
         { ranura: null, tipo: 'Nvme', capacidadGb: 512, marcaModelo: null, numeroSerie: null, uso: 'Sistema' },
@@ -191,7 +223,7 @@ describe('formulario del activo', () => {
       modificadoEn: null,
     } as FichaActivoDto;
 
-    const v = formularioDesdeFicha(ficha, [256, 512, 1000]);
+    const v = formularioDesdeFicha(ficha, [256, 512, 1000], [14, 15.6]);
 
     expect(v.generales.criticidad).toBe('Alta');
     expect(v.generales.numeroSerie).toBe('');
@@ -205,6 +237,10 @@ describe('formulario del activo', () => {
       ['otra', 750],
     ]);
     expect(v.modulosRam[0].capacidadGb).toBe(8);
+    expect(v.tecnicos.pantalla).toBe(15.6);
+    expect(v.tecnicos.antivirusId).toBe('av1');
+    expect(v.tecnicos.puertos).toEqual(['UsbA']);
+    expect(v.tecnicos.tipoGrafica).toBe('Dedicada');
   });
 
   it('da la fecha de hoy en la hora local', () => {

@@ -3,20 +3,22 @@
 
 import { OpcionDto } from '../models/opcion-dto';
 import { ReferenciaDto } from '../models/referencia-dto';
+import { TipoGrafica } from '../models/tipo-grafica';
 export interface TecnicosActivoDto {
-  accesoriosIncluidos: (string | null);
-  antivirus: (string | null);
+  accesorios: Array<OpcionDto>;
+  antivirus: (null | ReferenciaDto);
   direccionIp: (string | null);
   direccionMac: (string | null);
   discoCifrado: (boolean | null);
   dominioGrupo: (string | null);
   generacion: (null | OpcionDto);
+  modeloGrafica: (string | null);
   nombreEquipo: (string | null);
   nucleos: (number | string | null);
   pantallaPulgadas: (number | string | null);
   procesador: (null | ReferenciaDto);
-  puertosPrincipales: (string | null);
+  puertos: Array<OpcionDto>;
   sistemaOperativo: (null | ReferenciaDto);
-  tarjetaGrafica: (string | null);
+  tipoGrafica: (null | TipoGrafica);
   versionSistemaOperativo: (string | null);
 }

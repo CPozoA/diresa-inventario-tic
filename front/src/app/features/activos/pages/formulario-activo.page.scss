@@ -149,3 +149,15 @@ form {
     font-weight: 500;
   }
 }
+
+// Puertos y accesorios: se marcan varios (D45).
+.grupo-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+
+  .etiqueta {
+    font-weight: 500;
+  }
+}
