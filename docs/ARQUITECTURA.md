@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.21 · 25/10/2026 · Cambios: D46 (catálogos largos se eligen escribiendo; agregar al catálogo desde el formulario, Paso 7C-5).
+> Versión 0.22 · 25/10/2026 · Cambios: D47 (miniatura y limpieza de metadatos de las fotos); §5.8 al día con la API de fotos (Paso 7D-1).
 
 ---
 
@@ -84,6 +84,7 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D44 | Procesador y generación | El procesador se elige del catálogo general **Procesadores** (familias: Intel Core i5, AMD Ryzen 7…) y la generación, de la lista que ofrece su familia: **Intel Core** 1.ª a 14.ª generación, **Intel Core Ultra** Serie 1 a 3, **AMD Ryzen** Serie 1000 a 9000, o **ninguna** (Celeron, Xeon, Apple…). Las familias nuevas toman su lista por el nombre y el superadministrador la cambia en Catálogos generales. Se guarda el código de la generación ("13"); la API rechaza una generación que no sea de la familia (`Activos.GeneracionInvalida`). Reemplaza los textos libres "procesador" y "velocidad o generación" | Escrito a mano, la misma generación terminaba como "13", "13.ª" o "treceava" y no se podía filtrar ni contar. Que la familia indique su lista permite agregar procesadores sin cambiar el programa. |
 | D45 | Listas y sugerencias en la ficha | Se eligen de lista: **antivirus o EDR** (catálogo general), **tarjeta gráfica** (Integrada o Dedicada; el modelo solo si es dedicada), **pantalla** (medidas comunes u "Otra…") y **puertos** y **accesorios** (se marcan varios de listas fijas; se guardan como nombres separados por comas). Siguen escritos pero **sugieren lo ya registrado en la red**, lo más usado primero: modelo (según la marca), proveedor, dominio, versión del sistema operativo (según el sistema), ubicación física (según el establecimiento) y marca y modelo de discos y RAM | Lo que se repite mucho y tiene pocas variantes se elige, para poder contar y filtrar. Lo que tiene demasiados valores o cambia seguido se sigue escribiendo, pero las sugerencias evitan las variantes ("Latitude 5440" y "latitude5440"). |
 | D46 | Elegir escribiendo y agregar al catálogo | Los catálogos largos (tipo de activo, marca, área, procesador, sistema operativo, antivirus; y en los filtros del inventario, establecimiento y tipo) se eligen **escribiendo parte del nombre**: la lista se acorta mostrando primero los que empiezan así, sin distinguir mayúsculas ni tildes, pero el valor siempre es uno del catálogo; lo escrito que no existe se descarta con un aviso. Las listas cortas (estado, criticidad, tipos de disco o RAM) siguen como listas. Quien ya puede modificar ese catálogo ve además **"Agregar «…» al catálogo"**: se confirma en un diálogo que avisa nombres iguales o parecidos y deja elegir la ficha técnica (tipos) o las generaciones (procesadores); los catálogos generales, solo el superadministrador; las áreas, también el administrador de la red | En listas de decenas de elementos, desplazarse es lento (sobre todo en el celular) y con dos o tres letras queda una opción. Agregar sin salir del formulario evita perder lo escrito; usa la misma API y los mismos permisos que Catálogos generales. |
+| D47 | Miniatura y limpieza de las fotos | Con cada foto (reducida en el navegador a 1600 px; no se guarda el original) se sube una **miniatura** de unos 320 px, que usan la lista y las tarjetas. El servidor reconoce el formato por el contenido y a las **JPEG les quita los metadatos** (EXIF con ubicación GPS y modelo del celular, XMP, comentarios; conserva el perfil de color). Las fotos se gestionan con `Activos.Editar`; en el formulario se suben al guardar y desde la ficha, al momento | La lista de 25 activos con fotos de 300 KB pesaría 7 MB; con miniaturas, menos de medio MB. Reducir en el navegador ya suele quitar el EXIF, pero no se confía en la interfaz: la limpieza en el servidor protege también las fotos subidas por otros medios. |
 
 ### Decisiones pendientes de confirmar
 
@@ -248,20 +249,23 @@ Es la pieza de seguridad más importante del sistema.
 
 - **Cuántas:** hasta 6 por activo; una es la **principal** (se muestra en la lista). Al quitar la principal, pasa a serlo la siguiente.
 - **Cómo se obtienen:** con el selector de archivos del navegador (`accept="image/*"`). En el celular ofrece **tomar foto** con la cámara (el permiso lo pide el propio navegador; exige HTTPS) o elegir de la galería; en la computadora, cargar archivos.
-- **Antes de subir**, el navegador reduce la foto (lado mayor de 1600 px, JPEG o WebP). Así pesa unos cientos de KB y se descarta la información interna de la foto, incluida la **ubicación GPS**.
+- **Antes de subir**, el navegador reduce la foto (lado mayor de 1600 px, JPEG o WebP) y prepara una **miniatura** de unos 320 px (D47). Así la foto pesa unos cientos de KB y la miniatura unas decenas.
 - **Endpoints** (misma API, dentro de activos):
 
   | Acción | Endpoint | Permiso |
   |---|---|---|
-  | Subir | `POST /api/activos/{id}/imagenes` (multipart) | `Activos.Crear` o `Activos.Editar` |
-  | Ver | `GET /api/activos/{id}/imagenes/{imagenId}` | `Activos.Ver` |
-  | Marcar como principal | `PUT /api/activos/{id}/imagenes/{imagenId}/principal` | `Activos.Editar` |
-  | Quitar | `DELETE /api/activos/{id}/imagenes/{imagenId}` | `Activos.Editar` |
+  | Listar | `GET /api/activos/{id}/fotos` (la principal primero) | `Activos.Ver` |
+  | Ver la imagen | `GET /api/activos/{id}/fotos/{fotoId}/archivo` (`?miniatura=true` para la pequeña) | `Activos.Ver` |
+  | Subir | `POST /api/activos/{id}/fotos` (multipart: `archivo`, `miniatura`, `descripcion`) | `Activos.Editar` |
+  | Cambiar la descripción | `PUT /api/activos/{id}/fotos/{fotoId}` | `Activos.Editar` |
+  | Marcar como principal | `POST /api/activos/{id}/fotos/{fotoId}/principal` | `Activos.Editar` |
+  | Quitar | `DELETE /api/activos/{id}/fotos/{fotoId}` | `Activos.Editar` |
 
-- **Validación en el servidor:** solo JPG, PNG o WebP, comprobados por el **contenido** del archivo (no por la extensión ni por el tipo que declara el navegador); tope de tamaño; el nombre en disco lo genera el sistema (nunca el que envía el usuario).
-- **Aislamiento:** la tabla de fotos pertenece a la sede (`IPerteneceASede`) y las fotos solo se entregan por la API, con sesión y el filtro de §5.6. Nunca hay enlaces públicos. Se responden con `X-Content-Type-Options: nosniff`.
-- **Almacenamiento:** carpeta configurable fuera de `wwwroot` (`Almacenamiento:Ruta`), organizada por sede. Al eliminar un activo se eliminan sus fotos. El almacenamiento es reutilizable para otros módulos (por ejemplo, evidencias de mantenimiento).
-- **En la pantalla es un solo paso:** al pulsar *Guardar*, se guarda la ficha y luego se suben las fotos una por una, con su avance. Si una falla, la ficha ya quedó guardada y solo se reintenta esa foto.
+  La lista del inventario trae `fotoPrincipalId` para mostrar la miniatura sin otra consulta.
+- **Validación en el servidor:** solo JPG, PNG o WebP, comprobados por el **contenido** del archivo (no por la extensión ni por el tipo que declara el navegador); hasta 4 MB la foto y 512 KB la miniatura; a las JPEG se les quitan los metadatos (D47); descripción opcional de hasta 60 caracteres; el nombre en disco lo genera el sistema (nunca el que envía el usuario). Errores: `Fotos.TipoNoValido`, `Fotos.MuyGrande`, `Fotos.Danada`, `Fotos.SinArchivo`, `Fotos.SinMiniatura` (400) y `Fotos.Maximo` (422).
+- **Aislamiento:** la tabla `inventario.FotosActivo` pertenece a la sede (`IPerteneceASede`) y las fotos solo se entregan por la API, con sesión y el filtro de §5.6: otra red recibe 404. Nunca hay enlaces públicos. Se responden con `X-Content-Type-Options: nosniff` y `Cache-Control: private` de un año (una foto nunca cambia: otra imagen es otra foto).
+- **Almacenamiento:** `AlmacenArchivosEnDisco` (detrás de `IAlmacenArchivos`), carpeta `Almacenamiento:CarpetaFotos` fuera de `wwwroot` (en desarrollo `fotos-dev`, junto al proyecto Api), organizada como `{sede}/{activo}/{foto}.jpg` y `{foto}-mini.jpg`. Rechaza cualquier clave que salga de la carpeta. Los archivos se escriben antes de guardar el registro (y se borran si este falla) y se borran después de quitar el registro: como mucho queda un archivo sin uso, nunca una foto sin archivo. Al eliminar un activo se eliminan sus fotos y archivos. El almacenamiento es reutilizable para otros módulos (por ejemplo, evidencias de mantenimiento).
+- **En la pantalla:** en el formulario, al pulsar *Guardar* se guarda la ficha y luego se suben las fotos nuevas una por una, con su avance; si una falla, la ficha ya quedó guardada y solo se reintenta esa foto. Desde la ficha, las fotos se suben, describen, marcan o quitan al momento.
 
 ### 5.9 Establecimientos (D39)
 
@@ -296,7 +300,7 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 | Memoria RAM (D41) | Ranura, tipo (DDR3, DDR3L, DDR4, DDR5, LPDDR4X, LPDDR5), capacidad (2 a 64 GB), velocidad (lista según el tipo), marca y modelo |
 
 - **Se calculan, no se escriben:** RAM total, almacenamiento total, antigüedad, estado de la garantía, vida útil restante y situación de renovación.
-- **Para pasos posteriores:** los campos propios de servidores, red y periféricos (mientras tanto se registran con los campos comunes); licencias, mantenimiento y asignaciones en sus módulos; fotos en el 7D.
+- **Para pasos posteriores:** los campos propios de servidores, red y periféricos (mientras tanto se registran con los campos comunes); licencias, mantenimiento y asignaciones en sus módulos; fotos en el 7D (§5.8).
 
 **Implementado en el Paso 7A** (tablas `inventario.Activos`, `inventario.Discos` e `inventario.ModulosRam`; API en `/api/activos`):
 
@@ -482,7 +486,7 @@ Consideraciones del hosting compartido:
 - IIS recicla la aplicación: **no** se usan tareas en segundo plano permanentes.
 - Las claves de protección de datos se guardan en la base de datos (§6.1).
 - Las migraciones se aplican con un script SQL generado (`dotnet ef migrations script --idempotent`), no automáticamente al arrancar.
-- La carpeta de fotos (§5.8) va **fuera de `wwwroot`** y debe incluirse en las copias de seguridad junto con la base de datos. Vigilar la cuota de disco del plan.
+- La carpeta de fotos (§5.8) va **fuera de `wwwroot`** (variable de entorno `Almacenamiento__CarpetaFotos` con una ruta absoluta) y debe incluirse en las copias de seguridad junto con la base de datos. La cuenta de IIS necesita permiso de escritura en ella. Vigilar la cuota de disco del plan.
 
 ### 10.1 Pendientes antes de publicar (endurecimiento)
 
@@ -518,6 +522,7 @@ Consideraciones del hosting compartido:
 | **7C-3** | Procesador y generación de lista (D44); búsqueda del inventario por IP y nombre de equipo | `dotnet test`, `npm test` y prueba manual |
 | **7C-4** | Antivirus, tarjeta gráfica, pantalla, puertos y accesorios de lista; sugerencias en campos escritos (D45) | `dotnet test`, `npm test` y prueba manual |
 | **7C-5** | Catálogos largos que se eligen escribiendo y agregar al catálogo desde el formulario (D46) | `npm test` y prueba manual (también en celular) |
-| **7D** | Fotos de los activos (D38, §5.8): almacenamiento, API, cámara o carga de archivos y reducción en el navegador | `dotnet test`, `npm test` y prueba en celular |
+| **7D-1** | Fotos en la API (D38, D47, §5.8): almacenamiento en carpeta, subir con miniatura, principal, descripción, quitar; limpieza de EXIF; `fotoPrincipalId` en la lista | `dotnet test` y prueba en Scalar |
+| **7D-2** | Fotos en Angular: reducción y miniatura en el navegador, cámara del celular, fotos en el formulario y galería y visor en la ficha, miniatura en la lista | `npm test` y prueba en celular |
 
 Fases posteriores: licencias, mantenimiento, asignaciones, resumen, exportación a Excel, registro de auditoría y endurecimiento.

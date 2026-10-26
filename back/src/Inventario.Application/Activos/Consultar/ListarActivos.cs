@@ -21,7 +21,8 @@ public sealed record ActivoResumenDto(
     EstadoGarantia Garantia,
     SituacionRenovacion Renovacion,
     Guid SedeId,
-    string SedeNombre);
+    string SedeNombre,
+    Guid? FotoPrincipalId);
 
 /// <summary>Una página de la lista y el total de activos que cumplen los filtros.</summary>
 public sealed record PaginaActivosDto(IReadOnlyList<ActivoResumenDto> Activos, int Total, int Pagina, int TamanoPagina);
@@ -159,6 +160,14 @@ internal sealed class ListarActivosHandler(IAppDbContext db, TimeProvider reloj)
             .Take(tamano)
             .ToListAsync(cancellationToken);
 
+        // Foto principal de cada activo de la página, para la miniatura (D38).
+        var ids = pagina1.Select(f => f.Id).ToList();
+        var fotos = await db.FotosActivo.AsNoTracking()
+            .Where(f => ids.Contains(f.ActivoId) && f.Principal)
+            .Select(f => new { f.ActivoId, f.Id })
+            .ToListAsync(cancellationToken);
+        var principales = fotos.GroupBy(f => f.ActivoId).ToDictionary(g => g.Key, g => g.First().Id);
+
         var lista = pagina1
             .Select(f => new ActivoResumenDto(
                 f.Id,
@@ -174,7 +183,8 @@ internal sealed class ListarActivosHandler(IAppDbContext db, TimeProvider reloj)
                 Activo.GarantiaAl(f.FinGarantia, hoy),
                 Activo.RenovacionAl(f.FechaRenovacion, hoy),
                 f.SedeId,
-                f.SedeNombre))
+                f.SedeNombre,
+                principales.TryGetValue(f.Id, out var foto) ? foto : null))
             .ToList();
 
         return new PaginaActivosDto(lista, total, pagina, tamano);

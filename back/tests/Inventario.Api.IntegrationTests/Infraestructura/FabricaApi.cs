@@ -108,6 +108,7 @@ public sealed class FabricaApi : WebApplicationFactory<MarcadorApi>, IAsyncLifet
         builder.UseSetting("Correo:Modo", "Carpeta");
         builder.UseSetting("Correo:Carpeta", "correos-pruebas");
         builder.UseSetting("Correo:Remitente", "pruebas@inventario.local");
+        builder.UseSetting("Almacenamiento:CarpetaFotos", "fotos-pruebas");
         builder.UseSetting("Inicializacion:SuperAdmin:NombreUsuario", DatosPrueba.SuperAdmin);
         builder.UseSetting("Inicializacion:SuperAdmin:Correo", "superadmin@pruebas.local");
         builder.UseSetting("Inicializacion:SuperAdmin:ContrasenaInicial", DatosPrueba.Contrasena);

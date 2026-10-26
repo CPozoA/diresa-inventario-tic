@@ -31,6 +31,10 @@ Desktop.ini
 correos-dev/
 correos-pruebas/
 
+# ---------- Fotos de los activos en desarrollo y pruebas (en el servidor van fuera del repositorio) ----------
+fotos-dev/
+fotos-pruebas/
+
 # ---------- Secretos ----------
 *.pfx
 *.key

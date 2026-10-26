@@ -17,7 +17,7 @@ Sistema web para el registro y control del inventario de Tecnologías de la Info
 
 ## Estado
 
-Paso 7C-5 terminado: los catálogos largos se eligen escribiendo y se pueden agregar desde el formulario. Antes: antivirus, gráfica, pantalla, puertos y accesorios de lista, y sugerencias en campos escritos; procesador y generación de lista y búsqueda por IP o nombre de equipo; registrar y editar activos desde la pantalla; lista del inventario y ficha técnica; cada tipo de activo indica qué características lleva (D43); API de activos (ficha con discos y RAM, garantía y renovación), establecimientos de salud con importación desde Excel, y catálogos (áreas por sede y catálogos generales). Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
+Paso 7D-1 terminado: la API guarda hasta 6 fotos por activo, con miniatura y sin metadatos de ubicación (las pantallas llegan en el 7D-2). Antes: los catálogos largos se eligen escribiendo y se pueden agregar desde el formulario; antivirus, gráfica, pantalla, puertos y accesorios de lista, y sugerencias en campos escritos; procesador y generación de lista y búsqueda por IP o nombre de equipo; registrar y editar activos desde la pantalla; lista del inventario y ficha técnica; cada tipo de activo indica qué características lleva (D43); API de activos (ficha con discos y RAM, garantía y renovación), establecimientos de salud con importación desde Excel, y catálogos (áreas por sede y catálogos generales). Ver el plan en [ARQUITECTURA.md §11](docs/ARQUITECTURA.md#11-plan-por-pasos).
 
 ## Control de versiones
 

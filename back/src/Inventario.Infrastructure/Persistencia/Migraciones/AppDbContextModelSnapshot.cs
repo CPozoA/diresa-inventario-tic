@@ -258,6 +258,64 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.ToTable("Discos", "inventario");
                 });
 
+            modelBuilder.Entity("Inventario.Domain.Activos.FotoActivo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ActivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Principal")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("SedeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("TamanoBytes")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TamanoMiniaturaBytes")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("TipoMiniatura")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SedeId");
+
+                    b.HasIndex("ActivoId", "Orden");
+
+                    b.ToTable("FotosActivo", "inventario");
+                });
+
             modelBuilder.Entity("Inventario.Domain.Activos.ModuloRam", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1004,6 +1062,21 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .WithMany("Discos")
                         .HasForeignKey("ActivoId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Activos.FotoActivo", b =>
+                {
+                    b.HasOne("Inventario.Domain.Activos.Activo", null)
+                        .WithMany()
+                        .HasForeignKey("ActivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Sedes.Sede", null)
+                        .WithMany()
+                        .HasForeignKey("SedeId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

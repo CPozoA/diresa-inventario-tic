@@ -310,6 +310,31 @@ dotnet ef database update --project src/Inventario.Infrastructure --startup-proj
 En la ficha, `tecnicos` lleva `tipoGrafica` (`Integrada` o `Dedicada`), `modeloGrafica` (solo si es dedicada),
 `antivirusId`, y `puertos` y `accesorios` como listas (`["UsbA", "Hdmi"]`).
 
+## Paso 7D-1: fotos de los activos en la API (D38, D47)
+
+Este paso **cambia el modelo**: agrega la tabla `inventario.FotosActivo`. Desde `back`, con la API detenida:
+
+```powershell
+dotnet ef migrations add FotosActivo --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+Los archivos se guardan en la carpeta `Almacenamiento:CarpetaFotos`. En desarrollo es `fotos-dev`, dentro de
+`src/Inventario.Api` (está en `.gitignore`; las pruebas usan `fotos-pruebas`). En el servidor se define con una ruta
+absoluta fuera de la carpeta publicada, por ejemplo `Almacenamiento__CarpetaFotos=D:\InventarioTIC\fotos`, y se incluye
+en las copias de seguridad.
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/activos/{id}/fotos` | `Activos.Ver` | Fotos del activo, la principal primero |
+| `GET /api/activos/{id}/fotos/{fotoId}/archivo?miniatura=` | `Activos.Ver` | La imagen (o su miniatura) |
+| `POST /api/activos/{id}/fotos` | `Activos.Editar` | Formulario con `archivo` (hasta 4 MB), `miniatura` (hasta 512 KB) y `descripcion` (opcional, 60 caracteres). Máximo 6 por activo; la primera queda como principal |
+| `PUT /api/activos/{id}/fotos/{fotoId}` | `Activos.Editar` | Cambia la descripción |
+| `POST /api/activos/{id}/fotos/{fotoId}/principal` | `Activos.Editar` | La marca como principal |
+| `DELETE /api/activos/{id}/fotos/{fotoId}` | `Activos.Editar` | La quita con sus archivos; si era la principal, pasa a serlo la siguiente |
+
+`GET /api/activos` trae `fotoPrincipalId` en cada activo (nulo si no tiene fotos).
+
 ### Correo en producción
 
 En el servidor se configura `Correo:Modo = Smtp` y los datos del SMTP (`Servidor`, `Puerto`, `Remitente`, `Usuario`,
@@ -332,9 +357,9 @@ dotnet test
 
 | Proyecto | Qué comprueba |
 |---|---|
-| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles, catálogos, establecimientos (datos válidos, ubigeo, reconocimiento de la red), activos (ficha, IP y MAC, discos y RAM, garantía y renovación) |
+| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles, catálogos, establecimientos (datos válidos, ubigeo, reconocimiento de la red), activos (ficha, IP y MAC, discos y RAM, garantía y renovación), fotos (formato por el contenido, limpieza de EXIF, límites) |
 | `ArchitectureTests` | Que el dominio no dependa de nada, que Application no dependa de Infrastructure ni de la Api, que los handlers sean internos |
-| `Api.IntegrationTests` | Protección CSRF (sin token → 400; el token de antes de iniciar sesión no sirve después). Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan |
+| `Api.IntegrationTests` | Protección CSRF (sin token → 400; el token de antes de iniciar sesión no sirve después). Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan. Fotos (7D-1): sin EXIF al descargar, principal, máximo de 6, solo imágenes, permisos, otra red recibe 404, los archivos se borran con la foto y con el activo |
 
 Para ejecutar solo un proyecto: `dotnet test --project tests/Inventario.Domain.Tests`.
 

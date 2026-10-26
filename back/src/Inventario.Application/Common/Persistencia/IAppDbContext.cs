@@ -25,6 +25,8 @@ public interface IAppDbContext
 
     DbSet<Activo> Activos { get; }
 
+    DbSet<FotoActivo> FotosActivo { get; }
+
     // Catálogos de cada sede.
     DbSet<Area> Areas { get; }
 

@@ -1,7 +1,9 @@
+using Inventario.Application.Common.Archivos;
 using Inventario.Application.Common.Correo;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Seguridad;
 using Inventario.Application.Establecimientos.Importar;
+using Inventario.Infrastructure.Archivos;
 using Inventario.Infrastructure.Correo;
 using Inventario.Infrastructure.Enlaces;
 using Inventario.Infrastructure.Excel;
@@ -38,6 +40,10 @@ public static class DependencyInjection
         AgregarPersistencia(services, configuration);
         AgregarIdentidad(services);
         AgregarCorreoYEnlaces(services, configuration);
+
+        // Fotos de los activos en una carpeta del servidor (D38).
+        services.Configure<OpcionesAlmacenamiento>(configuration.GetSection(OpcionesAlmacenamiento.Seccion));
+        services.AddSingleton<IAlmacenArchivos, AlmacenArchivosEnDisco>();
 
         // Excel (ClosedXML, D42).
         services.AddSingleton<IHojaEstablecimientos, HojaEstablecimientosExcel>();

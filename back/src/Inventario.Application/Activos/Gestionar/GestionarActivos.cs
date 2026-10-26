@@ -1,3 +1,4 @@
+using Inventario.Application.Common.Archivos;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
@@ -82,7 +83,7 @@ internal sealed class EditarActivoHandler(IAppDbContext db, VerificadorFichaActi
     }
 }
 
-internal sealed class EliminarActivoHandler(IAppDbContext db) : ICommandHandler<EliminarActivoCommand, Vacio>
+internal sealed class EliminarActivoHandler(IAppDbContext db, IAlmacenArchivos almacen) : ICommandHandler<EliminarActivoCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(EliminarActivoCommand command, CancellationToken cancellationToken)
     {
@@ -96,8 +97,18 @@ internal sealed class EliminarActivoHandler(IAppDbContext db) : ICommandHandler<
             return ErroresActivo.NoEncontrado;
         }
 
+        // Las fotos se borran con el activo (en cascada); sus archivos, después de guardar.
+        var fotos = await db.FotosActivo.Where(f => f.ActivoId == activo.Id).ToListAsync(cancellationToken);
+
         db.Activos.Remove(activo);
         await db.SaveChangesAsync(cancellationToken);
+
+        foreach (var foto in fotos)
+        {
+            await almacen.EliminarAsync(foto.Clave, cancellationToken);
+            await almacen.EliminarAsync(foto.ClaveMiniatura, cancellationToken);
+        }
+
         return Vacio.Valor;
     }
 }

@@ -38,6 +38,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IUsuari
 
     public DbSet<Activo> Activos => Set<Activo>();
 
+    public DbSet<FotoActivo> FotosActivo => Set<FotoActivo>();
+
     public DbSet<Area> Areas => Set<Area>();
 
     public DbSet<TipoActivo> TiposActivo => Set<TipoActivo>();
