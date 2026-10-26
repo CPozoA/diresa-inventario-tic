@@ -41,25 +41,22 @@
 
     <div id="filtros-extra" class="filtros-extra" [class.abiertos]="filtrosAbiertos()">
       @if (!todasLasSedes()) {
-        <mat-form-field subscriptSizing="dynamic">
-          <mat-label>Establecimiento</mat-label>
-          <mat-select [value]="filtros().establecimientoId" (valueChange)="filtrar('establecimientoId', $event)">
-            <mat-option [value]="null">Todos</mat-option>
-            @for (e of establecimientos.value() ?? []; track e.id) {
-              <mat-option [value]="e.id">{{ e.nombre }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        <app-selector-catalogo
+          class="filtro-largo"
+          [formControl]="filtroEstablecimiento"
+          etiqueta="Establecimiento"
+          opcionVacia="Todos"
+          [compacto]="true"
+          [elementos]="establecimientos.value() ?? []"
+        />
       }
-      <mat-form-field subscriptSizing="dynamic">
-        <mat-label>Tipo</mat-label>
-        <mat-select [value]="filtros().tipoActivoId" (valueChange)="filtrar('tipoActivoId', $event)">
-          <mat-option [value]="null">Todos</mat-option>
-          @for (t of tipos.value() ?? []; track t.id) {
-            <mat-option [value]="t.id">{{ t.nombre }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <app-selector-catalogo
+        [formControl]="filtroTipo"
+        etiqueta="Tipo"
+        opcionVacia="Todos"
+        [compacto]="true"
+        [elementos]="tipos.value() ?? []"
+      />
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>Estado</mat-label>
         <mat-select [value]="filtros().estadoActivoId" (valueChange)="filtrar('estadoActivoId', $event)">

@@ -1,0 +1,41 @@
+<mat-form-field class="campo" [subscriptSizing]="compacto() || aviso() ? 'dynamic' : 'fixed'">
+  <mat-label>{{ etiqueta() }}</mat-label>
+  <input
+    #campo
+    matInput
+    autocomplete="off"
+    [value]="texto()"
+    [required]="requerido()"
+    [disabled]="desactivado()"
+    [errorStateMatcher]="errorEstado"
+    [matAutocomplete]="lista"
+    (input)="alEscribir($event)"
+    (focus)="alEntrar()"
+    (click)="alTocarCampo()"
+  />
+  <mat-icon matSuffix aria-hidden="true">arrow_drop_down</mat-icon>
+  <mat-autocomplete #lista="matAutocomplete" [displayWith]="mostrar" (optionSelected)="alElegir($event)" (closed)="alCerrar()">
+    @if (opcionVacia(); as vacia) {
+      <mat-option [value]="null" class="vacia">{{ vacia }}</mat-option>
+    }
+    @for (e of opciones(); track e.id) {
+      <mat-option [value]="e">{{ e.nombre }}{{ e.activo ? '' : ' (desactivado)' }}</mat-option>
+    } @empty {
+      @if (!textoParaAgregar()) {
+        <mat-option disabled>Sin coincidencias</mat-option>
+      }
+    }
+    @if (textoParaAgregar(); as nuevo) {
+      <mat-option [value]="{ agregar: nuevo }" class="agregar">
+        <mat-icon>add</mat-icon> Agregar «{{ nuevo }}» al catálogo
+      </mat-option>
+    }
+  </mat-autocomplete>
+  @if (enError()) {
+    <mat-error>{{ aviso() ?? mensajeRequerido() }}</mat-error>
+  } @else if (aviso(); as a) {
+    <mat-hint class="aviso" role="status">{{ a }}</mat-hint>
+  } @else if (pista(); as p) {
+    <mat-hint>{{ p }}</mat-hint>
+  }
+</mat-form-field>

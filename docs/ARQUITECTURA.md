@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.20 · 25/10/2026 · Cambios: D45 (más listas y sugerencias en la ficha, Paso 7C-4).
+> Versión 0.21 · 25/10/2026 · Cambios: D46 (catálogos largos se eligen escribiendo; agregar al catálogo desde el formulario, Paso 7C-5).
 
 ---
 
@@ -83,6 +83,7 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D43 | Ficha técnica por tipo | Cada **tipo de activo** indica qué características técnicas lleva: **Cómputo** (todas, con discos y RAM), **Red** (solo nombre de equipo, IP y MAC) o **Ninguna**. Los tipos iniciales la traen asignada por nombre; el superadministrador la cambia en Catálogos generales. La API rechaza datos que no correspondan al tipo (`Activos.DatosNoCorresponden`) | La pantalla muestra solo las secciones que aplican (un monitor no tiene IP ni discos) y la base no acumula datos sin sentido. Que sea un dato del catálogo permite agregar tipos nuevos sin cambiar código. |
 | D44 | Procesador y generación | El procesador se elige del catálogo general **Procesadores** (familias: Intel Core i5, AMD Ryzen 7…) y la generación, de la lista que ofrece su familia: **Intel Core** 1.ª a 14.ª generación, **Intel Core Ultra** Serie 1 a 3, **AMD Ryzen** Serie 1000 a 9000, o **ninguna** (Celeron, Xeon, Apple…). Las familias nuevas toman su lista por el nombre y el superadministrador la cambia en Catálogos generales. Se guarda el código de la generación ("13"); la API rechaza una generación que no sea de la familia (`Activos.GeneracionInvalida`). Reemplaza los textos libres "procesador" y "velocidad o generación" | Escrito a mano, la misma generación terminaba como "13", "13.ª" o "treceava" y no se podía filtrar ni contar. Que la familia indique su lista permite agregar procesadores sin cambiar el programa. |
 | D45 | Listas y sugerencias en la ficha | Se eligen de lista: **antivirus o EDR** (catálogo general), **tarjeta gráfica** (Integrada o Dedicada; el modelo solo si es dedicada), **pantalla** (medidas comunes u "Otra…") y **puertos** y **accesorios** (se marcan varios de listas fijas; se guardan como nombres separados por comas). Siguen escritos pero **sugieren lo ya registrado en la red**, lo más usado primero: modelo (según la marca), proveedor, dominio, versión del sistema operativo (según el sistema), ubicación física (según el establecimiento) y marca y modelo de discos y RAM | Lo que se repite mucho y tiene pocas variantes se elige, para poder contar y filtrar. Lo que tiene demasiados valores o cambia seguido se sigue escribiendo, pero las sugerencias evitan las variantes ("Latitude 5440" y "latitude5440"). |
+| D46 | Elegir escribiendo y agregar al catálogo | Los catálogos largos (tipo de activo, marca, área, procesador, sistema operativo, antivirus; y en los filtros del inventario, establecimiento y tipo) se eligen **escribiendo parte del nombre**: la lista se acorta mostrando primero los que empiezan así, sin distinguir mayúsculas ni tildes, pero el valor siempre es uno del catálogo; lo escrito que no existe se descarta con un aviso. Las listas cortas (estado, criticidad, tipos de disco o RAM) siguen como listas. Quien ya puede modificar ese catálogo ve además **"Agregar «…» al catálogo"**: se confirma en un diálogo que avisa nombres iguales o parecidos y deja elegir la ficha técnica (tipos) o las generaciones (procesadores); los catálogos generales, solo el superadministrador; las áreas, también el administrador de la red | En listas de decenas de elementos, desplazarse es lento (sobre todo en el celular) y con dos o tres letras queda una opción. Agregar sin salir del formulario evita perder lo escrito; usa la misma API y los mismos permisos que Catálogos generales. |
 
 ### Decisiones pendientes de confirmar
 
@@ -516,6 +517,7 @@ Consideraciones del hosting compartido:
 | **7C-2** | Formulario para registrar y editar activos (establecimiento por búsqueda, secciones según la ficha, discos y RAM, aviso de serie repetida, aviso de cambios sin guardar) | `npm test` y prueba de punta a punta |
 | **7C-3** | Procesador y generación de lista (D44); búsqueda del inventario por IP y nombre de equipo | `dotnet test`, `npm test` y prueba manual |
 | **7C-4** | Antivirus, tarjeta gráfica, pantalla, puertos y accesorios de lista; sugerencias en campos escritos (D45) | `dotnet test`, `npm test` y prueba manual |
+| **7C-5** | Catálogos largos que se eligen escribiendo y agregar al catálogo desde el formulario (D46) | `npm test` y prueba manual (también en celular) |
 | **7D** | Fotos de los activos (D38, §5.8): almacenamiento, API, cámara o carga de archivos y reducción en el navegador | `dotnet test`, `npm test` y prueba en celular |
 
 Fases posteriores: licencias, mantenimiento, asignaciones, resumen, exportación a Excel, registro de auditoría y endurecimiento.

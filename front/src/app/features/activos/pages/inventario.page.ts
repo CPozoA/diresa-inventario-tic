@@ -23,6 +23,7 @@ import { SesionStore } from '../../../core/auth/sesion.store';
 import { SiTienePermisoDirective } from '../../../core/auth/si-tiene-permiso.directive';
 import { SedeSeleccionadaStore } from '../../../core/layout/sede-seleccionada.store';
 import { AvisoComponent } from '../../../shared/ui/aviso.component';
+import { SelectorCatalogoComponent } from '../../catalogos/components/selector-catalogo.component';
 import { PaginadorEnEspanol } from '../../../shared/ui/paginador';
 import {
   FiltrosInventario,
@@ -65,6 +66,7 @@ const ESPERA_BUSQUEDA_MS = 350;
     MatSelectModule,
     AvisoComponent,
     SiTienePermisoDirective,
+    SelectorCatalogoComponent,
   ],
   providers: [InventarioStore, { provide: MatPaginatorIntl, useClass: PaginadorEnEspanol }],
   templateUrl: './inventario.page.html',
@@ -98,6 +100,10 @@ export class InventarioPage {
   );
 
   protected readonly busqueda = new FormControl(this.filtros().buscar, { nonNullable: true });
+
+  /** Establecimiento y tipo se eligen escribiendo (listas largas, D45). */
+  protected readonly filtroEstablecimiento = new FormControl<string | null>(this.filtros().establecimientoId);
+  protected readonly filtroTipo = new FormControl<string | null>(this.filtros().tipoActivoId);
 
   /** En pantallas angostas los filtros (salvo la búsqueda) se abren con un botón. */
   protected readonly filtrosAbiertos = signal(false);
@@ -161,6 +167,12 @@ export class InventarioPage {
         if (this.busqueda.value.trim() !== filtros.buscar) {
           this.busqueda.setValue(filtros.buscar, { emitEvent: false });
         }
+        if (this.filtroEstablecimiento.value !== filtros.establecimientoId) {
+          this.filtroEstablecimiento.setValue(filtros.establecimientoId, { emitEvent: false });
+        }
+        if (this.filtroTipo.value !== filtros.tipoActivoId) {
+          this.filtroTipo.setValue(filtros.tipoActivoId, { emitEvent: false });
+        }
       });
     });
 
@@ -173,9 +185,13 @@ export class InventarioPage {
         }
       }, ESPERA_BUSQUEDA_MS);
     });
+    const porEstablecimiento = this.filtroEstablecimiento.valueChanges.subscribe((id) => this.filtrar('establecimientoId', id));
+    const porTipo = this.filtroTipo.valueChanges.subscribe((id) => this.filtrar('tipoActivoId', id));
     inject(DestroyRef).onDestroy(() => {
       clearTimeout(espera);
       suscripcion.unsubscribe();
+      porEstablecimiento.unsubscribe();
+      porTipo.unsubscribe();
     });
   }
 

@@ -1,0 +1,27 @@
+:host {
+  display: block;
+}
+
+.campo {
+  width: 100%;
+}
+
+// Opciones con altura cómoda para tocar en el celular.
+.mat-mdc-option {
+  min-height: 48px;
+}
+
+.vacia {
+  color: var(--inv-atenuado);
+}
+
+.agregar {
+  font-weight: 500;
+  color: var(--inv-primario);
+  border-top: 1px solid var(--inv-borde);
+}
+
+// Lo escrito no estaba en el catálogo: el campo volvió a su valor y se avisa (no es un error del formulario).
+.aviso {
+  color: var(--inv-alerta);
+}

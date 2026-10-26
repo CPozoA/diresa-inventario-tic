@@ -47,27 +47,31 @@
               <mat-error>Escriba el código patrimonial.</mat-error>
             }
           </mat-form-field>
-          <mat-form-field>
-            <mat-label>Tipo de activo</mat-label>
-            <mat-select formControlName="tipoActivoId" required>
-              @for (t of opcionesTipo(); track t.id) {
-                <mat-option [value]="t.id">{{ t.nombre }}{{ t.activo ? '' : ' (desactivado)' }}</mat-option>
-              }
-            </mat-select>
-            @if (ficha(); as f) {
-              <mat-hint>Ficha técnica: {{ textoFicha(f) }}</mat-hint>
-            }
-            <mat-error>Elija el tipo de activo.</mat-error>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Marca</mat-label>
-            <mat-select formControlName="marcaId" required>
-              @for (m of opcionesMarca(); track m.id) {
-                <mat-option [value]="m.id">{{ m.nombre }}{{ m.activo ? '' : ' (desactivada)' }}</mat-option>
-              }
-            </mat-select>
-            <mat-error>Elija la marca.</mat-error>
-          </mat-form-field>
+          <app-selector-catalogo
+            formControlName="tipoActivoId"
+            etiqueta="Tipo de activo"
+            [requerido]="true"
+            mensajeRequerido="Elija el tipo de activo."
+            [elementos]="opcionesTipo()"
+            [pista]="ficha() ? 'Ficha técnica: ' + textoFicha(ficha()) : null"
+            catalogo="tipos-activo"
+            nombreSingular="Tipo de activo"
+            [puedeAgregar]="puedeAgregarGenerales"
+            [existentes]="tipos.value() ?? []"
+            (agregado)="sumar(tipos, $event)"
+          />
+          <app-selector-catalogo
+            formControlName="marcaId"
+            etiqueta="Marca"
+            [requerido]="true"
+            mensajeRequerido="Elija la marca."
+            [elementos]="opcionesMarca()"
+            catalogo="marcas"
+            nombreSingular="Marca"
+            [puedeAgregar]="puedeAgregarGenerales"
+            [existentes]="marcas.value() ?? []"
+            (agregado)="sumar(marcas, $event)"
+          />
           <mat-form-field>
             <mat-label>Modelo</mat-label>
             <input
@@ -111,18 +115,20 @@
       <section class="tarjeta" formGroupName="generales">
         <h2>Ubicación y estado</h2>
         <div class="campos">
-          <mat-form-field>
-            <mat-label>Área</mat-label>
-            <mat-select formControlName="areaId" required>
-              @for (a of opcionesArea(); track a.id) {
-                <mat-option [value]="a.id">{{ a.nombre }}{{ a.activo ? '' : ' (desactivada)' }}</mat-option>
-              }
-            </mat-select>
-            @if (!establecimiento()) {
-              <mat-hint>Elija primero el establecimiento.</mat-hint>
-            }
-            <mat-error>Elija el área.</mat-error>
-          </mat-form-field>
+          <app-selector-catalogo
+            formControlName="areaId"
+            etiqueta="Área"
+            [requerido]="true"
+            mensajeRequerido="Elija el área."
+            [elementos]="opcionesArea()"
+            [pista]="establecimiento() ? null : 'Elija primero el establecimiento.'"
+            catalogo="areas"
+            nombreSingular="Área"
+            [puedeAgregar]="puedeAgregarAreas"
+            [sedeId]="establecimiento()?.sedeId ?? null"
+            [existentes]="areas.value() ?? []"
+            (agregado)="sumar(areas, $event)"
+          />
           <mat-form-field>
             <mat-label>Ubicación física</mat-label>
             <input
@@ -274,15 +280,17 @@
           <section class="tarjeta" formGroupName="tecnicos">
             <h2>Características técnicas <span class="atenuado">· {{ nombreTipo() }}</span></h2>
             <div class="campos">
-              <mat-form-field>
-                <mat-label>Procesador</mat-label>
-                <mat-select formControlName="procesadorId">
-                  <mat-option [value]="null">Sin dato</mat-option>
-                  @for (p of opcionesProcesador(); track p.id) {
-                    <mat-option [value]="p.id">{{ p.nombre }}{{ p.activo ? '' : ' (desactivado)' }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <app-selector-catalogo
+                formControlName="procesadorId"
+                etiqueta="Procesador"
+                opcionVacia="Sin dato"
+                [elementos]="opcionesProcesador()"
+                catalogo="procesadores"
+                nombreSingular="Procesador"
+                [puedeAgregar]="puedeAgregarGenerales"
+                [existentes]="procesadores.value() ?? []"
+                (agregado)="sumar(procesadores, $event)"
+              />
               @if (generaciones().length > 0) {
                 <mat-form-field>
                   <mat-label>Generación</mat-label>
@@ -299,15 +307,17 @@
                 <input matInput type="number" formControlName="nucleos" min="1" max="512" step="1" inputmode="numeric" />
                 <mat-error>Entre 1 y 512.</mat-error>
               </mat-form-field>
-              <mat-form-field>
-                <mat-label>Sistema operativo</mat-label>
-                <mat-select formControlName="sistemaOperativoId">
-                  <mat-option [value]="null">Sin dato</mat-option>
-                  @for (s of opcionesSistema(); track s.id) {
-                    <mat-option [value]="s.id">{{ s.nombre }}{{ s.activo ? '' : ' (desactivado)' }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <app-selector-catalogo
+                formControlName="sistemaOperativoId"
+                etiqueta="Sistema operativo"
+                opcionVacia="Sin dato"
+                [elementos]="opcionesSistema()"
+                catalogo="sistemas-operativos"
+                nombreSingular="Sistema operativo"
+                [puedeAgregar]="puedeAgregarGenerales"
+                [existentes]="sistemas.value() ?? []"
+                (agregado)="sumar(sistemas, $event)"
+              />
               <mat-form-field>
                 <mat-label>Versión del sistema operativo</mat-label>
                 <input
@@ -344,15 +354,17 @@
               }
             </mat-autocomplete>
               </mat-form-field>
-              <mat-form-field>
-                <mat-label>Antivirus o EDR</mat-label>
-                <mat-select formControlName="antivirusId">
-                  <mat-option [value]="null">Sin dato</mat-option>
-                  @for (a of opcionesAntivirus(); track a.id) {
-                    <mat-option [value]="a.id">{{ a.nombre }}{{ a.activo ? '' : ' (desactivado)' }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <app-selector-catalogo
+                formControlName="antivirusId"
+                etiqueta="Antivirus o EDR"
+                opcionVacia="Sin dato"
+                [elementos]="opcionesAntivirus()"
+                catalogo="antivirus"
+                nombreSingular="Antivirus o EDR"
+                [puedeAgregar]="puedeAgregarGenerales"
+                [existentes]="antivirus.value() ?? []"
+                (agregado)="sumar(antivirus, $event)"
+              />
               <mat-form-field>
                 <mat-label>Disco cifrado</mat-label>
                 <mat-select formControlName="discoCifrado">

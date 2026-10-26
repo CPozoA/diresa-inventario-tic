@@ -80,7 +80,7 @@ src/app/
 | `/catalogos` | `Catalogos.GestionarGlobales` | Tipos de activo (con la ficha técnica de cada uno), marcas, estados, sistemas operativos, procesadores (con sus generaciones), antivirus o EDR y tipos de licencia. |
 | `/inventario` | `Activos.Ver` | Lista paginada en la API, con búsqueda y filtros que quedan en la dirección. En celular, tarjetas. |
 | `/inventario/{id}` | `Activos.Ver` (Editar y Eliminar según permiso) | Ficha técnica de solo lectura; las secciones dependen de la ficha del tipo. |
-| `/inventario/nuevo`, `/inventario/{id}/editar` | `Activos.Crear`, `Activos.Editar` | Formulario de la ficha: establecimiento por búsqueda, secciones según el tipo, discos y RAM. Pregunta antes de salir con cambios sin guardar. |
+| `/inventario/nuevo`, `/inventario/{id}/editar` | `Activos.Crear`, `Activos.Editar` | Formulario de la ficha: establecimiento por búsqueda, secciones según el tipo, discos y RAM. Los catálogos largos se eligen escribiendo (`app-selector-catalogo`) y quien administra el catálogo puede agregar desde ahí. Pregunta antes de salir con cambios sin guardar. |
 | `/` y demás secciones del menú | Con sesión | Estructura con menú según permisos. Las secciones aún no construidas muestran "próxima versión". |
 | `/estado` | Cualquiera | Comprobación técnica de la conexión con la API. |
 

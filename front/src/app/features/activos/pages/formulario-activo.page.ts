@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   input,
+  ResourceRef,
   resource,
   signal,
   untracked,
@@ -35,6 +36,7 @@ import { obtenerListasActivo } from '../../../api/fn/activos/obtener-listas-acti
 import { listarElementosCatalogo } from '../../../api/fn/catalogos/listar-elementos-catalogo';
 import { ActivoConSerieDto } from '../../../api/models/activo-con-serie-dto';
 import { ElementoCatalogoDto } from '../../../api/models/elemento-catalogo-dto';
+import { Permisos } from '../../../core/auth/permisos';
 import { ErrorApi, aErrorApi } from '../../../core/http/error-api';
 import { SesionStore } from '../../../core/auth/sesion.store';
 import { SedeSeleccionadaStore } from '../../../core/layout/sede-seleccionada.store';
@@ -42,6 +44,7 @@ import { NotificacionesService } from '../../../core/notificaciones.service';
 import { AvisoComponent } from '../../../shared/ui/aviso.component';
 import { confirmar } from '../../../shared/ui/confirmacion.dialog';
 import { ConCambiosSinGuardar } from '../../../shared/util/cambios-sin-guardar';
+import { SelectorCatalogoComponent } from '../../catalogos/components/selector-catalogo.component';
 import { BuscadorEstablecimientoComponent, EstablecimientoElegido } from '../components/buscador-establecimiento.component';
 import {
   CapacidadDisco,
@@ -90,6 +93,7 @@ const CAMPOS_DE_RED = ['nombreEquipo', 'direccionIp', 'direccionMac'] as const;
     MatSelectModule,
     AvisoComponent,
     BuscadorEstablecimientoComponent,
+    SelectorCatalogoComponent,
   ],
   templateUrl: './formulario-activo.page.html',
   styleUrl: './formulario-activo.page.scss',
@@ -114,6 +118,10 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   protected readonly maximoDiscos = MAXIMO_DISCOS;
   protected readonly maximoModulos = MAXIMO_MODULOS;
   protected readonly formatoGb = formatoGb;
+
+  /** Agregar al catálogo desde el formulario (D45): los generales, el superadministrador; las áreas, también el administrador de la red. */
+  protected readonly puedeAgregarGenerales = this.sesion.tienePermiso(Permisos.Catalogos.GestionarGlobales);
+  protected readonly puedeAgregarAreas = this.sesion.tienePermiso(Permisos.Catalogos.GestionarSede);
   protected readonly textoFicha = textoFicha;
 
   // ---------- Formulario ----------
@@ -195,12 +203,12 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
     loader: ({ params }) => this.api.invoke(obtenerFichaActivo, params),
   });
 
-  private readonly tipos = this.catalogo('tipos-activo');
-  private readonly marcas = this.catalogo('marcas');
-  private readonly estados = this.catalogo('estados-activo');
-  private readonly sistemas = this.catalogo('sistemas-operativos');
-  private readonly procesadores = this.catalogo('procesadores');
-  private readonly antivirus = this.catalogo('antivirus');
+  protected readonly tipos = this.catalogo('tipos-activo');
+  protected readonly marcas = this.catalogo('marcas');
+  protected readonly estados = this.catalogo('estados-activo');
+  protected readonly sistemas = this.catalogo('sistemas-operativos');
+  protected readonly procesadores = this.catalogo('procesadores');
+  protected readonly antivirus = this.catalogo('antivirus');
 
   // Sugerencias de lo ya registrado en la red (D45).
   protected readonly sModelo = crearSugeridor('Modelo', () => ({ marcaId: this.generales.marcaId.value ?? undefined }));
@@ -214,7 +222,7 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   protected readonly sRam = crearSugeridor('MarcaModeloRam');
 
   /** Áreas de la red del establecimiento elegido. */
-  private readonly areas = resource({
+  protected readonly areas = resource({
     params: () => {
       const e = this.establecimiento();
       return e ? { sedeId: e.sedeId } : undefined;
@@ -483,6 +491,13 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
     if (elegido && anterior && elegido.sedeId !== anterior.sedeId) {
       this.generales.areaId.setValue(null);
     }
+  }
+
+  /** Suma a la lista un elemento recién agregado al catálogo (queda elegido en el campo). */
+  protected sumar(lista: ResourceRef<ElementoCatalogoDto[] | undefined>, nuevo: ElementoCatalogoDto): void {
+    lista.update((elementos) =>
+      [...(elementos ?? []).filter((e) => e.id !== nuevo.id), nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
+    );
   }
 
   // ---------- Guardar y salir ----------

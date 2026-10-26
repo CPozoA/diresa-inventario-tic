@@ -33,7 +33,8 @@ $ancho-tabla: 784px;
   }
 
   // Angosto: dos filtros por fila.
-  mat-form-field {
+  mat-form-field,
+  app-selector-catalogo {
     flex: 1 1 calc(50% - 6px);
     min-width: 140px;
   }
@@ -138,9 +139,15 @@ mat-paginator {
   .filtros-extra {
     display: flex;
 
-    mat-form-field {
+    mat-form-field,
+    app-selector-catalogo {
       flex: 1 1 180px;
       max-width: 260px;
+    }
+
+    .filtro-largo {
+      flex-basis: 260px;
+      max-width: 340px;
     }
   }
 

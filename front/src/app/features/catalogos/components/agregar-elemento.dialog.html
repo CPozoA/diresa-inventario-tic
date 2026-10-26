@@ -1,0 +1,72 @@
+<h2 mat-dialog-title>Agregar {{ datos.nombreSingular.toLowerCase() }}</h2>
+<form [formGroup]="formulario" (ngSubmit)="agregar()" novalidate>
+  <mat-dialog-content class="contenido">
+    <p class="atenuado">Se agrega al catálogo para todos los registros{{ datos.sedeId ? ' de la red' : '' }} y queda elegido en el formulario.</p>
+
+    @if (error(); as e) {
+      <app-aviso>{{ e.mensaje }}</app-aviso>
+    }
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="nombre" maxlength="100" autocomplete="off" cdkFocusInitial />
+      @if (formulario.controls.nombre.hasError('required')) {
+        <mat-error>Escriba el nombre.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (repetido(); as r) {
+      <app-aviso tono="alerta">
+        Ya existe «{{ r.nombre }}»{{ r.activo ? '' : ', pero está desactivado: actívelo en Catálogos generales' }}.
+      </app-aviso>
+    } @else if (parecidos().length > 0) {
+      <app-aviso tono="info">
+        Ya existe
+        @for (p of parecidos(); track p.id; let ultimo = $last) {
+          «{{ p.nombre }}»{{ ultimo ? '.' : ', ' }}
+        }
+        Revise que no sea el mismo antes de agregarlo.
+      </app-aviso>
+    }
+
+    @if (esTipoActivo) {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Características técnicas</mat-label>
+        <mat-select formControlName="ficha">
+          <mat-option [value]="automatica">Según el nombre (automática)</mat-option>
+          @for (f of fichas; track f) {
+            <mat-option [value]="f">
+              <span class="opcion">
+                <span>{{ textoFicha(f) }}</span>
+                <span class="atenuado">{{ descripcionFicha(f) }}</span>
+              </span>
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    @if (esProcesador) {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Generaciones</mat-label>
+        <mat-select formControlName="generaciones">
+          <mat-option [value]="automatica">Según el nombre (automática)</mat-option>
+          @for (f of familias; track f) {
+            <mat-option [value]="f">
+              <span class="opcion">
+                <span>{{ textoGeneraciones(f) }}</span>
+                <span class="atenuado">{{ descripcionGeneraciones(f) }}</span>
+              </span>
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="guardando() || !!repetido()">
+      {{ guardando() ? 'Agregando…' : 'Agregar' }}
+    </button>
+  </mat-dialog-actions>
+</form>
