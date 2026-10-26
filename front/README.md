@@ -60,7 +60,7 @@ src/app/
    ├─ usuarios/    usuarios: crear, editar, roles, activar/desactivar, restablecer contraseña, desbloquear
    ├─ roles/       roles de la sede con sus permisos
    ├─ catalogos/   áreas (por sede) y catálogos generales; un solo editor para todos
-   ├─ activos/     inventario: lista con filtros y ficha técnica
+   ├─ activos/     inventario: lista con filtros, ficha técnica, formulario y fotos (galería, visor, reducción en el navegador)
    └─ pendiente/   lugar de las secciones del menú que aún no se construyen
 ```
 
@@ -78,9 +78,9 @@ src/app/
 | `/areas` | `Catalogos.GestionarSede` | Áreas de la sede (buscar o agregar en un solo campo); el superadmin elige la sede arriba. |
 | `/establecimientos` | `Establecimientos.Gestionar` | Solo el superadmin. Lista con búsqueda y filtro por estado, registro y corrección, e importación desde Excel con la lista de filas a corregir. |
 | `/catalogos` | `Catalogos.GestionarGlobales` | Tipos de activo (con la ficha técnica de cada uno), marcas, estados, sistemas operativos, procesadores (con sus generaciones), antivirus o EDR y tipos de licencia. |
-| `/inventario` | `Activos.Ver` | Lista paginada en la API, con búsqueda y filtros que quedan en la dirección. En celular, tarjetas. |
-| `/inventario/{id}` | `Activos.Ver` (Editar y Eliminar según permiso) | Ficha técnica de solo lectura; las secciones dependen de la ficha del tipo. |
-| `/inventario/nuevo`, `/inventario/{id}/editar` | `Activos.Crear`, `Activos.Editar` | Formulario de la ficha: establecimiento por búsqueda, secciones según el tipo, discos y RAM. Los catálogos largos se eligen escribiendo (`app-selector-catalogo`) y quien administra el catálogo puede agregar desde ahí. Pregunta antes de salir con cambios sin guardar. |
+| `/inventario` | `Activos.Ver` | Lista paginada en la API, con búsqueda y filtros que quedan en la dirección, y la miniatura de la foto principal. En celular, tarjetas. |
+| `/inventario/{id}` | `Activos.Ver` (Editar y Eliminar según permiso) | Ficha técnica de solo lectura; las secciones dependen de la ficha del tipo. Galería de fotos y visor a pantalla completa; con `Activos.Editar` se agregan fotos al momento y en el visor se marca la principal, se describe o se elimina. |
+| `/inventario/nuevo`, `/inventario/{id}/editar` | `Activos.Crear`, `Activos.Editar` | Formulario de la ficha: establecimiento por búsqueda, secciones según el tipo, discos y RAM. Los catálogos largos se eligen escribiendo (`app-selector-catalogo`) y quien administra el catálogo puede agregar desde ahí. Pregunta antes de salir con cambios sin guardar. Con `Activos.Editar`, sección Fotos: tomar foto (celular), elegir o arrastrar archivos; se reducen en el navegador y se suben al guardar, después de la ficha. |
 | `/` y demás secciones del menú | Con sesión | Estructura con menú según permisos. Las secciones aún no construidas muestran "próxima versión". |
 | `/estado` | Cualquiera | Comprobación técnica de la conexión con la API. |
 
@@ -91,5 +91,9 @@ src/app/
 - En producción, la API publica el frontend compilado en su carpeta `wwwroot` (mismo sitio, sin proxy).
 - Toda petición que cambia datos lleva la cabecera `X-XSRF-TOKEN` (protección CSRF). El token se pide a
   `GET /api/cuenta/csrf` y se renueva al iniciar o cerrar sesión (`core/http/csrf.interceptor.ts`).
+- Las fotos se muestran con `<img src="/api/activos/{id}/fotos/{fotoId}/archivo">`: el navegador envía la cookie de
+  sesión sola, porque es el mismo sitio. Antes de subirlas, `data/reducir-imagen.ts` las redibuja en un `<canvas>` a
+  1600 px y 320 px (miniatura) en JPEG, lo que además quita la ubicación GPS. En la computadora no hay botón
+  "Tomar foto"; en el celular, `capture="environment"` abre la cámara trasera (es un selector de archivos: no pide permisos de cámara).
 - Las fuentes (IBM Plex) y los íconos (Material Icons) se sirven desde la propia aplicación: no depende de
   Google Fonts ni de internet en la red de la sede.

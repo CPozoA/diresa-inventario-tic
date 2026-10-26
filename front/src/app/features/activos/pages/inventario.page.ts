@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, resource, signal, untracked } from '@angular/core';
-import { LowerCasePipe } from '@angular/common';
+import { LowerCasePipe, NgTemplateOutlet } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +13,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { Api } from '../../../api/api';
+import { ApiConfiguration } from '../../../api/api-configuration';
 import { listarElementosCatalogo } from '../../../api/fn/catalogos/listar-elementos-catalogo';
 import { listarEstablecimientos } from '../../../api/fn/establecimientos/listar-establecimientos';
 import { ActivoResumenDto } from '../../../api/models/activo-resumen-dto';
@@ -34,6 +35,7 @@ import {
   parametrosDesdeFiltros,
   sinFiltros,
 } from '../data/filtros-inventario';
+import { urlFoto } from '../data/fotos';
 import { InventarioStore } from '../data/inventario.store';
 import {
   cantidad,
@@ -55,6 +57,7 @@ const ESPERA_BUSQUEDA_MS = 350;
   selector: 'app-inventario',
   imports: [
     LowerCasePipe,
+    NgTemplateOutlet,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,
@@ -74,6 +77,8 @@ const ESPERA_BUSQUEDA_MS = 350;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InventarioPage {
+  private readonly raiz = inject(ApiConfiguration).rootUrl;
+
   protected readonly store = inject(InventarioStore);
   private readonly api = inject(Api);
   private readonly ruta = inject(ActivatedRoute);
@@ -219,6 +224,11 @@ export class InventarioPage {
   /** "Dell Latitude 5440". */
   protected equipo(a: ActivoResumenDto): string {
     return `${a.marca} ${a.modelo}`;
+  }
+
+  /** Miniatura de la foto principal (D47), o nada si el activo no tiene fotos. */
+  protected miniatura(a: ActivoResumenDto): string | null {
+    return a.fotoPrincipalId ? urlFoto(this.raiz, a.id, a.fotoPrincipalId, true) : null;
   }
 
   /** Estado de la dirección actual, para que la ficha pueda volver a esta misma lista. */

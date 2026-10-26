@@ -8,6 +8,7 @@ export interface ActivoResumenDto {
   codigoPatrimonial: string;
   establecimiento: string;
   estado: string;
+  fotoPrincipalId: (string | null);
   garantia: EstadoGarantia;
   id: string;
   marca: string;

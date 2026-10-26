@@ -1,0 +1,313 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+
+    .atenuado {
+      font-weight: 400;
+    }
+  }
+}
+
+.atenuado {
+  color: var(--inv-atenuado);
+}
+
+.zona {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 16px;
+  border: 1px dashed var(--inv-borde-campo);
+  border-radius: 10px;
+  background: var(--inv-fondo);
+  font-size: 13px;
+  transition: border-color 120ms, background-color 120ms;
+
+  &.arrastrando {
+    border-color: var(--inv-primario);
+    background: var(--inv-info-fondo);
+  }
+}
+
+.botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+// Un <label> con el <input type="file"> dentro: el botón abre el selector sin código y funciona con el teclado.
+.boton-archivo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--inv-borde-campo);
+  border-radius: 8px;
+  background: var(--inv-superficie);
+  color: var(--inv-tinta);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+
+  &.primario {
+    border-color: var(--inv-primario);
+    background: var(--inv-primario);
+    color: #fff;
+  }
+
+  &.deshabilitado {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  &:focus-within {
+    outline: 2px solid var(--inv-primario);
+    outline-offset: 2px;
+  }
+
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+}
+
+.lleno {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--inv-alerta-fondo);
+  color: var(--inv-alerta);
+}
+
+.fotos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.foto {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--inv-superficie);
+
+  &.nueva {
+    border-color: var(--inv-acento);
+  }
+
+  &.con-error {
+    border-color: var(--inv-mal);
+  }
+}
+
+.vista {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--inv-fondo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .subida {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+}
+
+.marca {
+  position: absolute;
+  top: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+
+  &.principal {
+    left: 8px;
+    background: var(--inv-tinta);
+    color: #fff;
+  }
+
+  &.estado {
+    right: 8px;
+    background: var(--inv-alerta-fondo);
+    color: var(--inv-alerta);
+  }
+}
+
+.marca .corto {
+  display: none;
+}
+
+.con-error .marca.estado {
+  background: var(--inv-mal-fondo);
+  color: var(--inv-mal);
+}
+
+.datos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 12px 6px;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.error {
+  color: var(--inv-mal);
+  font-size: 13px;
+}
+
+.pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.tamano {
+  font-size: 12px;
+}
+
+.acciones {
+  display: flex;
+}
+
+.estrella.activa mat-icon {
+  color: #b9851c;
+}
+
+.preparando {
+  justify-content: space-between;
+
+  .vista {
+    font-size: 13px;
+  }
+}
+
+.rechazo {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--inv-mal-fondo);
+  color: var(--inv-mal);
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.nota {
+  margin: 0;
+  font-size: 13px;
+}
+
+// En el celular cada foto es una fila: la imagen a la izquierda y sus datos al lado, para no hacer tan larga la página.
+@media (max-width: 599px) {
+  .fotos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .foto:not(.preparando) {
+    flex-direction: row;
+
+    .vista {
+      flex: 0 0 112px;
+      aspect-ratio: auto;
+      min-height: 112px;
+    }
+
+    .datos {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 10px 8px 4px 12px;
+    }
+  }
+
+  .marca {
+    top: 6px;
+    font-size: 11px;
+    padding: 1px 8px;
+
+    &.principal {
+      left: 6px;
+    }
+
+    &.estado {
+      right: auto;
+      left: 6px;
+      top: auto;
+      bottom: 6px;
+      white-space: nowrap;
+    }
+
+    .largo {
+      display: none;
+    }
+
+    .corto {
+      display: inline;
+    }
+  }
+
+  .zona {
+    padding: 12px;
+  }
+
+  .botones {
+    width: 100%;
+
+    .boton-archivo {
+      flex: 1 1 0;
+    }
+  }
+}

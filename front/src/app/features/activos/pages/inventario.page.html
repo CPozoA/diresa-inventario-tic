@@ -105,6 +105,7 @@
         <table class="tabla">
           <thead>
             <tr>
+              <th scope="col" class="col-foto"><span class="cdk-visually-hidden">Foto</span></th>
               <th scope="col">Código</th>
               <th scope="col">Equipo</th>
               <th scope="col">Establecimiento y área</th>
@@ -117,6 +118,9 @@
           <tbody>
             @for (a of store.activos(); track a.id) {
               <tr>
+                <td class="col-foto">
+                  <ng-container *ngTemplateOutlet="foto; context: { $implicit: a }" />
+                </td>
                 <td>
                   <a class="codigo mono" [routerLink]="[a.id]" [state]="volverAqui()">{{ a.codigoPatrimonial }}</a>
                 </td>
@@ -157,22 +161,25 @@
         @for (a of store.activos(); track a.id) {
           <li>
             <a class="tarjeta-activo" [routerLink]="[a.id]" [state]="volverAqui()">
-              <span class="cabecera">
-                <span class="codigo mono">{{ a.codigoPatrimonial }}</span>
-                <span class="pastilla" [class]="tonoEstado(a.estado)">{{ a.estado }}</span>
-              </span>
-              <span class="dos-lineas">
-                <span class="principal">{{ equipo(a) }}</span>
-                <span class="atenuado">
-                  {{ a.tipoActivo }} · {{ a.establecimiento }} · {{ a.area }}
-                  @if (todasLasSedes()) {
-                    · {{ a.sedeNombre }}
-                  }
+              <ng-container *ngTemplateOutlet="foto; context: { $implicit: a }" />
+              <span class="contenido">
+                <span class="cabecera">
+                  <span class="codigo mono">{{ a.codigoPatrimonial }}</span>
+                  <span class="pastilla" [class]="tonoEstado(a.estado)">{{ a.estado }}</span>
                 </span>
-              </span>
-              <span class="chips">
-                <span class="pastilla" [class]="tonoGarantia(a.garantia)">Garantía: {{ textoGarantia(a.garantia) | lowercase }}</span>
-                <span class="pastilla" [class]="tonoRenovacion(a.renovacion)">{{ textoRenovacion(a.renovacion) }}</span>
+                <span class="dos-lineas">
+                  <span class="principal">{{ equipo(a) }}</span>
+                  <span class="atenuado">
+                    {{ a.tipoActivo }} · {{ a.establecimiento }} · {{ a.area }}
+                    @if (todasLasSedes()) {
+                      · {{ a.sedeNombre }}
+                    }
+                  </span>
+                </span>
+                <span class="chips">
+                  <span class="pastilla" [class]="tonoGarantia(a.garantia)">Garantía: {{ textoGarantia(a.garantia) | lowercase }}</span>
+                  <span class="pastilla" [class]="tonoRenovacion(a.renovacion)">{{ textoRenovacion(a.renovacion) }}</span>
+                </span>
               </span>
             </a>
           </li>
@@ -204,3 +211,14 @@
     }
   </section>
 </div>
+
+<!-- Miniatura de la foto principal (D47); sin fotos, un icono del tipo de equipo. -->
+<ng-template #foto let-a>
+  <span class="miniatura" aria-hidden="true">
+    @if (miniatura(a); as url) {
+      <img [src]="url" alt="" loading="lazy" />
+    } @else {
+      <mat-icon>image_not_supported</mat-icon>
+    }
+  </span>
+</ng-template>

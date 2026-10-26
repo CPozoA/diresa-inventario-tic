@@ -101,3 +101,15 @@ export type { EditarActivo$Params as EditarActivo$Params } from './fn/activos/ed
 export { editarActivo as editarActivo } from './fn/activos/editar-activo';
 export type { EliminarActivo$Params as EliminarActivo$Params } from './fn/activos/eliminar-activo';
 export { eliminarActivo as eliminarActivo } from './fn/activos/eliminar-activo';
+export type { ListarFotosActivo$Params as ListarFotosActivo$Params } from './fn/fotos-de-activos/listar-fotos-activo';
+export { listarFotosActivo as listarFotosActivo } from './fn/fotos-de-activos/listar-fotos-activo';
+export type { SubirFotoActivo$Params as SubirFotoActivo$Params } from './fn/fotos-de-activos/subir-foto-activo';
+export { subirFotoActivo as subirFotoActivo } from './fn/fotos-de-activos/subir-foto-activo';
+export type { ObtenerArchivoFotoActivo$Params as ObtenerArchivoFotoActivo$Params } from './fn/fotos-de-activos/obtener-archivo-foto-activo';
+export { obtenerArchivoFotoActivo as obtenerArchivoFotoActivo } from './fn/fotos-de-activos/obtener-archivo-foto-activo';
+export type { DescribirFotoActivo$Params as DescribirFotoActivo$Params } from './fn/fotos-de-activos/describir-foto-activo';
+export { describirFotoActivo as describirFotoActivo } from './fn/fotos-de-activos/describir-foto-activo';
+export type { EliminarFotoActivo$Params as EliminarFotoActivo$Params } from './fn/fotos-de-activos/eliminar-foto-activo';
+export { eliminarFotoActivo as eliminarFotoActivo } from './fn/fotos-de-activos/eliminar-foto-activo';
+export type { MarcarFotoPrincipalActivo$Params as MarcarFotoPrincipalActivo$Params } from './fn/fotos-de-activos/marcar-foto-principal-activo';
+export { marcarFotoPrincipalActivo as marcarFotoPrincipalActivo } from './fn/fotos-de-activos/marcar-foto-principal-activo';

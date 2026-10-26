@@ -1,0 +1,80 @@
+@let f = actual();
+
+<div class="visor">
+  <header>
+    <div class="titulos">
+      <h2 id="titulo-visor" mat-dialog-title>{{ f ? nombreFoto(f.descripcion, indice() + 1) : 'Fotos' }}</h2>
+      <span class="atenuado">{{ datos.titulo }} · foto {{ indice() + 1 }} de {{ fotos().length }}</span>
+    </div>
+    @if (datos.puedeEditar && f) {
+      <button
+        mat-stroked-button
+        type="button"
+        class="claro"
+        [attr.aria-pressed]="f.principal"
+        [disabled]="ocupado() || f.principal"
+        (click)="marcarPrincipal()"
+      >
+        <mat-icon>{{ f.principal ? 'star' : 'star_outline' }}</mat-icon> {{ f.principal ? 'Es la principal' : 'Marcar como principal' }}
+      </button>
+      <button mat-stroked-button type="button" class="peligro" [disabled]="ocupado()" (click)="eliminar()">
+        <mat-icon>delete</mat-icon> Eliminar
+      </button>
+    }
+    <button mat-icon-button type="button" class="cerrar" mat-dialog-close aria-label="Cerrar el visor">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="escenario">
+    @if (fotos().length > 1) {
+      <button mat-icon-button type="button" class="flecha" aria-label="Foto anterior" (click)="anterior()">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+    }
+    @if (f) {
+      <figure>
+        <img [src]="url(f, false)" [alt]="nombreFoto(f.descripcion, indice() + 1)" />
+      </figure>
+    }
+    @if (fotos().length > 1) {
+      <button mat-icon-button type="button" class="flecha" aria-label="Foto siguiente" (click)="siguiente()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    }
+  </div>
+
+  <footer>
+    @if (datos.puedeEditar && f) {
+      <label class="descripcion">
+        <span>Descripción</span>
+        <input
+          [value]="f.descripcion ?? ''"
+          [attr.maxlength]="longitud"
+          placeholder="Por ejemplo: placa patrimonial"
+          [disabled]="ocupado()"
+          (blur)="describir($event)"
+          (keydown.enter)="describir($event)"
+        />
+      </label>
+    }
+    @if (fotos().length > 1) {
+      <ul class="miniaturas" aria-label="Fotos del activo">
+        @for (m of fotos(); track m.id; let i = $index) {
+          <li>
+            <button
+              type="button"
+              [class.elegida]="i === indice()"
+              [attr.aria-pressed]="i === indice()"
+              [attr.aria-label]="nombreFoto(m.descripcion, i + 1)"
+              (click)="indice.set(i)"
+            >
+              <img [src]="url(m, true)" alt="" loading="lazy" />
+            </button>
+          </li>
+        }
+      </ul>
+    }
+    <span class="atenuado detalle">{{ detalle() }}</span>
+  </footer>
+</div>

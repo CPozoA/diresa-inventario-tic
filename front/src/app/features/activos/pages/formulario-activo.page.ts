@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   computed,
   effect,
@@ -28,11 +29,13 @@ import { Router, RouterLink } from '@angular/router';
 import { catchError, debounceTime, distinctUntilChanged, from, map, of, switchMap } from 'rxjs';
 
 import { Api } from '../../../api/api';
+import { ApiConfiguration } from '../../../api/api-configuration';
 import { buscarSerieActivo } from '../../../api/fn/activos/buscar-serie-activo';
 import { crearActivo } from '../../../api/fn/activos/crear-activo';
 import { editarActivo } from '../../../api/fn/activos/editar-activo';
 import { obtenerFichaActivo } from '../../../api/fn/activos/obtener-ficha-activo';
 import { obtenerListasActivo } from '../../../api/fn/activos/obtener-listas-activo';
+import { listarFotosActivo } from '../../../api/fn/fotos-de-activos/listar-fotos-activo';
 import { listarElementosCatalogo } from '../../../api/fn/catalogos/listar-elementos-catalogo';
 import { ActivoConSerieDto } from '../../../api/models/activo-con-serie-dto';
 import { ElementoCatalogoDto } from '../../../api/models/elemento-catalogo-dto';
@@ -46,6 +49,8 @@ import { confirmar } from '../../../shared/ui/confirmacion.dialog';
 import { ConCambiosSinGuardar } from '../../../shared/util/cambios-sin-guardar';
 import { SelectorCatalogoComponent } from '../../catalogos/components/selector-catalogo.component';
 import { BuscadorEstablecimientoComponent, EstablecimientoElegido } from '../components/buscador-establecimiento.component';
+import { FotosFormularioComponent } from '../components/fotos-formulario.component';
+import { EdicionFotos } from '../data/edicion-fotos';
 import {
   CapacidadDisco,
   Ficha,
@@ -74,7 +79,7 @@ const CAMPOS_DE_RED = ['nombreEquipo', 'direccionIp', 'direccionMac'] as const;
 /**
  * Registrar y editar un activo (docs/ARQUITECTURA.md §5.10). Las secciones técnicas dependen de la ficha del tipo
  * elegido (D43); las que no corresponden se ocultan y no se envían. Avisa si el número de serie ya existe en la red
- * y pregunta antes de salir con cambios sin guardar.
+ * y pregunta antes de salir con cambios sin guardar. Las fotos (D38) se suben después de guardar la ficha.
  */
 @Component({
   selector: 'app-formulario-activo',
@@ -93,6 +98,7 @@ const CAMPOS_DE_RED = ['nombreEquipo', 'direccionIp', 'direccionMac'] as const;
     MatSelectModule,
     AvisoComponent,
     BuscadorEstablecimientoComponent,
+    FotosFormularioComponent,
     SelectorCatalogoComponent,
   ],
   templateUrl: './formulario-activo.page.html',
@@ -114,6 +120,12 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   readonly id = input<string>();
 
   protected readonly esEdicion = computed(() => !!this.id());
+  /**
+   * El activo que se guarda: el de la ruta, o el recién registrado si alguna foto no se subió y el usuario reintenta
+   * (así no se registra dos veces).
+   */
+  private readonly idCreado = signal<string | null>(null);
+  private readonly idActivo = computed(() => this.id() ?? this.idCreado());
   protected readonly hoy = hoyIso();
   protected readonly maximoDiscos = MAXIMO_DISCOS;
   protected readonly maximoModulos = MAXIMO_MODULOS;
@@ -123,6 +135,11 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   protected readonly puedeAgregarGenerales = this.sesion.tienePermiso(Permisos.Catalogos.GestionarGlobales);
   protected readonly puedeAgregarAreas = this.sesion.tienePermiso(Permisos.Catalogos.GestionarSede);
   protected readonly textoFicha = textoFicha;
+
+  /** Las fotos se gestionan con Activos.Editar (D47). */
+  protected readonly puedeFotos = this.sesion.tienePermiso(Permisos.Activos.Editar);
+  protected readonly fotos = new EdicionFotos(this.api, inject(ApiConfiguration).rootUrl);
+  protected readonly errorFotos = signal<string | null>(null);
 
   // ---------- Formulario ----------
 
@@ -193,6 +210,8 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   private guardado = false;
   /** La ficha a editar ya se volcó en el formulario. */
   private readonly cargada = signal(false);
+  /** Las fotos guardadas ya se volcaron en el formulario. */
+  private readonly fotosCargadas = signal(false);
 
   // ---------- Datos de la API ----------
 
@@ -201,6 +220,11 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   private readonly fichaActual = resource({
     params: () => (this.id() ? { id: this.id()! } : undefined),
     loader: ({ params }) => this.api.invoke(obtenerFichaActivo, params),
+  });
+
+  private readonly fotosActuales = resource({
+    params: () => (this.id() && this.puedeFotos ? { id: this.id()! } : undefined),
+    loader: ({ params }) => this.api.invoke(listarFotosActivo, params),
   });
 
   protected readonly tipos = this.catalogo('tipos-activo');
@@ -255,11 +279,15 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   );
 
   protected readonly cargando = computed(
-    () => this.listas.isLoading() || this.tipos.isLoading() || (this.esEdicion() && !this.cargada()),
+    () =>
+      this.listas.isLoading() ||
+      this.tipos.isLoading() ||
+      (this.esEdicion() && !this.cargada()) ||
+      (this.esEdicion() && this.puedeFotos && !this.fotosCargadas()),
   );
 
   protected readonly errorCarga = computed(() => {
-    const error = this.fichaActual.error() ?? this.listas.error() ?? this.tipos.error();
+    const error = this.fichaActual.error() ?? this.listas.error() ?? this.tipos.error() ?? this.fotosActuales.error();
     if (!error) {
       return null;
     }
@@ -332,6 +360,21 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   );
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.fotos.liberar());
+
+    // Al editar: las fotos guardadas, una sola vez.
+    effect(() => {
+      const fotos = this.fotosActuales.value();
+      const id = this.id();
+      if (!fotos || !id || untracked(this.fotosCargadas)) {
+        return;
+      }
+      untracked(() => {
+        this.fotos.cargar(id, fotos);
+        this.fotosCargadas.set(true);
+      });
+    });
+
     // Al editar: vuelca la ficha en el formulario cuando llegan la ficha y las listas.
     effect(() => {
       const ficha = this.fichaActual.value();
@@ -515,19 +558,33 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
     }
 
     this.guardando.set(true);
+    this.errorFotos.set(null);
     try {
       const cuerpo = fichaDesdeFormulario(this.valorActual(), establecimiento.id, ficha);
-      const id = this.id();
+      const id = this.idActivo();
       let destino: string;
       if (id) {
         await this.api.invoke(editarActivo, { id, body: cuerpo });
         destino = id;
       } else {
         destino = (await this.api.invoke(crearActivo, { body: cuerpo })).id;
+        this.idCreado.set(destino);
       }
+      this.formulario.markAsPristine();
+
+      // Las fotos van después de la ficha: si alguna falla, la ficha ya quedó guardada y solo se reintenta lo que falta.
+      const errorFotos = this.puedeFotos ? await this.fotos.aplicar(destino) : null;
+      if (errorFotos) {
+        this.errorFotos.set(errorFotos);
+        this.elemento.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+
       this.guardado = true;
-      this.notificaciones.exito(id ? 'Cambios guardados.' : `Se registró «${cuerpo.generales.codigoPatrimonial.toUpperCase()}».`);
-      await this.router.navigate(['/inventario', destino], { replaceUrl: !id });
+      this.notificaciones.exito(
+        this.id() ? 'Cambios guardados.' : `Se registró «${cuerpo.generales.codigoPatrimonial.toUpperCase()}».`,
+      );
+      await this.router.navigate(['/inventario', destino], { replaceUrl: !this.id() });
     } catch (error: unknown) {
       const e = aErrorApi(error);
       if (e.codigo === 'Activos.CodigoDuplicado') {
@@ -543,17 +600,19 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
 
   /** A dónde lleva Cancelar: la ficha al editar, la lista al registrar. */
   protected rutaCancelar(): string[] {
-    const id = this.id();
+    const id = this.idActivo();
     return id ? ['/inventario', id] : ['/inventario'];
   }
 
   async puedeSalir(): Promise<boolean> {
-    if (this.guardado || !this.formulario.dirty) {
+    if (this.guardado || !this.hayCambios()) {
       return true;
     }
     return confirmar(this.dialogos, {
       titulo: 'Salir sin guardar',
-      mensaje: 'Hay cambios en el formulario que todavía no se guardaron. Si sale ahora, se perderán.',
+      mensaje: this.formulario.dirty
+        ? 'Hay cambios en el formulario que todavía no se guardaron. Si sale ahora, se perderán.'
+        : 'Hay cambios en las fotos que todavía no se guardaron. Si sale ahora, se perderán.',
       confirmar: 'Salir sin guardar',
       peligro: true,
     });
@@ -561,9 +620,13 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
 
   /** Recargar o cerrar la pestaña con cambios: el navegador muestra su propia pregunta. */
   protected alCerrarLaPestana(evento: BeforeUnloadEvent): void {
-    if (!this.guardado && this.formulario.dirty) {
+    if (!this.guardado && this.hayCambios()) {
       evento.preventDefault();
     }
+  }
+
+  private hayCambios(): boolean {
+    return this.formulario.dirty || (this.puedeFotos && this.fotos.hayCambios());
   }
 
   // ---------- Auxiliares ----------

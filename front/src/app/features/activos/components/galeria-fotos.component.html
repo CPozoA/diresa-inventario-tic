@@ -1,0 +1,68 @@
+@let fotos = this.fotos();
+
+<div class="encabezado">
+  <h2 id="titulo-galeria">Fotos <span class="atenuado">· {{ fotos.length }} de {{ maximo }}</span></h2>
+  @if (puedeEditar() && lugares() > 0) {
+    <label class="boton-archivo" [class.deshabilitado]="!!subiendo()">
+      <input type="file" accept="image/*" multiple [disabled]="!!subiendo()" (change)="agregar($event)" />
+      <mat-icon aria-hidden="true">add_a_photo</mat-icon> Agregar
+    </label>
+  }
+</div>
+
+@if (cargando() && fotos.length === 0) {
+  <mat-progress-bar mode="indeterminate" aria-label="Cargando las fotos" />
+} @else if (actual(); as f) {
+  <button type="button" class="grande" [attr.aria-label]="'Ver «' + nombreFoto(f.descripcion, indice() + 1) + '» en grande'" (click)="abrirVisor()">
+    <img [src]="url(f, false)" [alt]="nombreFoto(f.descripcion, indice() + 1)" />
+    @if (f.principal) {
+      <span class="marca">Principal</span>
+    }
+    <span class="ampliar" aria-hidden="true"><mat-icon>open_in_full</mat-icon></span>
+  </button>
+  <div class="pie-foto">
+    <span class="descripcion">{{ f.descripcion ?? 'Sin descripción' }}</span>
+    <span class="atenuado">{{ formatoFecha(f.creadoEn) }}</span>
+  </div>
+
+  @if (fotos.length > 1 || subiendo()) {
+    <ul class="miniaturas" aria-label="Todas las fotos">
+      @for (m of fotos; track m.id; let i = $index) {
+        <li>
+          <button
+            type="button"
+            [class.elegida]="i === indice()"
+            [attr.aria-pressed]="i === indice()"
+            [attr.aria-label]="nombreFoto(m.descripcion, i + 1) + (m.principal ? ' (principal)' : '')"
+            (click)="elegir(m)"
+          >
+            <img [src]="url(m, true)" alt="" loading="lazy" />
+            @if (m.principal) {
+              <span class="estrella" aria-hidden="true"><mat-icon>star</mat-icon></span>
+            }
+          </button>
+        </li>
+      }
+      @if (subiendo(); as s) {
+        <li class="subiendo" role="status">
+          <span>Subiendo {{ s.hechas + 1 }} de {{ s.total }}…</span>
+          <mat-progress-bar mode="indeterminate" aria-label="Subiendo la foto" />
+        </li>
+      }
+    </ul>
+  }
+  <p class="nota atenuado">Toque la foto para verla en grande. La principal se muestra en la lista del inventario.</p>
+} @else {
+  <div class="vacio">
+    @if (subiendo(); as s) {
+      <span role="status">Subiendo {{ s.hechas + 1 }} de {{ s.total }}…</span>
+      <mat-progress-bar mode="indeterminate" aria-label="Subiendo la foto" />
+    } @else {
+      <mat-icon aria-hidden="true">photo_camera</mat-icon>
+      <span>Sin fotos todavía.</span>
+      @if (puedeEditar()) {
+        <span class="atenuado">Agregue la vista frontal, la placa patrimonial o la etiqueta de serie.</span>
+      }
+    }
+  </div>
+}

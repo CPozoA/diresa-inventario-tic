@@ -1,0 +1,122 @@
+@let e = edicion();
+@let fotos = e.lista();
+
+<div class="encabezado">
+  <h2 id="titulo-fotos">Fotos <span class="atenuado">· opcional, hasta {{ maximo }}</span></h2>
+  <span class="atenuado">{{ fotos.length }} de {{ maximo }}</span>
+</div>
+
+@if (e.lugares() > 0) {
+  <div
+    class="zona"
+    [class.arrastrando]="arrastrando()"
+    (dragover)="alArrastrar($event, true)"
+    (dragleave)="alArrastrar($event, false)"
+    (drop)="alSoltar($event)"
+  >
+    <div class="botones">
+      @if (esTactil) {
+        <!-- capture: el celular abre directamente la cámara trasera. -->
+        <label class="boton-archivo primario" [class.deshabilitado]="bloqueado()">
+          <input type="file" accept="image/*" capture="environment" [disabled]="bloqueado()" (change)="elegir($event)" />
+          <mat-icon aria-hidden="true">photo_camera</mat-icon> Tomar foto
+        </label>
+      }
+      <label class="boton-archivo" [class.primario]="!esTactil" [class.deshabilitado]="bloqueado()">
+        <input type="file" accept="image/*" multiple [disabled]="bloqueado()" (change)="elegir($event)" />
+        <mat-icon aria-hidden="true">{{ esTactil ? 'image' : 'upload' }}</mat-icon> {{ esTactil ? 'Galería' : 'Elegir archivos' }}
+      </label>
+    </div>
+    <span class="atenuado">
+      @if (!esTactil) {
+        O arrastre las imágenes aquí.
+      }
+      JPG, PNG, WebP o HEIC; se reducen a 1600 px antes de subirlas.
+    </span>
+  </div>
+} @else if (e.preparando() === 0) {
+  <p class="lleno" role="status">Ya tiene {{ maximo }} fotos, el máximo. Quite una para agregar otra.</p>
+}
+
+@if (fotos.length > 0 || e.preparando() > 0 || e.rechazadas().length > 0) {
+  <ul class="fotos" aria-labelledby="titulo-fotos">
+    @for (f of fotos; track f.clave; let i = $index) {
+      <li class="foto" [class.nueva]="!f.id" [class.con-error]="f.estado === 'error'">
+        <div class="vista">
+          <img [src]="f.vista" [alt]="nombreFoto(f.descripcion, i + 1)" loading="lazy" />
+          @if (f.principal) {
+            <span class="marca principal">Principal</span>
+          }
+          @if (f.estado === 'pendiente') {
+            <!-- En el celular la imagen es angosta: allí basta "Nueva". -->
+            <span class="marca estado"><span class="largo">Se sube al guardar</span><span class="corto">Nueva</span></span>
+          } @else if (estado(f); as texto) {
+            <span class="marca estado">{{ texto }}</span>
+          }
+          @if (f.estado === 'subiendo') {
+            <mat-progress-bar class="subida" mode="indeterminate" aria-label="Subiendo la foto" />
+          }
+        </div>
+        <div class="datos">
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>Descripción (opcional)</mat-label>
+            <input
+              matInput
+              [value]="f.descripcion"
+              [attr.maxlength]="longitud"
+              placeholder="Por ejemplo: placa patrimonial"
+              [disabled]="bloqueado()"
+              (input)="describir(f, $event)"
+            />
+          </mat-form-field>
+          @if (f.error) {
+            <span class="error" role="alert">{{ f.error }}</span>
+          }
+          <div class="pie">
+            <span class="atenuado tamano">{{ detalle(f) }}</span>
+            <div class="acciones">
+              <button
+                mat-icon-button
+                type="button"
+                class="estrella"
+                [class.activa]="f.principal"
+                [attr.aria-pressed]="f.principal"
+                [attr.aria-label]="'Marcar «' + nombreFoto(f.descripcion, i + 1) + '» como principal'"
+                [disabled]="bloqueado()"
+                (click)="e.marcarPrincipal(f.clave)"
+              >
+                <mat-icon>{{ f.principal ? 'star' : 'star_outline' }}</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="'Quitar «' + nombreFoto(f.descripcion, i + 1) + '»'"
+                [disabled]="bloqueado()"
+                (click)="e.quitar(f.clave)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </li>
+    }
+    @for (n of enPreparacion(); track n) {
+      <li class="foto preparando" aria-live="polite">
+        <div class="vista"><span class="atenuado">Preparando la foto…</span></div>
+        <mat-progress-bar mode="indeterminate" aria-label="Preparando la foto" />
+      </li>
+    }
+    @for (r of e.rechazadas(); track $index; let i = $index) {
+      <li class="rechazo" role="alert">
+        <div>
+          <strong>No se agregó «{{ r.nombre }}»</strong>
+          <span>{{ r.motivo }}</span>
+        </div>
+        <button mat-button type="button" (click)="e.descartarRechazo(i)">Entendido</button>
+      </li>
+    }
+  </ul>
+}
+
+<p class="nota atenuado">Las fotos nuevas se suben al guardar; las que quite se borran al guardar. Si sale sin guardar, nada cambia.</p>

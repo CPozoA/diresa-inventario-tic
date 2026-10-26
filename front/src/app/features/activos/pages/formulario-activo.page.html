@@ -18,6 +18,11 @@
     @if (errorGuardar(); as e) {
       <app-aviso>{{ e.mensaje }}</app-aviso>
     }
+    @if (errorFotos(); as e) {
+      <app-aviso tono="alerta">
+        La ficha se guardó, pero no todas las fotos: {{ e }} Pulse «Guardar cambios» para reintentar lo que falta.
+      </app-aviso>
+    }
 
     <form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
       <!-- Establecimiento -->
@@ -578,6 +583,12 @@
         }
       }
 
+      @if (puedeFotos) {
+        <section class="tarjeta" aria-labelledby="titulo-fotos">
+          <app-fotos-formulario [edicion]="fotos" [bloqueado]="guardando()" />
+        </section>
+      }
+
       <!-- Sugerencias compartidas por todas las filas de discos y de RAM. -->
       <mat-autocomplete #acDisco="matAutocomplete">
       @for (o of sDisco.opciones(); track o) {
@@ -615,9 +626,14 @@
         @if (intentoGuardar() && (formulario.invalid || !establecimiento())) {
           <span class="falta" role="alert">Revise los campos marcados.</span>
         }
+        @if (fotos.avance(); as a) {
+          <span class="avance-fotos" role="status">Subiendo fotos… {{ a.hechas }} de {{ a.total }}</span>
+        } @else if (fotos.preparando() > 0) {
+          <span class="avance-fotos" role="status">Preparando fotos…</span>
+        }
         <a mat-button [routerLink]="rutaCancelar()">Cancelar</a>
-        <button mat-flat-button type="submit" [disabled]="guardando()">
-          <mat-icon>save</mat-icon> {{ guardando() ? 'Guardando…' : esEdicion() ? 'Guardar cambios' : 'Guardar activo' }}
+        <button mat-flat-button type="submit" [disabled]="guardando() || fotos.preparando() > 0">
+          <mat-icon>save</mat-icon> {{ guardando() ? 'Guardando…' : esEdicion() || errorFotos() ? 'Guardar cambios' : 'Guardar activo' }}
         </button>
       </div>
     </form>

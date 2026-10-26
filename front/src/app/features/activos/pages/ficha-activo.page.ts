@@ -7,16 +7,22 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router, RouterLink } from '@angular/router';
 
 import { Api } from '../../../api/api';
+import { ApiConfiguration } from '../../../api/api-configuration';
 import { eliminarActivo } from '../../../api/fn/activos/eliminar-activo';
 import { obtenerFichaActivo } from '../../../api/fn/activos/obtener-ficha-activo';
+import { listarFotosActivo } from '../../../api/fn/fotos-de-activos/listar-fotos-activo';
 import { FichaActivoDto } from '../../../api/models/ficha-activo-dto';
 import { Permisos } from '../../../core/auth/permisos';
+import { SesionStore } from '../../../core/auth/sesion.store';
 import { SiTienePermisoDirective } from '../../../core/auth/si-tiene-permiso.directive';
 import { aErrorApi } from '../../../core/http/error-api';
 import { NotificacionesService } from '../../../core/notificaciones.service';
 import { rutaInternaSegura } from '../../../core/rutas';
 import { AvisoComponent } from '../../../shared/ui/aviso.component';
 import { confirmar } from '../../../shared/ui/confirmacion.dialog';
+import { GaleriaFotosComponent } from '../components/galeria-fotos.component';
+import { abrirVisorFotos } from '../components/visor-fotos.dialog';
+import { ordenarFotos, urlFoto } from '../data/fotos';
 import { cicloDeVida, datosTecnicos, detalleEstablecimiento } from '../data/presentacion-ficha';
 import {
   aNumero,
@@ -42,10 +48,19 @@ const LISTA = '/inventario';
 /**
  * Ficha técnica de un activo, solo lectura (docs/ARQUITECTURA.md §5.10). Las secciones técnicas dependen de la ficha
  * del tipo (D43): Cómputo muestra todo, con discos y RAM; Red, solo nombre de equipo, IP y MAC; Ninguna, nada técnico.
+ * Las fotos (D38) se ven y, con Activos.Editar, se agregan o cambian aquí mismo.
  */
 @Component({
   selector: 'app-ficha-activo',
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressBarModule, AvisoComponent, SiTienePermisoDirective],
+  imports: [
+    RouterLink,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressBarModule,
+    AvisoComponent,
+    GaleriaFotosComponent,
+    SiTienePermisoDirective,
+  ],
   templateUrl: './ficha-activo.page.html',
   styleUrl: './ficha-activo.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,6 +71,7 @@ export class FichaActivoPage {
   private readonly ubicacion = inject(Location);
   private readonly dialogos = inject(MatDialog);
   private readonly notificaciones = inject(NotificacionesService);
+  private readonly raiz = inject(ApiConfiguration).rootUrl;
 
   /** Viene de la ruta (:id). */
   readonly id = input.required<string>();
@@ -79,6 +95,7 @@ export class FichaActivoPage {
   protected readonly aNumero = aNumero;
 
   protected readonly eliminando = signal(false);
+  protected readonly puedeEditarFotos = inject(SesionStore).tienePermiso(Permisos.Activos.Editar);
 
   protected readonly recurso = resource({
     params: () => ({ id: this.id() }),
@@ -86,6 +103,19 @@ export class FichaActivoPage {
   });
 
   protected readonly ficha = computed<FichaActivoDto | null>(() => (this.recurso.hasValue() ? this.recurso.value() : null));
+
+  protected readonly recursoFotos = resource({
+    params: () => ({ id: this.id() }),
+    loader: ({ params }) => this.api.invoke(listarFotosActivo, params),
+  });
+
+  /** Se conservan mientras se vuelven a pedir, para que la galería no parpadee. */
+  protected readonly fotos = computed(() => ordenarFotos(this.recursoFotos.hasValue() ? this.recursoFotos.value() : []));
+
+  protected readonly miniaturaPrincipal = computed(() => {
+    const principal = this.fotos()[0];
+    return principal ? urlFoto(this.raiz, this.id(), principal.id, true) : null;
+  });
 
   protected readonly error = computed(() => {
     const error = this.recurso.error();
@@ -115,6 +145,21 @@ export class FichaActivoPage {
     const a = this.ficha()?.adquisicion;
     return !!a && (!!a.tipoAdquisicion || aNumero(a.valorAdquisicion) !== null || !!a.numeroOrdenCompra || !!a.proveedor);
   });
+
+  protected tituloVisor(ficha: FichaActivoDto): string {
+    return `${ficha.generales.codigoPatrimonial} · ${ficha.generales.marca.nombre} ${ficha.generales.modelo}`;
+  }
+
+  protected verFotoPrincipal(ficha: FichaActivoDto): void {
+    abrirVisorFotos(this.dialogos, {
+      activoId: ficha.id,
+      titulo: this.tituloVisor(ficha),
+      fotos: this.fotos(),
+      indice: 0,
+      puedeEditar: this.puedeEditarFotos,
+      alCambiar: () => this.recursoFotos.reload(),
+    });
+  }
 
   /** Vuelve a la lista con los mismos filtros con que se abrió la ficha (si se llegó desde ella). */
   protected volver(evento: Event): void {

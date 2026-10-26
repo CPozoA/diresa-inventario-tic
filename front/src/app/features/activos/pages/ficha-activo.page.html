@@ -11,6 +11,11 @@
 
   @if (ficha(); as f) {
     <section class="tarjeta cabecera">
+      @if (miniaturaPrincipal(); as m) {
+        <button type="button" class="foto-cabecera" aria-label="Ver la foto principal en grande" (click)="verFotoPrincipal(f)">
+          <img [src]="m" alt="" />
+        </button>
+      }
       <div class="identidad">
         <div class="titulo">
           <h1 class="mono">{{ f.generales.codigoPatrimonial }}</h1>
@@ -44,7 +49,18 @@
     </section>
 
     <div class="columnas">
-      <div class="columna">
+      <section class="tarjeta fotos" aria-labelledby="titulo-galeria">
+        <app-galeria-fotos
+          [activoId]="f.id"
+          [titulo]="tituloVisor(f)"
+          [fotos]="fotos()"
+          [cargando]="recursoFotos.isLoading()"
+          [puedeEditar]="puedeEditarFotos"
+          (cambiaron)="recursoFotos.reload()"
+        />
+      </section>
+
+      <div class="columna principal-columna">
         <section class="tarjeta">
           <h2>Establecimiento</h2>
           <div class="establecimiento">

@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.22 · 25/10/2026 · Cambios: D47 (miniatura y limpieza de metadatos de las fotos); §5.8 al día con la API de fotos (Paso 7D-1).
+> Versión 0.23 · 25/10/2026 · Cambios: fotos en las pantallas (Paso 7D-2): galería y visor en la ficha, sección Fotos del formulario y miniatura en la lista (§5.8).
 
 ---
 
@@ -248,8 +248,8 @@ Es la pieza de seguridad más importante del sistema.
 ### 5.8 Fotos de los activos (D38)
 
 - **Cuántas:** hasta 6 por activo; una es la **principal** (se muestra en la lista). Al quitar la principal, pasa a serlo la siguiente.
-- **Cómo se obtienen:** con el selector de archivos del navegador (`accept="image/*"`). En el celular ofrece **tomar foto** con la cámara (el permiso lo pide el propio navegador; exige HTTPS) o elegir de la galería; en la computadora, cargar archivos.
-- **Antes de subir**, el navegador reduce la foto (lado mayor de 1600 px, JPEG o WebP) y prepara una **miniatura** de unos 320 px (D47). Así la foto pesa unos cientos de KB y la miniatura unas decenas.
+- **Cómo se obtienen:** con el selector de archivos del navegador (`accept="image/*"`). En el celular ofrece **tomar foto** con la cámara (la abre el propio sistema; la aplicación no pide permiso de cámara) o elegir de la galería; en la computadora, cargar archivos.
+- **Antes de subir**, el navegador reduce la foto (lado mayor de 1600 px, en JPEG) y prepara una **miniatura** de unos 320 px (D47). Así la foto pesa unos cientos de KB y la miniatura unas decenas.
 - **Endpoints** (misma API, dentro de activos):
 
   | Acción | Endpoint | Permiso |
@@ -265,7 +265,8 @@ Es la pieza de seguridad más importante del sistema.
 - **Validación en el servidor:** solo JPG, PNG o WebP, comprobados por el **contenido** del archivo (no por la extensión ni por el tipo que declara el navegador); hasta 4 MB la foto y 512 KB la miniatura; a las JPEG se les quitan los metadatos (D47); descripción opcional de hasta 60 caracteres; el nombre en disco lo genera el sistema (nunca el que envía el usuario). Errores: `Fotos.TipoNoValido`, `Fotos.MuyGrande`, `Fotos.Danada`, `Fotos.SinArchivo`, `Fotos.SinMiniatura` (400) y `Fotos.Maximo` (422).
 - **Aislamiento:** la tabla `inventario.FotosActivo` pertenece a la sede (`IPerteneceASede`) y las fotos solo se entregan por la API, con sesión y el filtro de §5.6: otra red recibe 404. Nunca hay enlaces públicos. Se responden con `X-Content-Type-Options: nosniff` y `Cache-Control: private` de un año (una foto nunca cambia: otra imagen es otra foto).
 - **Almacenamiento:** `AlmacenArchivosEnDisco` (detrás de `IAlmacenArchivos`), carpeta `Almacenamiento:CarpetaFotos` fuera de `wwwroot` (en desarrollo `fotos-dev`, junto al proyecto Api), organizada como `{sede}/{activo}/{foto}.jpg` y `{foto}-mini.jpg`. Rechaza cualquier clave que salga de la carpeta. Los archivos se escriben antes de guardar el registro (y se borran si este falla) y se borran después de quitar el registro: como mucho queda un archivo sin uso, nunca una foto sin archivo. Al eliminar un activo se eliminan sus fotos y archivos. El almacenamiento es reutilizable para otros módulos (por ejemplo, evidencias de mantenimiento).
-- **En la pantalla:** en el formulario, al pulsar *Guardar* se guarda la ficha y luego se suben las fotos nuevas una por una, con su avance; si una falla, la ficha ya quedó guardada y solo se reintenta esa foto. Desde la ficha, las fotos se suben, describen, marcan o quitan al momento.
+- **En la pantalla:** en el formulario, las fotos nuevas, las quitadas, las descripciones y la principal quedan en el navegador hasta pulsar *Guardar*: se guarda la ficha y luego se elimina, describe y sube (una por una, con su avance) y se fija la principal. Si algo falla, la ficha ya quedó guardada, la foto se marca "No se subió" y al volver a guardar solo se reintenta lo que falta (si era un registro nuevo, no se vuelve a crear). Salir sin guardar no cambia nada. Desde la ficha, las fotos se suben al momento y en el visor (pantalla completa, con flechas y teclado) se marca la principal, se describe o se elimina.
+- **En el celular:** el formulario ofrece *Tomar foto* (`capture="environment"`, cámara trasera) y *Galería*; en la computadora, *Elegir archivos* o arrastrarlos. Las fotos HEIC del iPhone las convierte Safari; un navegador que no puede abrirlas lo avisa.
 
 ### 5.9 Establecimientos (D39)
 
