@@ -3,6 +3,14 @@
 
 export type { ObtenerSalud$Params as ObtenerSalud$Params } from './fn/salud/obtener-salud';
 export { obtenerSalud as obtenerSalud } from './fn/salud/obtener-salud';
+export type { ListarMovimientosAsignacion$Params as ListarMovimientosAsignacion$Params } from './fn/asignaciones/listar-movimientos-asignacion';
+export { listarMovimientosAsignacion as listarMovimientosAsignacion } from './fn/asignaciones/listar-movimientos-asignacion';
+export type { ListarAsignacionesActivo$Params as ListarAsignacionesActivo$Params } from './fn/asignaciones/listar-asignaciones-activo';
+export { listarAsignacionesActivo as listarAsignacionesActivo } from './fn/asignaciones/listar-asignaciones-activo';
+export type { AsignarActivo$Params as AsignarActivo$Params } from './fn/asignaciones/asignar-activo';
+export { asignarActivo as asignarActivo } from './fn/asignaciones/asignar-activo';
+export type { DevolverActivo$Params as DevolverActivo$Params } from './fn/asignaciones/devolver-activo';
+export { devolverActivo as devolverActivo } from './fn/asignaciones/devolver-activo';
 export type { ObtenerTokenCsrf$Params as ObtenerTokenCsrf$Params } from './fn/cuenta/obtener-token-csrf';
 export { obtenerTokenCsrf as obtenerTokenCsrf } from './fn/cuenta/obtener-token-csrf';
 export type { IniciarSesion$Params as IniciarSesion$Params } from './fn/cuenta/iniciar-sesion';
@@ -115,5 +123,21 @@ export type { EliminarFotoActivo$Params as EliminarFotoActivo$Params } from './f
 export { eliminarFotoActivo as eliminarFotoActivo } from './fn/fotos-de-activos/eliminar-foto-activo';
 export type { MarcarFotoPrincipalActivo$Params as MarcarFotoPrincipalActivo$Params } from './fn/fotos-de-activos/marcar-foto-principal-activo';
 export { marcarFotoPrincipalActivo as marcarFotoPrincipalActivo } from './fn/fotos-de-activos/marcar-foto-principal-activo';
+export type { ListarPersonal$Params as ListarPersonal$Params } from './fn/personal/listar-personal';
+export { listarPersonal as listarPersonal } from './fn/personal/listar-personal';
+export type { RegistrarPersona$Params as RegistrarPersona$Params } from './fn/personal/registrar-persona';
+export { registrarPersona as registrarPersona } from './fn/personal/registrar-persona';
+export type { ConsultarDni$Params as ConsultarDni$Params } from './fn/personal/consultar-dni';
+export { consultarDni as consultarDni } from './fn/personal/consultar-dni';
+export type { ObtenerPersona$Params as ObtenerPersona$Params } from './fn/personal/obtener-persona';
+export { obtenerPersona as obtenerPersona } from './fn/personal/obtener-persona';
+export type { EditarPersona$Params as EditarPersona$Params } from './fn/personal/editar-persona';
+export { editarPersona as editarPersona } from './fn/personal/editar-persona';
+export type { VerificarPersona$Params as VerificarPersona$Params } from './fn/personal/verificar-persona';
+export { verificarPersona as verificarPersona } from './fn/personal/verificar-persona';
+export type { CesarPersona$Params as CesarPersona$Params } from './fn/personal/cesar-persona';
+export { cesarPersona as cesarPersona } from './fn/personal/cesar-persona';
+export type { ReactivarPersona$Params as ReactivarPersona$Params } from './fn/personal/reactivar-persona';
+export { reactivarPersona as reactivarPersona } from './fn/personal/reactivar-persona';
 export type { ObtenerResumen$Params as ObtenerResumen$Params } from './fn/resumen/obtener-resumen';
 export { obtenerResumen as obtenerResumen } from './fn/resumen/obtener-resumen';

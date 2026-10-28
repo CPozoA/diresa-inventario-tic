@@ -74,6 +74,8 @@ function ficha(tipo: FichaTecnica, cambios: Partial<FichaActivoDto> = {}): Ficha
     situacion: { antiguedadAnios: 3.6, garantia: 'Vencida', vidaUtilRestanteAnios: 0.4, renovacion: 'ProximoARenovar' },
     creadoEn: '2026-10-20T15:00:00Z',
     modificadoEn: null,
+    grupoEstado: 'EnUso',
+    asignacion: null,
     ...cambios,
   };
 }

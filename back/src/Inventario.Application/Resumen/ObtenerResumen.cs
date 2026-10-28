@@ -72,10 +72,10 @@ public sealed record AtencionResumenDto(int Total, IReadOnlyList<ActivoAtencionD
 
 /// <summary>Fichas por completar, sin contar los activos de baja.</summary>
 /// <param name="Evaluadas">Activos que no están de baja.</param>
-/// <param name="Completas">Con número de serie, fecha de adquisición, responsable y al menos una foto.</param>
+/// <param name="Completas">Con número de serie, fecha de adquisición, al menos una foto y asignada (salvo en almacén).</param>
 /// <param name="SinFotos">Sin ninguna foto.</param>
 /// <param name="SinFechaAdquisicion">Sin fecha de adquisición (no se calcula su renovación).</param>
-/// <param name="SinResponsable">Sin responsable.</param>
+/// <param name="SinResponsable">Sin asignación vigente, sin contar los que están en almacén (D52).</param>
 /// <param name="SinNumeroSerie">Sin número de serie.</param>
 public sealed record FichasResumenDto(int Evaluadas, int Completas, int SinFotos, int SinFechaAdquisicion, int SinResponsable, int SinNumeroSerie);
 

@@ -1,3 +1,4 @@
+using Inventario.Application.Asignaciones;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
@@ -56,7 +57,11 @@ public sealed record TecnicosActivoDto(
     IReadOnlyList<OpcionDto> Accesorios);
 
 /// <summary>Ficha técnica completa de un activo, con los datos calculados a hoy.</summary>
-/// <remarks><c>Ficha</c> es la del tipo de activo (D43): indica qué secciones técnicas se muestran.</remarks>
+/// <remarks>
+/// <c>Ficha</c> es la del tipo de activo (D43): indica qué secciones técnicas se muestran. <c>GrupoEstado</c> es el
+/// grupo de su estado (D48). <c>Asignacion</c> es la vigente (D51), o nula; <c>Generales.Responsable</c> es el texto de
+/// antes del módulo de asignaciones (D52).
+/// </remarks>
 public sealed record FichaActivoDto(
     Guid Id,
     FichaTecnica Ficha,
@@ -72,7 +77,9 @@ public sealed record FichaActivoDto(
     int AlmacenamientoTotalGb,
     SituacionActivo Situacion,
     DateTimeOffset CreadoEn,
-    DateTimeOffset? ModificadoEn);
+    DateTimeOffset? ModificadoEn,
+    GrupoEstado GrupoEstado,
+    AsignacionActivoDto? Asignacion);
 
 /// <summary>Ficha técnica de un activo. Un activo de otra sede "no existe".</summary>
 /// <remarks>Requiere Activos.Ver.</remarks>
@@ -107,7 +114,12 @@ internal sealed class ObtenerFichaActivoHandler(IAppDbContext db, TimeProvider r
         var tipo = tipoActivo.Nombre;
         var marca = await NombreAsync(db.Marcas.AsNoTracking().Where(m => m.Id == activo.MarcaId).Select(m => m.Nombre), cancellationToken);
         var area = await NombreAsync(db.Areas.AsNoTracking().Where(a => a.Id == activo.AreaId).Select(a => a.Nombre), cancellationToken);
-        var estado = await NombreAsync(db.EstadosActivo.AsNoTracking().Where(e => e.Id == activo.EstadoActivoId).Select(e => e.Nombre), cancellationToken);
+        var estadoActivo = await db.EstadosActivo.AsNoTracking()
+            .Where(e => e.Id == activo.EstadoActivoId)
+            .Select(e => new { e.Nombre, Grupo = e.GrupoAsignado ?? GrupoEstado.EnUso })
+            .FirstAsync(cancellationToken);
+        var estado = estadoActivo.Nombre;
+        var asignacion = await ConsultasAsignacion.VigenteAsync(db, activo.Id, cancellationToken);
         var sistema = activo.SistemaOperativoId is Guid sistemaId
             ? new ReferenciaDto(
                 sistemaId,
@@ -197,7 +209,9 @@ internal sealed class ObtenerFichaActivoHandler(IAppDbContext db, TimeProvider r
             activo.AlmacenamientoTotalGb,
             activo.Situacion(hoy),
             activo.CreadoEn,
-            activo.ModificadoEn);
+            activo.ModificadoEn,
+            estadoActivo.Grupo,
+            asignacion);
     }
 
     /// <summary>Nombre del elemento, o un texto de respaldo si no se encuentra (no debería pasar: hay claves foráneas).</summary>

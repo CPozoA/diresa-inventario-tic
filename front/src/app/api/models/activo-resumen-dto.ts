@@ -16,6 +16,7 @@ export interface ActivoResumenDto {
   numeroSerie: (string | null);
   renovacion: SituacionRenovacion;
   responsable: (string | null);
+  responsableAsignado: boolean;
   sedeId: string;
   sedeNombre: string;
   tipoActivo: string;

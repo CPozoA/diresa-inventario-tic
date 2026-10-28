@@ -51,6 +51,7 @@ internal static class ResultadosHttp
             TipoError.Conflicto => StatusCodes.Status409Conflict,
             TipoError.Prohibido => StatusCodes.Status403Forbidden,
             TipoError.ReglaDeNegocio => StatusCodes.Status422UnprocessableEntity,
+            TipoError.NoDisponible => StatusCodes.Status503ServiceUnavailable,
             _ => StatusCodes.Status500InternalServerError,
         };
 

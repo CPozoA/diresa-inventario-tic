@@ -15,7 +15,7 @@ namespace Inventario.Domain.Activos;
 /// <param name="Descripcion">Descripción breve.</param>
 /// <param name="AreaId">Área de la sede.</param>
 /// <param name="UbicacionFisica">Dónde está (texto libre, D40).</param>
-/// <param name="Responsable">Responsable o usuario del equipo (texto, hasta que exista el módulo de asignaciones).</param>
+/// <param name="Responsable">Responsable escrito como texto antes del módulo de asignaciones (D52). Se conserva como dato anterior.</param>
 /// <param name="EstadoActivoId">Catálogo de estados.</param>
 /// <param name="Conservacion">Estado físico.</param>
 /// <param name="Criticidad">Criticidad.</param>
@@ -308,6 +308,19 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
         _discos.AddRange(nuevosDiscos);
         _modulosRam.Clear();
         _modulosRam.AddRange(nuevosModulos);
+    }
+
+    /// <summary>
+    /// Cambia solo el estado y la conservación, sin tocar el resto de la ficha. Lo usan las asignaciones: al entregar
+    /// y al devolver se registra cómo está el equipo (docs/ARQUITECTURA.md §5.12).
+    /// </summary>
+    public void CambiarSituacion(Guid estadoActivoId, Conservacion conservacion)
+    {
+        Exigir(estadoActivoId != Guid.Empty, "Elija el estado.");
+        Exigir(Enum.IsDefined(conservacion), "Elija el estado de conservación.");
+
+        EstadoActivoId = estadoActivoId;
+        Conservacion = conservacion;
     }
 
     /// <summary>Antigüedad, garantía y renovación a la fecha indicada (hoy, en la zona horaria del sistema).</summary>

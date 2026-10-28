@@ -20,6 +20,9 @@ public enum TipoError
 
     /// <summary>Una regla de negocio impide la operación (HTTP 422).</summary>
     ReglaDeNegocio,
+
+    /// <summary>Un servicio externo (por ejemplo, la consulta de DNI) no responde en este momento (HTTP 503).</summary>
+    NoDisponible,
 }
 
 /// <summary>Error esperado de un caso de uso.</summary>
@@ -39,4 +42,6 @@ public sealed record ErrorAplicacion(string Codigo, string Mensaje, TipoError Ti
     public static ErrorAplicacion Prohibido(string codigo, string mensaje) => new(codigo, mensaje, TipoError.Prohibido);
 
     public static ErrorAplicacion ReglaDeNegocio(string codigo, string mensaje) => new(codigo, mensaje, TipoError.ReglaDeNegocio);
+
+    public static ErrorAplicacion NoDisponible(string codigo, string mensaje) => new(codigo, mensaje, TipoError.NoDisponible);
 }

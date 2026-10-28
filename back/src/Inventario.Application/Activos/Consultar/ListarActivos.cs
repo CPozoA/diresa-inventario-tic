@@ -7,6 +7,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Inventario.Application.Activos.Consultar;
 
 /// <summary>Un activo en la lista del inventario.</summary>
+/// <remarks>
+/// <c>Responsable</c> es la persona que lo tiene asignado (D51); si no hay asignación, el texto escrito antes del módulo
+/// de asignaciones ("responsable anterior", D52). <c>ResponsableAsignado</c> distingue los dos casos.
+/// </remarks>
 public sealed record ActivoResumenDto(
     Guid Id,
     string CodigoPatrimonial,
@@ -17,6 +21,7 @@ public sealed record ActivoResumenDto(
     string Establecimiento,
     string Area,
     string? Responsable,
+    bool ResponsableAsignado,
     string Estado,
     EstadoGarantia Garantia,
     SituacionRenovacion Renovacion,
@@ -40,7 +45,7 @@ public sealed record PaginaActivosDto(IReadOnlyList<ActivoResumenDto> Activos, i
 /// <param name="Renovacion">Filtra por situación de renovación hoy.</param>
 /// <param name="Atencion">Los que requieren atención por ese motivo, sin los de baja (como en el resumen, D49).</param>
 /// <param name="Falta">Los que no tienen ese dato en su ficha, sin los de baja.</param>
-/// <param name="Buscar">Código patrimonial, serie, modelo, responsable, marca, IP o nombre de equipo.</param>
+/// <param name="Buscar">Código patrimonial, serie, modelo, marca, IP, nombre de equipo, nombre o DNI de quien lo tiene asignado, o el responsable anterior.</param>
 /// <param name="Pagina">Desde 1.</param>
 /// <param name="TamanoPagina">Entre 1 y 100 (por omisión, 25).</param>
 /// <remarks>Requiere Activos.Ver.</remarks>
@@ -133,6 +138,11 @@ internal sealed class ListarActivosHandler(IAppDbContext db, TimeProvider reloj)
             join es in db.EstadosActivo on a.EstadoActivoId equals es.Id
             join e in db.Establecimientos on a.EstablecimientoId equals e.Id
             join s in db.Sedes on a.SedeId equals s.Id
+            // La asignación vigente (a lo sumo una, D51) y su persona.
+            join v in db.Asignaciones.Where(x => x.FechaDevolucion == null) on a.Id equals v.ActivoId into vigentes
+            from v in vigentes.DefaultIfEmpty()
+            join p in db.Personal on v!.PersonaId equals p.Id into personas
+            from p in personas.DefaultIfEmpty()
             select new
             {
                 a.Id,
@@ -145,7 +155,9 @@ internal sealed class ListarActivosHandler(IAppDbContext db, TimeProvider reloj)
                 a.DireccionIp,
                 Establecimiento = e.Nombre,
                 Area = ar.Nombre,
-                a.Responsable,
+                ResponsableAnterior = a.Responsable,
+                Persona = p != null ? p.NombreCompleto : null,
+                PersonaDni = p != null ? p.Dni : null,
                 Estado = es.Nombre,
                 a.FinGarantia,
                 a.FechaRenovacion,
@@ -160,7 +172,9 @@ internal sealed class ListarActivosHandler(IAppDbContext db, TimeProvider reloj)
                 f.CodigoPatrimonial.Contains(buscar)
                 || (f.NumeroSerie != null && f.NumeroSerie.Contains(buscar))
                 || f.Modelo.Contains(buscar)
-                || (f.Responsable != null && f.Responsable.Contains(buscar))
+                || (f.Persona != null && f.Persona.Contains(buscar))
+                || (f.PersonaDni != null && f.PersonaDni.StartsWith(buscar))
+                || (f.ResponsableAnterior != null && f.ResponsableAnterior.Contains(buscar))
                 || f.Marca.Contains(buscar)
                 || (f.DireccionIp != null && f.DireccionIp.Contains(buscar))
                 || (f.NombreEquipo != null && f.NombreEquipo.Contains(buscar)));
@@ -192,7 +206,8 @@ internal sealed class ListarActivosHandler(IAppDbContext db, TimeProvider reloj)
                 f.NumeroSerie,
                 f.Establecimiento,
                 f.Area,
-                f.Responsable,
+                f.Persona ?? f.ResponsableAnterior,
+                f.Persona != null,
                 f.Estado,
                 Activo.GarantiaAl(f.FinGarantia, hoy),
                 Activo.RenovacionAl(f.FechaRenovacion, hoy),

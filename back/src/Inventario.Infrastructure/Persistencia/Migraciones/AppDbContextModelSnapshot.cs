@@ -353,6 +353,69 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.ToTable("ModulosRam", "inventario");
                 });
 
+            modelBuilder.Entity("Inventario.Domain.Asignaciones.Asignacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ActivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConservacionDevolucion")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ConservacionEntrega")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("FechaDevolucion")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("FechaEntrega")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("PersonaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SedeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActivoId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Asignaciones_ActivoVigente")
+                        .HasFilter("[FechaDevolucion] IS NULL");
+
+                    b.HasIndex("ActivoId", "FechaEntrega");
+
+                    b.HasIndex("PersonaId", "FechaDevolucion");
+
+                    b.HasIndex("SedeId", "FechaDevolucion");
+
+                    b.HasIndex("SedeId", "FechaEntrega");
+
+                    b.ToTable("Asignaciones", "inventario");
+                });
+
             modelBuilder.Entity("Inventario.Domain.Catalogos.Antivirus", b =>
                 {
                     b.Property<Guid>("Id")
@@ -700,6 +763,83 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.HasIndex("SedeId", "Nombre");
 
                     b.ToTable("Establecimientos", "organizacion");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Personal.Persona", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ApellidoMaterno")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<string>("ApellidoPaterno")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<Guid>("AreaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Cargo")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Dni")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .IsUnicode(false)
+                        .HasColumnType("char(8)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("EstablecimientoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("NombreCompleto")
+                        .IsRequired()
+                        .HasMaxLength(230)
+                        .HasColumnType("nvarchar(230)")
+                        .UseCollation("Modern_Spanish_CI_AI");
+
+                    b.Property<string>("Nombres")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("SedeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("VerificadaEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AreaId");
+
+                    b.HasIndex("EstablecimientoId");
+
+                    b.HasIndex("SedeId", "Dni")
+                        .IsUnique();
+
+                    b.HasIndex("SedeId", "Activa", "ApellidoPaterno");
+
+                    b.ToTable("Personal", "organizacion");
                 });
 
             modelBuilder.Entity("Inventario.Domain.Sedes.Sede", b =>
@@ -1094,6 +1234,27 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Inventario.Domain.Asignaciones.Asignacion", b =>
+                {
+                    b.HasOne("Inventario.Domain.Activos.Activo", null)
+                        .WithMany()
+                        .HasForeignKey("ActivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Personal.Persona", null)
+                        .WithMany()
+                        .HasForeignKey("PersonaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Sedes.Sede", null)
+                        .WithMany()
+                        .HasForeignKey("SedeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Inventario.Domain.Catalogos.Area", b =>
                 {
                     b.HasOne("Inventario.Domain.Sedes.Sede", null)
@@ -1105,6 +1266,27 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
 
             modelBuilder.Entity("Inventario.Domain.Establecimientos.Establecimiento", b =>
                 {
+                    b.HasOne("Inventario.Domain.Sedes.Sede", null)
+                        .WithMany()
+                        .HasForeignKey("SedeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Personal.Persona", b =>
+                {
+                    b.HasOne("Inventario.Domain.Catalogos.Area", null)
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Establecimientos.Establecimiento", null)
+                        .WithMany()
+                        .HasForeignKey("EstablecimientoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Inventario.Domain.Sedes.Sede", null)
                         .WithMany()
                         .HasForeignKey("SedeId")

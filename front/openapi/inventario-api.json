@@ -30,6 +30,52 @@
         }
       }
     },
+    "/api/asignaciones/movimientos": {
+      "get": {
+        "tags": [
+          "Asignaciones"
+        ],
+        "summary": "Entregas y devoluciones más recientes de la red.",
+        "operationId": "ListarMovimientosAsignacion",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "maximo",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MovimientoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/cuenta/csrf": {
       "get": {
         "tags": [
@@ -1311,7 +1357,7 @@
         "tags": [
           "Activos"
         ],
-        "summary": "Inventario paginado, con filtros. ?buscar= código patrimonial, serie, modelo, responsable, marca, IP o nombre de equipo. ?atencion= y ?falta= como en el resumen (sin los de baja).",
+        "summary": "Inventario paginado, con filtros. ?buscar= código patrimonial, serie, modelo, marca, IP, nombre de equipo, o nombre o DNI de quien lo tiene asignado. ?atencion= y ?falta= como en el resumen (sin los de baja).",
         "operationId": "ListarActivos",
         "parameters": [
           {
@@ -1924,6 +1970,384 @@
         }
       }
     },
+    "/api/personal": {
+      "get": {
+        "tags": [
+          "Personal"
+        ],
+        "summary": "Personal de la red por apellidos, con cuántos equipos tiene cada uno. ?buscar= DNI o palabras del nombre (sin importar tildes).",
+        "operationId": "ListarPersonal",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "establecimientoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "incluirCesados",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "maximo",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PersonaResumenDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Personal"
+        ],
+        "summary": "Registra a una persona. Los nombres los da RENIEC; los escritos solo se usan si RENIEC no la encuentra o no responde (queda sin verificar).",
+        "operationId": "RegistrarPersona",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarPersonaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdCreado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/personal/consulta-dni": {
+      "post": {
+        "tags": [
+          "Personal"
+        ],
+        "summary": "Antes de registrar: si el DNI ya está en la red, la persona; si no, lo que responde RENIEC (encontrado, no encontrado o no disponible). No guarda nada.",
+        "operationId": "ConsultarDni",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsultarDniRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsultaDniDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/personal/{id}": {
+      "get": {
+        "tags": [
+          "Personal"
+        ],
+        "summary": "Ficha de la persona con los equipos que tiene y tuvo.",
+        "operationId": "ObtenerPersona",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonaDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Personal"
+        ],
+        "summary": "Cambia establecimiento, área y cargo; los nombres solo si no está verificada. El DNI no cambia.",
+        "operationId": "EditarPersona",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarPersonaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/personal/{id}/verificar": {
+      "post": {
+        "tags": [
+          "Personal"
+        ],
+        "summary": "Consulta RENIEC otra vez y, si encuentra el DNI, toma sus nombres y marca a la persona como verificada.",
+        "operationId": "VerificarPersona",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/personal/{id}/cesar": {
+      "post": {
+        "tags": [
+          "Personal"
+        ],
+        "summary": "Marca a la persona como cesada. Antes debe devolver los equipos que tiene.",
+        "operationId": "CesarPersona",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/personal/{id}/reactivar": {
+      "post": {
+        "tags": [
+          "Personal"
+        ],
+        "summary": "Vuelve a marcar a la persona como activa.",
+        "operationId": "ReactivarPersona",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/activos/{id}/asignaciones": {
+      "get": {
+        "tags": [
+          "Asignaciones"
+        ],
+        "summary": "Historial de asignaciones del activo: la vigente primero.",
+        "operationId": "ListarAsignacionesActivo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AsignacionActivoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Asignaciones"
+        ],
+        "summary": "Entrega el activo a una persona de la red. Si ya lo tenía otra, se cierra su asignación con la misma fecha y conservación.",
+        "operationId": "AsignarActivo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AsignarActivoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdCreado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activos/{id}/asignaciones/devolver": {
+      "post": {
+        "tags": [
+          "Asignaciones"
+        ],
+        "summary": "Registra la devolución: fecha, conservación, estado en que queda el activo y observaciones.",
+        "operationId": "DevolverActivo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevolverActivoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
     "/api/resumen": {
       "get": {
         "tags": [
@@ -2078,6 +2502,7 @@
           "establecimiento",
           "area",
           "responsable",
+          "responsableAsignado",
           "estado",
           "garantia",
           "renovacion",
@@ -2121,6 +2546,9 @@
               "string"
             ]
           },
+          "responsableAsignado": {
+            "type": "boolean"
+          },
           "estado": {
             "type": "string"
           },
@@ -2143,6 +2571,106 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "AsignacionActivoDto": {
+        "required": [
+          "id",
+          "personaId",
+          "dni",
+          "nombreCompleto",
+          "cargo",
+          "establecimiento",
+          "area",
+          "verificada",
+          "fechaEntrega",
+          "conservacionEntrega",
+          "fechaDevolucion",
+          "conservacionDevolucion",
+          "observaciones"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "personaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dni": {
+            "type": "string"
+          },
+          "nombreCompleto": {
+            "type": "string"
+          },
+          "cargo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "establecimiento": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string"
+          },
+          "verificada": {
+            "type": "boolean"
+          },
+          "fechaEntrega": {
+            "type": "string",
+            "format": "date"
+          },
+          "conservacionEntrega": {
+            "$ref": "#/components/schemas/Conservacion"
+          },
+          "fechaDevolucion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "conservacionDevolucion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Conservacion"
+              }
+            ]
+          },
+          "observaciones": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "AsignarActivoRequest": {
+        "required": [
+          "personaId",
+          "fechaEntrega",
+          "conservacion"
+        ],
+        "type": "object",
+        "properties": {
+          "personaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fechaEntrega": {
+            "type": "string",
+            "format": "date"
+          },
+          "conservacion": {
+            "$ref": "#/components/schemas/Conservacion"
           }
         }
       },
@@ -2519,6 +3047,79 @@
           "Regular",
           "Malo"
         ]
+      },
+      "ConsultaDniDto": {
+        "required": [
+          "dni",
+          "reniec",
+          "apellidoPaterno",
+          "apellidoMaterno",
+          "nombres",
+          "registrada"
+        ],
+        "type": "object",
+        "properties": {
+          "dni": {
+            "type": "string"
+          },
+          "reniec": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EstadoConsultaDni"
+              }
+            ]
+          },
+          "apellidoPaterno": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "apellidoMaterno": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nombres": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "registrada": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PersonaRegistradaDto"
+              }
+            ]
+          }
+        }
+      },
+      "ConsultarDniRequest": {
+        "required": [
+          "dni",
+          "sedeId"
+        ],
+        "type": "object",
+        "properties": {
+          "dni": {
+            "type": "string"
+          },
+          "sedeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
       },
       "ContrasenaTemporalDto": {
         "required": [
@@ -3130,6 +3731,34 @@
           }
         }
       },
+      "DevolverActivoRequest": {
+        "required": [
+          "fecha",
+          "conservacion",
+          "estadoActivoId",
+          "observaciones"
+        ],
+        "type": "object",
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "conservacion": {
+            "$ref": "#/components/schemas/Conservacion"
+          },
+          "estadoActivoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "observaciones": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "EditarEstablecimientoRequest": {
         "required": [
           "idEstablecimiento",
@@ -3187,6 +3816,51 @@
             ]
           },
           "ubigeo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "EditarPersonaRequest": {
+        "required": [
+          "establecimientoId",
+          "areaId",
+          "cargo",
+          "apellidoPaterno",
+          "apellidoMaterno",
+          "nombres"
+        ],
+        "type": "object",
+        "properties": {
+          "establecimientoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "areaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cargo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "apellidoPaterno": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "apellidoMaterno": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nombres": {
             "type": [
               "null",
               "string"
@@ -3307,6 +3981,75 @@
               },
               {
                 "$ref": "#/components/schemas/GrupoEstado"
+              }
+            ]
+          }
+        }
+      },
+      "EquipoPersonaDto": {
+        "required": [
+          "asignacionId",
+          "activoId",
+          "codigoPatrimonial",
+          "tipoActivo",
+          "marca",
+          "modelo",
+          "fotoPrincipalId",
+          "fechaEntrega",
+          "conservacionEntrega",
+          "fechaDevolucion",
+          "conservacionDevolucion"
+        ],
+        "type": "object",
+        "properties": {
+          "asignacionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "activoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigoPatrimonial": {
+            "type": "string"
+          },
+          "tipoActivo": {
+            "type": "string"
+          },
+          "marca": {
+            "type": "string"
+          },
+          "modelo": {
+            "type": "string"
+          },
+          "fotoPrincipalId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "fechaEntrega": {
+            "type": "string",
+            "format": "date"
+          },
+          "conservacionEntrega": {
+            "$ref": "#/components/schemas/Conservacion"
+          },
+          "fechaDevolucion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "conservacionDevolucion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Conservacion"
               }
             ]
           }
@@ -3499,6 +4242,14 @@
           }
         }
       },
+      "EstadoConsultaDni": {
+        "enum": [
+          "Encontrado",
+          "NoEncontrado",
+          "NoDisponible",
+          null
+        ]
+      },
       "EstadoGarantia": {
         "enum": [
           "SinDato",
@@ -3580,7 +4331,9 @@
           "almacenamientoTotalGb",
           "situacion",
           "creadoEn",
-          "modificadoEn"
+          "modificadoEn",
+          "grupoEstado",
+          "asignacion"
         ],
         "type": "object",
         "properties": {
@@ -3651,6 +4404,19 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "grupoEstado": {
+            "$ref": "#/components/schemas/GrupoEstado"
+          },
+          "asignacion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AsignacionActivoDto"
+              }
+            ]
           }
         }
       },
@@ -4065,6 +4831,65 @@
           null
         ]
       },
+      "MovimientoDto": {
+        "required": [
+          "asignacionId",
+          "tipo",
+          "fecha",
+          "activoId",
+          "codigoPatrimonial",
+          "tipoActivo",
+          "marca",
+          "modelo",
+          "personaId",
+          "nombreCompleto",
+          "conservacion",
+          "sedeNombre"
+        ],
+        "type": "object",
+        "properties": {
+          "asignacionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoMovimiento"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "activoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigoPatrimonial": {
+            "type": "string"
+          },
+          "tipoActivo": {
+            "type": "string"
+          },
+          "marca": {
+            "type": "string"
+          },
+          "modelo": {
+            "type": "string"
+          },
+          "personaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombreCompleto": {
+            "type": "string"
+          },
+          "conservacion": {
+            "$ref": "#/components/schemas/Conservacion"
+          },
+          "sedeNombre": {
+            "type": "string"
+          }
+        }
+      },
       "OpcionDto": {
         "required": [
           "valor",
@@ -4144,6 +4969,189 @@
           }
         }
       },
+      "PersonaDto": {
+        "required": [
+          "id",
+          "dni",
+          "apellidoPaterno",
+          "apellidoMaterno",
+          "nombres",
+          "nombreCompleto",
+          "cargo",
+          "establecimientoId",
+          "establecimiento",
+          "areaId",
+          "area",
+          "verificada",
+          "verificadaEn",
+          "activa",
+          "sedeId",
+          "sedeNombre",
+          "equipos"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dni": {
+            "type": "string"
+          },
+          "apellidoPaterno": {
+            "type": "string"
+          },
+          "apellidoMaterno": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nombres": {
+            "type": "string"
+          },
+          "nombreCompleto": {
+            "type": "string"
+          },
+          "cargo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "establecimientoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "establecimiento": {
+            "type": "string"
+          },
+          "areaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "area": {
+            "type": "string"
+          },
+          "verificada": {
+            "type": "boolean"
+          },
+          "verificadaEn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "sedeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sedeNombre": {
+            "type": "string"
+          },
+          "equipos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EquipoPersonaDto"
+            }
+          }
+        }
+      },
+      "PersonaRegistradaDto": {
+        "required": [
+          "id",
+          "nombreCompleto",
+          "activa"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombreCompleto": {
+            "type": "string"
+          },
+          "activa": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PersonaResumenDto": {
+        "required": [
+          "id",
+          "dni",
+          "nombreCompleto",
+          "cargo",
+          "establecimientoId",
+          "establecimiento",
+          "areaId",
+          "area",
+          "verificada",
+          "activa",
+          "equipos",
+          "sedeId",
+          "sedeNombre"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dni": {
+            "type": "string"
+          },
+          "nombreCompleto": {
+            "type": "string"
+          },
+          "cargo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "establecimientoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "establecimiento": {
+            "type": "string"
+          },
+          "areaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "area": {
+            "type": "string"
+          },
+          "verificada": {
+            "type": "boolean"
+          },
+          "activa": {
+            "type": "boolean"
+          },
+          "equipos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "sedeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sedeNombre": {
+            "type": "string"
+          }
+        }
+      },
       "Puerto": {
         "enum": [
           "UsbA",
@@ -4183,6 +5191,55 @@
           },
           "nombre": {
             "type": "string"
+          }
+        }
+      },
+      "RegistrarPersonaRequest": {
+        "required": [
+          "dni",
+          "establecimientoId",
+          "areaId",
+          "cargo",
+          "apellidoPaterno",
+          "apellidoMaterno",
+          "nombres"
+        ],
+        "type": "object",
+        "properties": {
+          "dni": {
+            "type": "string"
+          },
+          "establecimientoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "areaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cargo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "apellidoPaterno": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "apellidoMaterno": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "nombres": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -4776,6 +5833,12 @@
           null
         ]
       },
+      "TipoMovimiento": {
+        "enum": [
+          "Entrega",
+          "Devolucion"
+        ]
+      },
       "TipoRam": {
         "enum": [
           "Ddr3",
@@ -4912,6 +5975,9 @@
       "name": "Salud"
     },
     {
+      "name": "Asignaciones"
+    },
+    {
       "name": "Cuenta"
     },
     {
@@ -4934,6 +6000,9 @@
     },
     {
       "name": "Fotos de activos"
+    },
+    {
+      "name": "Personal"
     },
     {
       "name": "Resumen"

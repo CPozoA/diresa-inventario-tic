@@ -1,6 +1,8 @@
 using Inventario.Domain.Activos;
+using Inventario.Domain.Asignaciones;
 using Inventario.Domain.Catalogos;
 using Inventario.Domain.Establecimientos;
+using Inventario.Domain.Personal;
 using Inventario.Domain.Sedes;
 using Inventario.Domain.Seguridad;
 using Inventario.Domain.Usuarios;
@@ -26,6 +28,10 @@ public interface IAppDbContext
     DbSet<Activo> Activos { get; }
 
     DbSet<FotoActivo> FotosActivo { get; }
+
+    DbSet<Persona> Personal { get; }
+
+    DbSet<Asignacion> Asignaciones { get; }
 
     // Catálogos de cada sede.
     DbSet<Area> Areas { get; }

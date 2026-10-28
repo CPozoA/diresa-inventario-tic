@@ -38,6 +38,10 @@ public enum DatoFaltante
     /// <summary>Sin fecha de adquisición no se calcula la antigüedad ni la renovación.</summary>
     FechaAdquisicion,
 
+    /// <summary>
+    /// Nadie lo tiene asignado (D52). No cuentan los que están en almacén: esos no tienen por qué tener responsable.
+    /// El texto "Responsable" de antes del módulo de asignaciones no cuenta como asignación.
+    /// </summary>
     Responsable,
 
     NumeroSerie,
@@ -83,16 +87,25 @@ internal static class AlertasActivo
         {
             DatoFaltante.Fotos => vigentes.Where(a => !db.FotosActivo.Any(f => f.ActivoId == a.Id)),
             DatoFaltante.FechaAdquisicion => vigentes.Where(a => a.FechaAdquisicion == null),
-            DatoFaltante.Responsable => vigentes.Where(a => a.Responsable == null || a.Responsable == string.Empty),
+            DatoFaltante.Responsable => vigentes.SinAsignar(db).Where(a =>
+                !db.EstadosActivo.Any(e => e.Id == a.EstadoActivoId && e.GrupoAsignado == GrupoEstado.EnAlmacen)),
             _ => vigentes.Where(a => a.NumeroSerie == null || a.NumeroSerie == string.Empty),
         };
     }
 
-    /// <summary>Ficha completa: número de serie, fecha de adquisición, responsable y al menos una foto.</summary>
+    /// <summary>
+    /// Ficha completa: número de serie, fecha de adquisición, al menos una foto y alguien a cargo (salvo que esté en
+    /// almacén).
+    /// </summary>
     public static IQueryable<Activo> Completas(this IQueryable<Activo> activos, IAppDbContext db) =>
         activos.SinBaja(db).Where(a =>
             a.NumeroSerie != null && a.NumeroSerie != string.Empty
             && a.FechaAdquisicion != null
-            && a.Responsable != null && a.Responsable != string.Empty
+            && (db.Asignaciones.Any(x => x.ActivoId == a.Id && x.FechaDevolucion == null)
+                || db.EstadosActivo.Any(e => e.Id == a.EstadoActivoId && e.GrupoAsignado == GrupoEstado.EnAlmacen))
             && db.FotosActivo.Any(f => f.ActivoId == a.Id));
+
+    /// <summary>Los que no tienen una asignación vigente.</summary>
+    public static IQueryable<Activo> SinAsignar(this IQueryable<Activo> activos, IAppDbContext db) =>
+        activos.Where(a => !db.Asignaciones.Any(x => x.ActivoId == a.Id && x.FechaDevolucion == null));
 }

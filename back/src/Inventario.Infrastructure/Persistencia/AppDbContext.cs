@@ -2,9 +2,11 @@ using System.Reflection;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Seguridad;
 using Inventario.Domain.Activos;
+using Inventario.Domain.Asignaciones;
 using Inventario.Domain.Catalogos;
 using Inventario.Domain.Common;
 using Inventario.Domain.Establecimientos;
+using Inventario.Domain.Personal;
 using Inventario.Domain.Sedes;
 using Inventario.Domain.Seguridad;
 using Inventario.Domain.Usuarios;
@@ -39,6 +41,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IUsuari
     public DbSet<Activo> Activos => Set<Activo>();
 
     public DbSet<FotoActivo> FotosActivo => Set<FotoActivo>();
+
+    public DbSet<Persona> Personal => Set<Persona>();
+
+    public DbSet<Asignacion> Asignaciones => Set<Asignacion>();
 
     public DbSet<Area> Areas => Set<Area>();
 

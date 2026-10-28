@@ -221,6 +221,8 @@ describe('formulario del activo', () => {
       situacion: { antiguedadAnios: 3.6, garantia: 'SinDato', vidaUtilRestanteAnios: 0.4, renovacion: 'ProximoARenovar' },
       creadoEn: '2026-10-20T15:00:00Z',
       modificadoEn: null,
+      grupoEstado: 'EnUso',
+      asignacion: null,
     } as FichaActivoDto;
 
     const v = formularioDesdeFicha(ficha, [256, 512, 1000], [14, 15.6]);

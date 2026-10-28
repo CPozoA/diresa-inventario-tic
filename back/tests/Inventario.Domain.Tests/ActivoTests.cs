@@ -187,4 +187,19 @@ public sealed class ActivoTests
         Assert.Equal(EstadoGarantia.SinDato, situacion.Garantia);
         Assert.Equal(SituacionRenovacion.SinDato, situacion.Renovacion);
     }
+
+    [Fact]
+    public void CambiarSituacion_SoloCambiaEstadoYConservacion()
+    {
+        var activo = Crear();
+        var codigo = activo.CodigoPatrimonial;
+        var estado = Guid.CreateVersion7();
+
+        activo.CambiarSituacion(estado, Conservacion.Regular);
+
+        Assert.Equal(estado, activo.EstadoActivoId);
+        Assert.Equal(Conservacion.Regular, activo.Conservacion);
+        Assert.Equal(codigo, activo.CodigoPatrimonial);
+        Assert.Throws<DominioException>(() => activo.CambiarSituacion(Guid.Empty, Conservacion.Bueno));
+    }
 }

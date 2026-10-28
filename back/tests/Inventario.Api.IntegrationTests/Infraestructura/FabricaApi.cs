@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Inventario.Application.Common.Reniec;
 using Inventario.Application.Common.Seguridad;
 using Inventario.Domain.Seguridad;
 using Inventario.Domain.Usuarios;
@@ -9,8 +10,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Mvc.Testing.Handlers;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Inventario.Api.IntegrationTests.Infraestructura;
 
@@ -113,6 +116,13 @@ public sealed class FabricaApi : WebApplicationFactory<MarcadorApi>, IAsyncLifet
         builder.UseSetting("Inicializacion:SuperAdmin:Correo", "superadmin@pruebas.local");
         builder.UseSetting("Inicializacion:SuperAdmin:ContrasenaInicial", DatosPrueba.Contrasena);
         builder.UseSetting("Seguridad:IntentosAutenticacionPorMinuto", "1000");
+
+        // La consulta de DNI nunca sale a internet en las pruebas.
+        builder.ConfigureTestServices(servicios =>
+        {
+            servicios.RemoveAll<IConsultaDni>();
+            servicios.AddSingleton<IConsultaDni, ConsultaDniFalsa>();
+        });
     }
 
     private async Task CrearDatosDePruebaAsync()

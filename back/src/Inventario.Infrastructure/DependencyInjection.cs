@@ -1,6 +1,7 @@
 using Inventario.Application.Common.Archivos;
 using Inventario.Application.Common.Correo;
 using Inventario.Application.Common.Persistencia;
+using Inventario.Application.Common.Reniec;
 using Inventario.Application.Common.Seguridad;
 using Inventario.Application.Establecimientos.Importar;
 using Inventario.Infrastructure.Archivos;
@@ -11,12 +12,14 @@ using Inventario.Infrastructure.Identidad;
 using Inventario.Infrastructure.Persistencia;
 using Inventario.Infrastructure.Persistencia.Inicializacion;
 using Inventario.Infrastructure.Persistencia.Interceptores;
+using Inventario.Infrastructure.Reniec;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Inventario.Infrastructure;
 
@@ -44,6 +47,17 @@ public static class DependencyInjection
         // Fotos de los activos en una carpeta del servidor (D38).
         services.Configure<OpcionesAlmacenamiento>(configuration.GetSection(OpcionesAlmacenamiento.Seccion));
         services.AddSingleton<IAlmacenArchivos, AlmacenArchivosEnDisco>();
+
+        // Consulta de DNI en RENIEC (D50). La clave es un secreto: user-secrets en desarrollo, variable de entorno en el servidor.
+        services.Configure<OpcionesConsultaDni>(configuration.GetSection(OpcionesConsultaDni.Seccion));
+        services.AddMemoryCache();
+        services.AddHttpClient<IConsultaDni, ConsultaDniPeruDevs>((proveedor, cliente) =>
+            {
+                var opciones = proveedor.GetRequiredService<IOptions<OpcionesConsultaDni>>().Value;
+                cliente.Timeout = TimeSpan.FromSeconds(Math.Clamp(opciones.SegundosDeEspera, 2, 30));
+            })
+            // Los registros automáticos del cliente escribirían la dirección, que lleva la clave.
+            .RemoveAllLoggers();
 
         // Excel (ClosedXML, D42).
         services.AddSingleton<IHojaEstablecimientos, HojaEstablecimientosExcel>();

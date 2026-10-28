@@ -49,6 +49,7 @@ public sealed class ResumenTests(FabricaApi api)
     /// A3 inoperativo, le quedan 6 meses de vida útil, garantía vencida;
     /// A4 de baja, 10 años de uso y garantía vencida (no cuenta en las alertas);
     /// A5 en mantenimiento, sin fecha, sin serie ni responsable.
+    /// A1, A2 y A3 están asignados a una persona de la red.
     /// </summary>
     private static async Task<Escenario> PrepararAsync(HttpClient superAdmin)
     {
@@ -114,7 +115,24 @@ public sealed class ResumenTests(FabricaApi api)
         var a4 = await Activo(e2, monitor, deBaja, Hoy.AddYears(-10), Hoy.AddYears(-8), null, null);
         var a5 = await Activo(e1, ups, mantenimiento, null, null, null, null);
 
-        // A1 queda con la ficha completa: serie, fecha, responsable y una foto.
+        // A1, A2 y A3 se asignan a una persona de la red; A5 queda sin asignar (D52: el texto de responsable no cuenta).
+        var persona = await Crear("/api/personal", new
+        {
+            dni = ConsultaDniFalsa.DniEncontrado(),
+            establecimientoId = e1,
+            areaId = area,
+            cargo = "Asistente administrativo",
+        });
+        foreach (var asignado in new[] { a1, a2, a3 })
+        {
+            var asignacion = await superAdmin.PostAsJsonAsync(
+                $"/api/activos/{asignado}/asignaciones",
+                new { personaId = persona, fechaEntrega = Fecha(Hoy), conservacion = "Bueno" },
+                Ct);
+            Assert.Equal(HttpStatusCode.Created, asignacion.StatusCode);
+        }
+
+        // A1 queda con la ficha completa: serie, fecha, asignación y una foto.
         using var formulario = new MultipartFormDataContent();
         byte[] jpeg = [0xFF, 0xD8, 0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3F, 0x00, 0x12, 0x34, 0xFF, 0xD9];
         foreach (var nombre in new[] { "archivo", "miniatura" })

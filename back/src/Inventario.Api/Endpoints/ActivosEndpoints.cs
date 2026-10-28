@@ -24,7 +24,7 @@ internal static class ActivosEndpoints
         grupo.MapGet("/", ListarAsync)
             .RequirePermiso(Permisos.Activos.Ver)
             .WithName("ListarActivos")
-            .WithSummary("Inventario paginado, con filtros. ?buscar= código patrimonial, serie, modelo, responsable, marca, IP o nombre de equipo. ?atencion= y ?falta= como en el resumen (sin los de baja).");
+            .WithSummary("Inventario paginado, con filtros. ?buscar= código patrimonial, serie, modelo, marca, IP, nombre de equipo, o nombre o DNI de quien lo tiene asignado. ?atencion= y ?falta= como en el resumen (sin los de baja).");
 
         grupo.MapGet("/listas", ListasAsync)
             .RequirePermiso(Permisos.Activos.Ver)

@@ -356,6 +356,48 @@ Inoperativo → `FueraDeServicio`, De baja → `DeBaja`…) y lo anota en el reg
 
 `GET /api/catalogos/estados-activo` trae `grupo` en cada estado.
 
+## Paso 9-1: personal y asignaciones (D50, D51, D52)
+
+Este paso **cambia el modelo**: agrega las tablas `organizacion.Personal` e `inventario.Asignaciones`. Desde `back`,
+con la API detenida:
+
+```powershell
+dotnet ef migrations add PersonalYAsignaciones --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+### Clave de la consulta de DNI (secreto)
+
+Los nombres se consultan a RENIEC con el servicio de PeruDevs. Su clave **nunca** va en `appsettings.json` ni en el
+repositorio. En desarrollo, guárdela una vez en los user secrets (reemplace `<su clave>`):
+
+```powershell
+dotnet user-secrets set "ConsultaDni:Clave" "<su clave>" --project src/Inventario.Api
+```
+
+En el servidor, como variable de entorno `ConsultaDni__Clave`. Sin clave la API funciona igual: la consulta responde
+"no disponible" (el registro lo avisa con el evento 1301) y los nombres se escriben a mano, con la persona
+"sin verificar". Las pruebas automáticas nunca llaman al servicio: usan `ConsultaDniFalsa`.
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/personal?buscar=&establecimientoId=&incluirCesados=&maximo=&sedeId=` | `Activos.Ver` | Personal de la red por apellidos, con cuántos equipos tiene cada uno. `buscar`: DNI o palabras del nombre (sin tildes) |
+| `GET /api/personal/{id}` | `Activos.Ver` | Ficha de la persona con los equipos que tiene y tuvo |
+| `POST /api/personal/consulta-dni` | `Activos.Editar` | `{ "dni": "41234567" }` (y `sedeId` si es el superadministrador). Si ya está en la red, la devuelve en `registrada`; si no, lo que dice RENIEC: `Encontrado` (con nombres), `NoEncontrado` o `NoDisponible`. No guarda nada |
+| `POST /api/personal` | `Activos.Editar` | Registra. El servidor vuelve a consultar RENIEC; los nombres escritos solo se usan si no los da |
+| `PUT /api/personal/{id}` | `Activos.Editar` | Establecimiento, área, cargo y, si no está verificada, los nombres |
+| `POST /api/personal/{id}/verificar` | `Activos.Editar` | Vuelve a consultar RENIEC (503 si no responde) |
+| `POST /api/personal/{id}/cesar` y `/reactivar` | `Activos.Editar` | Cesar exige que antes devuelva sus equipos |
+| `GET /api/activos/{id}/asignaciones` | `Activos.Ver` | Historial del activo, la vigente primero |
+| `POST /api/activos/{id}/asignaciones` | `Activos.Editar` | `{ "personaId", "fechaEntrega", "conservacion" }`. Si otra persona lo tenía, se cierra su asignación con la misma fecha y conservación |
+| `POST /api/activos/{id}/asignaciones/devolver` | `Activos.Editar` | `{ "fecha", "conservacion", "estadoActivoId", "observaciones" }` |
+| `GET /api/asignaciones/movimientos?maximo=&sedeId=` | `Activos.Ver` | Entregas y devoluciones recientes de la red |
+
+`GET /api/activos/{id}` trae `asignacion` (la vigente, o nula) y `grupoEstado`. En `GET /api/activos`, `responsable` es
+quien lo tiene asignado o, si nadie, el texto escrito antes (`responsableAsignado` dice cuál es), y `buscar` encuentra
+también por nombre o DNI de la persona. "Sin responsable" del resumen y `falta=Responsable` cuentan los activos sin
+asignación (sin los que están en almacén), así que esa cifra sube hasta que se asignen los equipos.
+
 ### Correo en producción
 
 En el servidor se configura `Correo:Modo = Smtp` y los datos del SMTP (`Servidor`, `Puerto`, `Remitente`, `Usuario`,
@@ -378,9 +420,9 @@ dotnet test
 
 | Proyecto | Qué comprueba |
 |---|---|
-| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles, catálogos, establecimientos (datos válidos, ubigeo, reconocimiento de la red), activos (ficha, IP y MAC, discos y RAM, garantía y renovación), fotos (formato por el contenido, limpieza de EXIF, límites), grupo de cada estado por su nombre |
+| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles, catálogos, establecimientos (datos válidos, ubigeo, reconocimiento de la red), activos (ficha, IP y MAC, discos y RAM, garantía y renovación), fotos (formato por el contenido, limpieza de EXIF, límites), grupo de cada estado por su nombre, personal (DNI de 8 dígitos, nombres en mayúsculas, verificados que no se corrigen a mano) y asignaciones (fechas de entrega y devolución) |
 | `ArchitectureTests` | Que el dominio no dependa de nada, que Application no dependa de Infrastructure ni de la Api, que los handlers sean internos |
-| `Api.IntegrationTests` | Protección CSRF (sin token → 400; el token de antes de iniciar sesión no sirve después). Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan. Fotos (7D-1): sin EXIF al descargar, principal, máximo de 6, solo imágenes, permisos, otra red recibe 404, los archivos se borran con la foto y con el activo. Resumen (8-1): cifras exactas en una red nueva, los de baja fuera de las alertas, los filtros de la lista coinciden con el resumen, tabla por red solo para el superadministrador, solo él cambia el grupo de un estado |
+| `Api.IntegrationTests` | Protección CSRF (sin token → 400; el token de antes de iniciar sesión no sirve después). Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan. Fotos (7D-1): sin EXIF al descargar, principal, máximo de 6, solo imágenes, permisos, otra red recibe 404, los archivos se borran con la foto y con el activo. Resumen (8-1): cifras exactas en una red nueva, los de baja fuera de las alertas, los filtros de la lista coinciden con el resumen, tabla por red solo para el superadministrador, solo él cambia el grupo de un estado. Personal y asignaciones (9-1): nombres de RENIEC o escritos a mano sin verificar, DNI único por red, verificar después, otra red no ve al personal, solo `Activos.Editar` registra; asignar, reasignar (cierra la anterior), devolver (queda en almacén y deja de faltar responsable), personal de otra red o cesado, activo de baja, fechas |
 
 Para ejecutar solo un proyecto: `dotnet test --project tests/Inventario.Domain.Tests`.
 
