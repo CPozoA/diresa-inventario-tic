@@ -24,7 +24,8 @@ export const MENU: readonly GrupoMenu[] = [
       { texto: 'Inventario', ruta: 'inventario', permiso: Permisos.Activos.Ver },
       { texto: 'Licencias', ruta: 'licencias', permiso: Permisos.Licencias.Ver },
       { texto: 'Mantenimiento', ruta: 'mantenimiento', permiso: Permisos.Mantenimiento.Ver },
-      { texto: 'Asignaciones', ruta: 'asignaciones', permiso: Permisos.Asignaciones.Ver },
+      // Las asignaciones se consultan con Activos.Ver y se gestionan con Activos.Editar (D50).
+      { texto: 'Asignaciones', ruta: 'asignaciones', permiso: Permisos.Activos.Ver },
     ],
   },
   {

@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.26 · 28/10/2026 · Cambios: personal de cada red y asignaciones en la API (Paso 9-1, D50 a D52, §5.12).
+> Versión 0.27 · 28/10/2026 · Cambios: pantallas del personal de la red (Paso 9-2A, §5.12).
 
 ---
 
@@ -361,7 +361,8 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 - **Endpoints de personal** (`/api/personal`): `GET /` (lista con `?buscar=` por DNI o palabras del nombre, `?establecimientoId=`, `?incluirCesados=`, `?maximo=`, y cuántos equipos tiene cada uno), `GET /{id}` (ficha con los equipos que tiene y tuvo), `POST /consulta-dni` (antes de registrar; si ya está en la red no consulta RENIEC; el DNI va en el cuerpo para que no quede en los registros de IIS), `POST /` (registrar: el servidor vuelve a consultar RENIEC), `PUT /{id}` (establecimiento, área, cargo y, si no está verificada, los nombres), `POST /{id}/verificar`, `POST /{id}/cesar` y `POST /{id}/reactivar`. Consultar: `Activos.Ver`; lo demás: `Activos.Editar`.
 - **Endpoints de asignaciones:** `GET /api/activos/{id}/asignaciones` (historial), `POST /api/activos/{id}/asignaciones` (asignar o reasignar), `POST /api/activos/{id}/asignaciones/devolver` y `GET /api/asignaciones/movimientos` (entregas y devoluciones recientes de la red). La ficha del activo trae la asignación vigente (`asignacion`) y el grupo de su estado (`grupoEstado`).
 - **Errores:** `Personal.*` y `Asignaciones.*`; si RENIEC no responde al verificar, **503** (`Personal.ReniecNoDisponible`, nuevo tipo de error `NoDisponible`).
-- **Pantallas (Paso 9-2):** página "Asignaciones" (personal y movimientos), ficha de la persona, diálogo "Nueva persona" (se reutiliza desde el formulario del activo y para editar), asignar y devolver desde la ficha del activo, y asignación opcional al registrar un activo.
+- **Pantallas (Paso 9-2A):** menú "Asignaciones" con `Activos.Ver`; página con las pestañas Personal y Entregas y devoluciones (filtros en la dirección); diálogo "Nueva persona" (`features/asignaciones/components/persona.dialog.ts`, se abre con `abrirPersonaDialog`), que primero busca el DNI y solo deja escribir los nombres si RENIEC no los da, y que sirve también para editar; ficha de la persona con sus equipos, historial, verificar, cesar y reactivar. Un 503 con código (RENIEC no responde) muestra su mensaje en lugar del genérico.
+- **Pantallas (Paso 9-2B):** asignar, reasignar y devolver desde la ficha del activo; "Responsable anterior (sin registrar)"; asignación opcional al registrar un activo (con "+ Registrar a una persona nueva", el mismo diálogo); quién lo tiene en la lista del inventario.
 
 ---
 
@@ -560,6 +561,7 @@ Consideraciones del hosting compartido:
 | **8-1** | Resumen del inicio en la API (§5.11): grupo de cada estado (D48), los de baja fuera de las alertas (D49), filtros `atencion` y `falta` en el inventario, establecimientos sin activos | `dotnet test` y prueba en Scalar |
 | **8-2** | Resumen del inicio en Angular (bosquejos del Paso 8): tarjetas de color, estados, antigüedad, atención, tipos, establecimientos, fichas por completar, tabla por red; filtros nuevos en la lista; grupo del estado en Catálogos generales | `npm test` y prueba manual |
 | **9-1** | Personal y asignaciones en la API (§5.12): personal por red con DNI y consulta a RENIEC (D50), asignar, reasignar y devolver (D51), responsable anterior y "sin responsable" por asignación (D52); migración | `dotnet test` y prueba en Scalar |
-| **9-2** | Asignaciones en Angular (bosquejos del Paso 9): página de personal y movimientos, ficha de la persona, diálogo "Nueva persona", asignar y devolver desde la ficha, asignación al registrar un activo | `npm test` y prueba manual |
+| **9-2A** | Personal en Angular (bosquejos del Paso 9): página Asignaciones con personal y movimientos, diálogo "Nueva persona" con búsqueda del DNI, ficha de la persona (editar, verificar, cesar, reactivar) | `npm test` y prueba manual |
+| **9-2B** | Asignar y devolver en Angular: desde la ficha del activo (con historial y responsable anterior), al registrar un activo, y quién lo tiene en la lista del inventario | `npm test` y prueba manual |
 
 Fases posteriores: mantenimiento, licencias, exportación a Excel, registro de auditoría y endurecimiento.

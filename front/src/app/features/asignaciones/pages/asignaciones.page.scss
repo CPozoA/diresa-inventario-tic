@@ -1,0 +1,204 @@
+// Ancho desde el que se usa la tabla (el mismo del inventario).
+$ancho-tabla: 784px;
+
+.pestanas {
+  --mat-tab-header-divider-color: var(--inv-borde);
+  --mat-tab-header-divider-height: 1px;
+}
+
+.contenido-pestana {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+}
+
+.buscador {
+  flex: 1 1 280px;
+  max-width: 520px;
+}
+
+.filtro-establecimiento {
+  flex: 1 1 220px;
+  max-width: 300px;
+}
+
+.persona {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--inv-info-fondo);
+  color: var(--inv-primario);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nombre {
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.dos-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  .atenuado {
+    font-size: 12px;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pastilla.info {
+  background: var(--inv-info-fondo);
+  color: var(--inv-primario);
+}
+
+tr.cesada .nombre,
+tr.cesada .avatar {
+  opacity: 0.6;
+}
+
+.codigo {
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.fecha {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  color: var(--inv-atenuado);
+  text-align: center;
+
+  p {
+    margin: 0;
+    max-width: 480px;
+    line-height: 1.5;
+  }
+}
+
+// ---------- Tarjetas (pantallas angostas) ----------
+
+.vista-tarjetas {
+  list-style: none;
+  margin: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-persona {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+  color: var(--inv-tinta);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--inv-primario);
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .contenido {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nombre {
+    color: var(--inv-primario);
+  }
+
+  .atenuado {
+    font-size: 13px;
+  }
+
+  .chips {
+    margin-top: 4px;
+  }
+}
+
+.tarjeta-movimiento {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+
+  .cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .atenuado {
+    font-size: 13px;
+  }
+}
+
+.vista-tabla {
+  display: none;
+}
+
+@media (min-width: $ancho-tabla) {
+  .vista-tabla {
+    display: block;
+  }
+
+  .vista-tarjetas {
+    display: none;
+  }
+}

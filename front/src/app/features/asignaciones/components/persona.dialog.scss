@@ -1,0 +1,118 @@
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+mat-form-field,
+app-selector-catalogo {
+  width: 100%;
+}
+
+.fila-dni {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.campo-dni {
+  flex: 0 1 200px;
+
+  input {
+    letter-spacing: 0.04em;
+  }
+}
+
+.boton-dni {
+  flex-shrink: 0;
+  height: 56px;
+}
+
+.dni-fijo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+
+  .mono {
+    font-size: 15px;
+    font-weight: 500;
+  }
+}
+
+.reniec {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  padding: 12px 14px;
+  border: 1px solid #cde6d7;
+  border-radius: 8px;
+  background: #f2faf5;
+
+  .titulo-reniec {
+    grid-column: 1 / -1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--inv-ok);
+    font-size: 12px;
+    font-weight: 600;
+
+    mat-icon {
+      width: 16px;
+      height: 16px;
+      font-size: 16px;
+    }
+  }
+
+  .dato {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-weight: 500;
+
+    .atenuado {
+      font-size: 12px;
+      font-weight: 400;
+    }
+  }
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 12px;
+}
+
+.ancho {
+  grid-column: 1 / -1;
+}
+
+// Se ve como se guardará; lo escrito se envía en mayúsculas.
+.mayusculas {
+  text-transform: uppercase;
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .etiqueta {
+    font-size: 13px;
+    font-weight: 500;
+  }
+}
+
+.nota {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 520px) {
+  .rejilla,
+  .reniec {
+    grid-template-columns: 1fr;
+  }
+}

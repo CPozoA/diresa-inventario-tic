@@ -1,0 +1,121 @@
+<div class="pagina">
+  <a class="volver" [href]="urlDeLista()" (click)="volver($event)"><mat-icon aria-hidden="true">arrow_back</mat-icon> Volver al personal</a>
+
+  @if (recurso.isLoading() && !persona()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando la ficha" />
+  }
+
+  @if (error(); as e) {
+    <app-aviso>{{ e }}</app-aviso>
+  }
+
+  @if (persona(); as p) {
+    <section class="tarjeta cabecera">
+      <span class="avatar" aria-hidden="true">{{ iniciales(p.nombreCompleto) }}</span>
+      <div class="identidad">
+        <div class="titulo">
+          <h1>{{ p.nombreCompleto }}</h1>
+          @if (p.activa) {
+            <span class="pastilla ok">Activa</span>
+          } @else {
+            <span class="pastilla neutra">Cesada</span>
+          }
+          @if (!p.verificada) {
+            <span class="pastilla alerta">Sin verificar en RENIEC</span>
+          }
+        </div>
+        @if (lugar()) {
+          <span class="lugar">{{ lugar() }}</span>
+        }
+        <span class="atenuado dni">DNI <span class="mono">{{ p.dni }}</span></span>
+      </div>
+      <div class="acciones" *siTienePermiso="permisos.Activos.Editar">
+        @if (!p.verificada) {
+          <button mat-stroked-button type="button" [disabled]="trabajando()" (click)="verificar(p)">
+            <mat-icon>verified</mat-icon> Verificar con RENIEC
+          </button>
+        }
+        @if (p.activa) {
+          <button mat-stroked-button type="button" [disabled]="trabajando()" (click)="cesar(p)">Marcar como cesada</button>
+        } @else {
+          <button mat-stroked-button type="button" [disabled]="trabajando()" (click)="reactivar(p)">Reactivar</button>
+        }
+        <button mat-flat-button type="button" (click)="editar(p)"><mat-icon>edit</mat-icon> Editar</button>
+      </div>
+    </section>
+
+    @if (avisoCese()) {
+      <app-aviso tono="alerta">
+        Tiene {{ textoACargo() }} a su cargo. Devuélvalos o asígnelos a otra persona antes de marcarla como cesada.
+      </app-aviso>
+    }
+
+    <section class="tarjeta" aria-labelledby="titulo-equipos">
+      <h2 id="titulo-equipos">Equipos a su cargo <span class="atenuado cuenta">· {{ aCargo().length }}</span></h2>
+      @if (aCargo().length > 0) {
+        <div class="equipos">
+          @for (e of aCargo(); track e.asignacionId) {
+            <article class="equipo">
+              <span class="miniatura" aria-hidden="true">
+                @if (miniatura(e); as url) {
+                  <img [src]="url" alt="" loading="lazy" />
+                } @else {
+                  <mat-icon>image_not_supported</mat-icon>
+                }
+              </span>
+              <div class="datos-equipo">
+                <a class="codigo mono" [routerLink]="['/inventario', e.activoId]">{{ e.codigoPatrimonial }}</a>
+                <span class="principal">{{ equipo(e) }}</span>
+                <span class="atenuado">Desde el {{ formatoFecha(e.fechaEntrega) }} · recibido en estado {{ textoConservacion(e.conservacionEntrega).toLowerCase() }}</span>
+              </div>
+              <a class="ver" [routerLink]="['/inventario', e.activoId]">Ver ficha</a>
+            </article>
+          }
+        </div>
+      } @else {
+        <p class="atenuado sin-equipos">No tiene equipos a su cargo.</p>
+      }
+    </section>
+
+    <section class="tarjeta historial" aria-labelledby="titulo-historial">
+      <h2 id="titulo-historial">Historial</h2>
+      @if (p.equipos.length > 0) {
+        <div class="tabla-contenedor">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th scope="col">Activo</th>
+                <th scope="col">Entregado</th>
+                <th scope="col">Devuelto</th>
+                <th scope="col">Conservación</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of p.equipos; track e.asignacionId) {
+                <tr>
+                  <td>
+                    <span class="dos-lineas">
+                      <a class="codigo mono" [routerLink]="['/inventario', e.activoId]">{{ e.codigoPatrimonial }}</a>
+                      <span class="atenuado">{{ equipo(e) }}</span>
+                    </span>
+                  </td>
+                  <td class="fecha">{{ formatoFecha(e.fechaEntrega) }}</td>
+                  <td class="fecha">
+                    @if (e.fechaDevolucion) {
+                      {{ formatoFecha(e.fechaDevolucion) }}
+                    } @else {
+                      <span class="la-tiene">La tiene</span>
+                    }
+                  </td>
+                  <td>{{ conservacionHistorial(e.conservacionEntrega, e.conservacionDevolucion) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="atenuado sin-equipos">Todavía no recibió ningún equipo.</p>
+      }
+    </section>
+  }
+</div>

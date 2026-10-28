@@ -1,0 +1,145 @@
+<h2 mat-dialog-title>{{ creando ? 'Nueva persona' : 'Editar persona' }}</h2>
+<form [formGroup]="formulario" (ngSubmit)="guardar()" novalidate>
+  <mat-dialog-content class="contenido">
+    @if (error(); as e) {
+      <app-aviso>{{ e.mensaje }}</app-aviso>
+    }
+
+    @if (creando) {
+      <div class="fila-dni">
+        <mat-form-field class="campo-dni" subscriptSizing="dynamic">
+          <mat-label>DNI</mat-label>
+          <input
+            matInput
+            formControlName="dni"
+            class="mono"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength="8"
+            required
+            (keydown.enter)="buscarDni($event)"
+          />
+          @if (formulario.controls.dni.invalid && formulario.controls.dni.touched) {
+            <mat-error>El DNI tiene 8 dígitos.</mat-error>
+          }
+        </mat-form-field>
+        <button mat-stroked-button type="button" class="boton-dni" [disabled]="estado() === 'consultando'" (click)="buscarDni()">
+          <mat-icon>search</mat-icon> Buscar DNI
+        </button>
+      </div>
+
+      @switch (estado()) {
+        @case ('pendiente') {
+          <p class="atenuado nota">Escriba el DNI y búsquelo: los nombres se toman de RENIEC.</p>
+        }
+        @case ('consultando') {
+          <mat-progress-bar mode="indeterminate" aria-label="Consultando RENIEC" />
+        }
+        @case ('registrada') {
+          @if (consulta()?.registrada; as r) {
+            <app-aviso tono="alerta">
+              <strong>{{ r.nombreCompleto }}</strong> ya está registrada en la red{{ r.activa ? '' : ' (marcada como cesada)' }}.
+              <a [routerLink]="['/asignaciones/personal', r.id]" mat-dialog-close>Ver su ficha</a>
+            </app-aviso>
+          }
+        }
+        @case ('encontrado') {
+          <ng-container *ngTemplateOutlet="datosReniec; context: { $implicit: consulta() }" />
+        }
+        @default {
+          <app-aviso tono="alerta">
+            {{ mensajeConsulta() }} Puede escribir los datos; la persona quedará como «Sin verificar» hasta confirmarla con RENIEC.
+          </app-aviso>
+        }
+      }
+    } @else if (persona) {
+      <div class="dni-fijo">
+        <span class="atenuado">DNI</span>
+        <span class="mono">{{ persona.dni }}</span>
+        @if (persona.verificada) {
+          <span class="pastilla ok">Verificado en RENIEC</span>
+        } @else {
+          <span class="pastilla alerta">Sin verificar en RENIEC</span>
+        }
+      </div>
+      @if (persona.verificada) {
+        <ng-container *ngTemplateOutlet="datosReniec; context: { $implicit: persona }" />
+      } @else {
+        <p class="atenuado nota">Corrija los nombres si es necesario. Para tomar los de RENIEC, use «Verificar con RENIEC» en la ficha.</p>
+      }
+    }
+
+    @if (estado() !== 'registrada') {
+      @if (nombresAMano()) {
+        <div class="rejilla">
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>Apellido paterno</mat-label>
+            <input matInput formControlName="apellidoPaterno" class="mayusculas" maxlength="60" required autocomplete="off" />
+            @if (formulario.controls.apellidoPaterno.hasError('required')) {
+              <mat-error>Escriba el apellido paterno.</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>Apellido materno</mat-label>
+            <input matInput formControlName="apellidoMaterno" class="mayusculas" maxlength="60" autocomplete="off" />
+          </mat-form-field>
+          <mat-form-field subscriptSizing="dynamic" class="ancho">
+            <mat-label>Nombres</mat-label>
+            <input matInput formControlName="nombres" class="mayusculas" maxlength="100" required autocomplete="off" />
+            @if (formulario.controls.nombres.hasError('required')) {
+              <mat-error>Escriba los nombres.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      }
+
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Cargo (opcional)</mat-label>
+        <input matInput formControlName="cargo" maxlength="100" placeholder="Asistente administrativo" autocomplete="off" />
+      </mat-form-field>
+
+      <div class="grupo">
+        <span class="etiqueta">Establecimiento *</span>
+        <app-buscador-establecimiento [sedeId]="sedeId" [(elegido)]="establecimiento" [marcarError]="intentoGuardar()" />
+      </div>
+
+      <app-selector-catalogo
+        formControlName="areaId"
+        etiqueta="Área"
+        [requerido]="true"
+        mensajeRequerido="Elija el área."
+        [elementos]="opcionesArea()"
+        [pista]="establecimiento() ? null : 'Elija primero el establecimiento.'"
+        catalogo="areas"
+        nombreSingular="Área"
+        [puedeAgregar]="puedeAgregarAreas"
+        [sedeId]="establecimiento()?.sedeId ?? null"
+        [existentes]="areas.value() ?? []"
+        (agregado)="sumarArea($event)"
+      />
+
+      @if (creando) {
+        <p class="atenuado nota">
+          Los nombres y apellidos vienen de RENIEC; solo se escriben a mano si RENIEC no responde o no encuentra el DNI. El DNI
+          no se repite en la red.
+        </p>
+      }
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="guardando() || estado() === 'consultando' || estado() === 'registrada'">
+      {{ guardando() ? 'Guardando…' : creando && estado() === 'pendiente' ? 'Buscar DNI' : 'Guardar' }}
+    </button>
+  </mat-dialog-actions>
+</form>
+
+<!-- Nombres que dio RENIEC: no se escriben ni se corrigen a mano. -->
+<ng-template #datosReniec let-d>
+  <div class="reniec">
+    <span class="titulo-reniec"><mat-icon aria-hidden="true">verified</mat-icon> Datos de RENIEC</span>
+    <span class="dato"><span class="atenuado">Apellido paterno</span><span>{{ d.apellidoPaterno }}</span></span>
+    <span class="dato"><span class="atenuado">Apellido materno</span><span>{{ d.apellidoMaterno || '—' }}</span></span>
+    <span class="dato ancho"><span class="atenuado">Nombres</span><span>{{ d.nombres }}</span></span>
+  </div>
+</ng-template>

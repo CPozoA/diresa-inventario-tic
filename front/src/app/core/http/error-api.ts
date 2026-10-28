@@ -32,7 +32,8 @@ export function aErrorApi(error: unknown): ErrorApi {
   const codigo = typeof cuerpo?.['codigo'] === 'string' ? cuerpo['codigo'] : null;
   const titulo = typeof cuerpo?.['title'] === 'string' ? cuerpo['title'] : null;
 
-  if (error.status >= 500) {
+  // Un 503 con código es un error esperado (un servicio externo, como la consulta de DNI, no responde): trae su mensaje.
+  if (error.status >= 500 && !(error.status === 503 && codigo !== null && titulo !== null)) {
     return { estado: error.status, codigo, mensaje: MENSAJE_INESPERADO };
   }
 

@@ -61,6 +61,7 @@ src/app/
    ├─ roles/       roles de la sede con sus permisos
    ├─ catalogos/   áreas (por sede) y catálogos generales; un solo editor para todos
    ├─ activos/     inventario: lista con filtros, ficha técnica, formulario y fotos (galería, visor, reducción en el navegador)
+   ├─ asignaciones/ personal de la red (diálogo "Nueva persona" con consulta del DNI), ficha de la persona, entregas y devoluciones
    └─ pendiente/   lugar de las secciones del menú que aún no se construyen
 ```
 
@@ -82,6 +83,8 @@ src/app/
 | `/inventario` | `Activos.Ver` | Lista paginada en la API, con búsqueda y filtros que quedan en la dirección, y la miniatura de la foto principal. Los filtros que vienen del resumen (`?atencion=`, `?falta=`) se muestran como etiquetas que se quitan con ✕. En celular, tarjetas. |
 | `/inventario/{id}` | `Activos.Ver` (Editar y Eliminar según permiso) | Ficha técnica de solo lectura; las secciones dependen de la ficha del tipo. Galería de fotos y visor a pantalla completa; con `Activos.Editar` se agregan fotos al momento y en el visor se marca la principal, se describe o se elimina. |
 | `/inventario/nuevo`, `/inventario/{id}/editar` | `Activos.Crear`, `Activos.Editar` | Formulario de la ficha: establecimiento por búsqueda, secciones según el tipo, discos y RAM. Los catálogos largos se eligen escribiendo (`app-selector-catalogo`) y quien administra el catálogo puede agregar desde ahí. Pregunta antes de salir con cambios sin guardar. Con `Activos.Editar`, sección Fotos: tomar foto (celular), elegir o arrastrar archivos; se reducen en el navegador y se suben al guardar, después de la ficha. |
+| `/asignaciones` | `Activos.Ver` (registrar y editar con `Activos.Editar`) | Pestaña **Personal**: búsqueda por nombre (sin tildes) o DNI, filtro por establecimiento, "Incluir cesados" y cuántos equipos tiene cada persona; pestaña **Entregas y devoluciones**: movimientos recientes. Pestaña y filtros quedan en la dirección. "Nueva persona": se busca el DNI; si ya está en la red se avisa, si RENIEC lo encuentra se muestran sus nombres, si no lo encuentra o no responde se escriben a mano y queda "Sin verificar en RENIEC". En celular, tarjetas. |
+| `/asignaciones/personal/{id}` | `Activos.Ver` (acciones con `Activos.Editar`) | Ficha de la persona: equipos a su cargo (con la miniatura del activo) e historial. Editar (los nombres solo si no está verificada), verificar con RENIEC, marcar como cesada (avisa si todavía tiene equipos) y reactivar. |
 | `/` y demás secciones del menú | Con sesión | Estructura con menú según permisos. Las secciones aún no construidas muestran "próxima versión". |
 | `/estado` | Cualquiera | Comprobación técnica de la conexión con la API. |
 

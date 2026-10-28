@@ -1,0 +1,203 @@
+.volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-weight: 500;
+  text-decoration: none;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}
+
+.tarjeta {
+  background: var(--inv-superficie);
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+.cabecera {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 20px;
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--inv-info-fondo);
+  color: var(--inv-primario);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.identidad {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  .pastilla {
+    margin-left: 0;
+  }
+}
+
+.lugar {
+  color: #3a464e;
+}
+
+.dni {
+  font-size: 13px;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cuenta {
+  font-weight: 400;
+}
+
+.equipos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+  gap: 12px;
+}
+
+.equipo {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+}
+
+.miniatura {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--inv-fondo);
+  border: 1px solid var(--inv-borde);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aeb9b3;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.datos-equipo {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  .principal {
+    font-weight: 500;
+  }
+
+  .atenuado {
+    font-size: 13px;
+  }
+}
+
+.ver {
+  align-self: center;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.codigo {
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.historial {
+  padding-bottom: 0;
+
+  .tabla-contenedor {
+    margin: 0 -20px;
+  }
+
+  .tabla td {
+    white-space: nowrap;
+  }
+}
+
+.dos-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .atenuado {
+    font-size: 12px;
+  }
+}
+
+.fecha {
+  font-variant-numeric: tabular-nums;
+}
+
+.la-tiene {
+  color: var(--inv-ok);
+  font-weight: 500;
+}
+
+.sin-equipos {
+  margin: 0 0 4px;
+}
+
+.historial .sin-equipos {
+  margin-bottom: 20px;
+}

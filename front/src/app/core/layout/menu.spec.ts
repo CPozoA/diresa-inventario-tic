@@ -16,7 +16,7 @@ describe('menuVisible', () => {
     const grupos = menuVisible(new Set([Permisos.Activos.Ver, Permisos.Licencias.Ver]));
 
     expect(grupos.map((g) => g.titulo)).toEqual(['Inventario']);
-    expect(grupos[0].opciones.map((o) => o.texto)).toEqual(['Resumen', 'Inventario', 'Licencias']);
+    expect(grupos[0].opciones.map((o) => o.texto)).toEqual(['Resumen', 'Inventario', 'Licencias', 'Asignaciones']);
   });
 
   it('el administrador de sede ve usuarios y roles, pero no sedes', () => {

@@ -1,0 +1,239 @@
+<div class="pagina">
+  <header class="pagina-encabezado">
+    <div class="pagina-titulo">
+      <h1>Asignaciones</h1>
+      <span class="atenuado">Quién tiene cada equipo de {{ ambito() }}</span>
+    </div>
+    <button *siTienePermiso="permisos.Activos.Editar" mat-flat-button type="button" (click)="nuevaPersona()">
+      <mat-icon>person_add</mat-icon> Nueva persona
+    </button>
+  </header>
+
+  <mat-tab-group
+    class="pestanas"
+    [selectedIndex]="indicePestana()"
+    (selectedIndexChange)="cambiarVista($event)"
+    animationDuration="0ms"
+    [mat-stretch-tabs]="false"
+    mat-align-tabs="start"
+  >
+    <mat-tab [label]="'Personal · ' + listaPersonal().length">
+      <div class="contenido-pestana">
+        <div class="filtros">
+          <mat-form-field subscriptSizing="dynamic" floatLabel="always" class="buscador">
+            <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+            <mat-label>Buscar</mat-label>
+            <input
+              matInput
+              autocomplete="off"
+              placeholder="Nombre, apellidos o DNI"
+              [formControl]="busqueda"
+              (keydown.escape)="limpiarBusqueda()"
+            />
+            @if (busqueda.value) {
+              <button matSuffix mat-icon-button type="button" aria-label="Limpiar la búsqueda" (click)="limpiarBusqueda()">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+          @if (!todasLasSedes()) {
+            <app-selector-catalogo
+              class="filtro-establecimiento"
+              [formControl]="filtroEstablecimiento"
+              etiqueta="Establecimiento"
+              opcionVacia="Todos"
+              [compacto]="true"
+              [elementos]="establecimientos.value() ?? []"
+            />
+          }
+          <mat-checkbox [checked]="filtros().cesados" (change)="cambiarCesados($event.checked)">Incluir cesados</mat-checkbox>
+        </div>
+
+        @if (errorPersonal(); as e) {
+          <app-aviso>{{ e }}</app-aviso>
+        }
+
+        <section class="tarjeta-tabla">
+          @if (personal.isLoading()) {
+            <mat-progress-bar mode="indeterminate" />
+          }
+
+          @if (listaPersonal().length > 0) {
+            <div class="tabla-contenedor vista-tabla">
+              <table class="tabla">
+                <thead>
+                  <tr>
+                    <th scope="col">Persona</th>
+                    <th scope="col">DNI</th>
+                    <th scope="col">Cargo</th>
+                    <th scope="col">Establecimiento y área</th>
+                    <th scope="col" class="numero">Equipos a su cargo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (p of listaPersonal(); track p.id) {
+                    <tr [class.cesada]="!p.activa">
+                      <td>
+                        <span class="persona">
+                          <span class="avatar" aria-hidden="true">{{ iniciales(p.nombreCompleto) }}</span>
+                          <span class="dos-lineas">
+                            <a class="nombre" [routerLink]="['/asignaciones/personal', p.id]" [state]="volverAqui()">{{ p.nombreCompleto }}</a>
+                            @if (!p.verificada || !p.activa) {
+                              <span class="chips">
+                                @if (!p.verificada) {
+                                  <span class="pastilla alerta">Sin verificar en RENIEC</span>
+                                }
+                                @if (!p.activa) {
+                                  <span class="pastilla neutra">Cesada</span>
+                                }
+                              </span>
+                            }
+                          </span>
+                        </span>
+                      </td>
+                      <td class="mono">{{ p.dni }}</td>
+                      <td>{{ p.cargo ?? '—' }}</td>
+                      <td>
+                        <span class="dos-lineas">
+                          <span>{{ p.establecimiento }}</span>
+                          <span class="atenuado">
+                            {{ p.area }}
+                            @if (todasLasSedes()) {
+                              · {{ p.sedeNombre }}
+                            }
+                          </span>
+                        </span>
+                      </td>
+                      <td class="numero">
+                        <span class="pastilla" [class.info]="+p.equipos > 0" [class.neutra]="+p.equipos === 0">{{ textoEquipos(p.equipos) }}</span>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <ul class="vista-tarjetas" aria-label="Personal">
+              @for (p of listaPersonal(); track p.id) {
+                <li>
+                  <a class="tarjeta-persona" [routerLink]="['/asignaciones/personal', p.id]" [state]="volverAqui()">
+                    <span class="avatar" aria-hidden="true">{{ iniciales(p.nombreCompleto) }}</span>
+                    <span class="contenido">
+                      <span class="nombre">{{ p.nombreCompleto }}</span>
+                      <span class="atenuado">
+                        DNI <span class="mono">{{ p.dni }}</span>
+                        @if (p.cargo) {
+                          · {{ p.cargo }}
+                        }
+                      </span>
+                      <span class="atenuado">
+                        {{ p.establecimiento }} · {{ p.area }}
+                        @if (todasLasSedes()) {
+                          · {{ p.sedeNombre }}
+                        }
+                      </span>
+                      <span class="chips">
+                        <span class="pastilla" [class.info]="+p.equipos > 0" [class.neutra]="+p.equipos === 0">{{ textoEquipos(p.equipos) }}</span>
+                        @if (!p.verificada) {
+                          <span class="pastilla alerta">Sin verificar en RENIEC</span>
+                        }
+                        @if (!p.activa) {
+                          <span class="pastilla neutra">Cesada</span>
+                        }
+                      </span>
+                    </span>
+                  </a>
+                </li>
+              }
+            </ul>
+          } @else if (!personal.isLoading() && !errorPersonal()) {
+            <div class="vacio">
+              @if (conFiltros()) {
+                <p>Nadie coincide con la búsqueda.</p>
+                <button mat-stroked-button type="button" (click)="quitarFiltros()">Quitar filtros</button>
+              } @else {
+                <p>Todavía no hay personal registrado. Registre a quienes reciben equipos para poder asignárselos.</p>
+                <button *siTienePermiso="permisos.Activos.Editar" mat-flat-button type="button" (click)="nuevaPersona()">
+                  <mat-icon>person_add</mat-icon> Registrar a la primera persona
+                </button>
+              }
+            </div>
+          }
+        </section>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Entregas y devoluciones">
+      <div class="contenido-pestana">
+        @if (errorMovimientos(); as e) {
+          <app-aviso>{{ e }}</app-aviso>
+        }
+
+        <section class="tarjeta-tabla">
+          @if (movimientos.isLoading()) {
+            <mat-progress-bar mode="indeterminate" />
+          }
+
+          @if (listaMovimientos().length > 0) {
+            <div class="tabla-contenedor vista-tabla">
+              <table class="tabla">
+                <thead>
+                  <tr>
+                    <th scope="col">Fecha</th>
+                    <th scope="col">Movimiento</th>
+                    <th scope="col">Activo</th>
+                    <th scope="col">Persona</th>
+                    <th scope="col">Conservación</th>
+                    @if (todasLasSedes()) {
+                      <th scope="col">Red</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of listaMovimientos(); track m.asignacionId + m.tipo) {
+                    <tr>
+                      <td class="fecha">{{ formatoFecha(m.fecha) }}</td>
+                      <td><span class="pastilla" [class]="tonoMovimiento(m.tipo)">{{ textoMovimiento(m.tipo) }}</span></td>
+                      <td>
+                        <span class="dos-lineas">
+                          <a class="codigo mono" [routerLink]="['/inventario', m.activoId]">{{ m.codigoPatrimonial }}</a>
+                          <span class="atenuado">{{ equipo(m) }}</span>
+                        </span>
+                      </td>
+                      <td><a class="nombre" [routerLink]="['/asignaciones/personal', m.personaId]" [state]="volverAqui()">{{ m.nombreCompleto }}</a></td>
+                      <td>{{ textoConservacion(m.conservacion) }}</td>
+                      @if (todasLasSedes()) {
+                        <td>{{ m.sedeNombre }}</td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <ul class="vista-tarjetas" aria-label="Entregas y devoluciones">
+              @for (m of listaMovimientos(); track m.asignacionId + m.tipo) {
+                <li class="tarjeta-movimiento">
+                  <span class="cabecera">
+                    <span class="pastilla" [class]="tonoMovimiento(m.tipo)">{{ textoMovimiento(m.tipo) }}</span>
+                    <span class="atenuado fecha">{{ formatoFecha(m.fecha) }}</span>
+                  </span>
+                  <a class="codigo mono" [routerLink]="['/inventario', m.activoId]">{{ m.codigoPatrimonial }}</a>
+                  <span class="atenuado">{{ equipo(m) }}</span>
+                  <span>
+                    <a class="nombre" [routerLink]="['/asignaciones/personal', m.personaId]" [state]="volverAqui()">{{ m.nombreCompleto }}</a>
+                    <span class="atenuado"> · {{ textoConservacion(m.conservacion) }}</span>
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else if (!movimientos.isLoading() && !errorMovimientos()) {
+            <div class="vacio">
+              <p>Todavía no hay entregas ni devoluciones.</p>
+            </div>
+          }
+        </section>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

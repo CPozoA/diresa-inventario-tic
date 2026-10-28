@@ -21,6 +21,17 @@ describe('aErrorApi', () => {
     expect(resultado.mensaje).not.toContain('NullReference');
   });
 
+  it('un 503 con código (servicio externo no disponible) trae su mensaje; sin código, el genérico', () => {
+    const conCodigo = new HttpErrorResponse({
+      status: 503,
+      error: { title: 'No se pudo consultar RENIEC en este momento.', codigo: 'Personal.ReniecNoDisponible' },
+    });
+    const sinCodigo = new HttpErrorResponse({ status: 503, error: { title: 'Service Unavailable' } });
+
+    expect(aErrorApi(conCodigo).mensaje).toBe('No se pudo consultar RENIEC en este momento.');
+    expect(aErrorApi(sinCodigo).mensaje).not.toContain('Service');
+  });
+
   it('reconoce la falta de conexión', () => {
     expect(aErrorApi(new HttpErrorResponse({ status: 0 })).estado).toBe(0);
   });
