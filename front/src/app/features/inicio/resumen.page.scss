@@ -1,0 +1,557 @@
+@use 'sass:list';
+
+// Colores del resumen: cada uno con su fondo claro (íconos) y su tinta (números), con contraste suficiente.
+$colores: (
+  azul: (#2447c8, #e3e9fa, #2447c8),
+  rojo: (#c2362b, #f9dedb, #9b1c14),
+  ambar: (#e8b64a, #fbefd3, #7a4f00),
+  naranja: (#d9772b, #fce7d6, #8a3f0a),
+  verde: (#1b6b43, #e1f2e8, #1b6b43),
+  violeta: (#6a5acd, #ebe8fb, #4b3fa6),
+  gris: (#9aa6ad, #e8ebe9, #5b6770),
+);
+
+.tarjeta {
+  background: var(--inv-superficie);
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+
+  &.sin-relleno {
+    padding: 20px 0 8px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+.relleno {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px 12px;
+}
+
+.titulos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .atenuado {
+    font-size: 13px;
+  }
+}
+
+.atenuado {
+  color: var(--inv-atenuado);
+}
+
+.numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.fuerte {
+  font-weight: 500;
+}
+
+.texto-rojo {
+  color: #9b1c14;
+}
+
+.texto-ambar {
+  color: #7a4f00;
+}
+
+.nota {
+  margin: 0;
+  color: var(--inv-atenuado);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+// ---------- Estado vacío ----------
+
+.vacio {
+  align-items: center;
+  text-align: center;
+  padding: 48px 24px;
+
+  h2 {
+    font-size: 18px;
+  }
+
+  p {
+    margin: 0 0 4px;
+    max-width: 460px;
+    line-height: 1.55;
+  }
+}
+
+.icono-vacio {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--inv-info-fondo);
+  color: var(--inv-primario);
+
+  mat-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 28px;
+  }
+}
+
+// ---------- Tarjetas de cifras ----------
+
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.cifra {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  min-width: 0;
+  background: var(--inv-superficie);
+  border: 1px solid var(--inv-borde);
+  border-top-width: 4px;
+  border-radius: 10px;
+  color: var(--inv-tinta);
+  text-decoration: none;
+  transition: box-shadow 120ms, transform 120ms;
+
+  &:hover {
+    box-shadow: 0 4px 14px rgba(23, 32, 38, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--inv-primario);
+    outline-offset: 2px;
+  }
+
+  .icono {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+
+    mat-icon {
+      width: 24px;
+      height: 24px;
+      font-size: 24px;
+    }
+  }
+
+  @each $nombre, $c in $colores {
+    &.#{$nombre} {
+      border-top-color: list.nth($c, 1);
+
+      .icono {
+        background: list.nth($c, 2);
+        color: list.nth($c, 3);
+      }
+
+      .cifra-valor {
+        color: list.nth($c, 3);
+      }
+    }
+  }
+}
+
+.cifra-textos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cifra-titulo {
+  color: #3a464e;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.cifra-valor {
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cifra-detalle {
+  color: var(--inv-atenuado);
+  font-size: 12px;
+}
+
+// ---------- Rejilla de secciones ----------
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+// ---------- Barras ----------
+
+.barra-estados {
+  display: flex;
+  gap: 2px;
+  height: 16px;
+  border-radius: 4px;
+  overflow: hidden;
+
+  span {
+    height: 100%;
+    min-width: 3px;
+  }
+}
+
+.barras {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fila-barra {
+  display: grid;
+  grid-template-columns: minmax(96px, 150px) minmax(0, 1fr) 48px;
+  gap: 12px;
+  align-items: center;
+  color: var(--inv-tinta);
+  text-decoration: none;
+}
+
+a.fila-barra:hover span:first-child {
+  text-decoration: underline;
+}
+
+.pista {
+  display: block;
+  height: 12px;
+  border-radius: 3px;
+  background: #eef0ee;
+  overflow: hidden;
+
+  &.delgada {
+    height: 8px;
+  }
+
+  .relleno {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+  }
+}
+
+// Color de barras, muestras y segmentos.
+@each $nombre, $c in $colores {
+  .barra-estados .#{$nombre},
+  .muestra.#{$nombre},
+  .relleno.#{$nombre} {
+    background: list.nth($c, 1);
+  }
+}
+
+// ---------- Listas ----------
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    border-top: 1px solid #eef0ee;
+  }
+}
+
+.fila-estado {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) 64px 48px;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 0;
+  color: var(--inv-tinta);
+  text-decoration: none;
+
+  &:hover span:nth-child(2) {
+    text-decoration: underline;
+  }
+}
+
+.muestra {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.fila-atencion {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 0;
+  color: var(--inv-tinta);
+  text-decoration: none;
+
+  .linea {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+  }
+
+  .codigo {
+    color: var(--inv-primario);
+    font-weight: 500;
+  }
+
+  .pastilla {
+    margin-left: 0;
+  }
+
+  .detalle {
+    font-size: 13px;
+  }
+
+  &:hover .codigo {
+    text-decoration: underline;
+  }
+}
+
+.ver-todos {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sin-datos {
+  padding: 12px 0;
+  color: var(--inv-atenuado);
+}
+
+.fila-ficha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(60px, 120px) 48px;
+  gap: 12px;
+  align-items: center;
+  min-height: 44px;
+  color: var(--inv-tinta);
+  text-decoration: none;
+
+  &:hover span:first-child {
+    text-decoration: underline;
+  }
+}
+
+// ---------- Tablas ----------
+
+.tabla-contenedor {
+  overflow-x: auto;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: 6px 8px;
+    color: var(--inv-atenuado);
+    font-size: 12px;
+    font-weight: 500;
+    text-align: left;
+  }
+
+  td {
+    padding: 10px 8px;
+    border-top: 1px solid #eef0ee;
+  }
+
+  th:first-child,
+  td:first-child {
+    padding-left: 20px;
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-right: 20px;
+  }
+
+  th.numero {
+    text-align: right;
+  }
+
+  a {
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  tfoot td {
+    border-top: 2px solid var(--inv-borde);
+    font-weight: 600;
+  }
+}
+
+.tabla-redes {
+  min-width: 860px;
+
+  .col-uso {
+    width: 180px;
+  }
+}
+
+.barra-uso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .pista {
+    flex: 1 1 auto;
+    height: 8px;
+  }
+
+  .numero {
+    width: 40px;
+    font-size: 13px;
+  }
+}
+
+.enlace {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+  color: var(--inv-primario);
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--inv-primario);
+    outline-offset: 2px;
+  }
+}
+
+.ordenar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--inv-atenuado);
+  font-size: 13px;
+
+  select {
+    height: 36px;
+    padding: 0 8px;
+    border: 1px solid var(--inv-borde-campo);
+    border-radius: 6px;
+    background: var(--inv-superficie);
+    font: inherit;
+    color: var(--inv-tinta);
+  }
+}
+
+.aviso-sin-activos {
+  margin: 4px 20px 12px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 8px;
+  background: var(--inv-alerta-fondo);
+  color: var(--inv-alerta);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+
+  strong {
+    font-weight: 600;
+  }
+
+  button {
+    --mat-button-text-label-text-color: var(--inv-alerta);
+    font-weight: 600;
+  }
+}
+
+// ---------- Celular ----------
+
+@media (max-width: 599px) {
+  .cifras {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .cifra {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+
+    .icono {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+
+      mat-icon {
+        width: 18px;
+        height: 18px;
+        font-size: 18px;
+      }
+    }
+  }
+
+  .cifra-valor {
+    font-size: 24px;
+  }
+
+  .tarjeta {
+    padding: 16px;
+
+    &.sin-relleno {
+      padding: 16px 0 6px;
+    }
+  }
+
+  .relleno {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .fila-barra {
+    grid-template-columns: minmax(84px, 120px) minmax(0, 1fr) 40px;
+    gap: 8px;
+  }
+}
+
+// En el estado vacío el aviso va dentro de la tarjeta centrada.
+.aviso-sin-activos.en-vacio {
+  margin: 16px 0 0;
+  width: 100%;
+  max-width: 520px;
+  box-sizing: border-box;
+  text-align: left;
+}

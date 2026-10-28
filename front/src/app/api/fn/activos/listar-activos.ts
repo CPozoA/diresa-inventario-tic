@@ -7,7 +7,9 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
+import { DatoFaltante } from '../../models/dato-faltante';
 import { EstadoGarantia } from '../../models/estado-garantia';
+import { MotivoAtencion } from '../../models/motivo-atencion';
 import { PaginaActivosDto } from '../../models/pagina-activos-dto';
 import { SituacionRenovacion } from '../../models/situacion-renovacion';
 
@@ -19,6 +21,8 @@ export interface ListarActivos$Params {
   estadoActivoId?: string;
   garantia?: EstadoGarantia;
   renovacion?: SituacionRenovacion;
+  atencion?: MotivoAtencion;
+  falta?: DatoFaltante;
   buscar?: string;
   pagina?: (number | string);
   tamanoPagina?: (number | string);
@@ -34,6 +38,8 @@ export function listarActivos(http: HttpClient, rootUrl: string, params?: Listar
     rb.query('estadoActivoId', params.estadoActivoId, {});
     rb.query('garantia', params.garantia, {});
     rb.query('renovacion', params.renovacion, {});
+    rb.query('atencion', params.atencion, {});
+    rb.query('falta', params.falta, {});
     rb.query('buscar', params.buscar, {});
     rb.query('pagina', params.pagina, {});
     rb.query('tamanoPagina', params.tamanoPagina, {});

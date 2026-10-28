@@ -12,14 +12,14 @@ import { IFormFile } from '../../models/i-form-file';
 
 export interface SubirFotoActivo$Params {
   id: string;
-  body: {
-    'archivo'?: IFormFile;
-  } & {
-    'miniatura'?: IFormFile;
-  } & {
-    'descripcion'?: string;
-  } & {
-  }
+      body: {
+'archivo'?: IFormFile;
+} & {
+'miniatura'?: IFormFile;
+} & {
+'descripcion'?: string;
+} & {
+}
 }
 
 export function subirFotoActivo(http: HttpClient, rootUrl: string, params: SubirFotoActivo$Params, context?: HttpContext): Observable<StrictHttpResponse<FotoActivoDto>> {

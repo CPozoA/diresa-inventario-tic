@@ -41,6 +41,17 @@ describe('filtros del inventario', () => {
     expect(parametrosDesdeFiltros(FILTROS_INICIALES)).toEqual({});
   });
 
+  it('lee y escribe los filtros que vienen del resumen del inicio', () => {
+    const filtros = filtrosDesdeParametros({ atencion: 'Renovar', falta: 'Fotos' });
+
+    expect(filtros.atencion).toBe('Renovar');
+    expect(filtros.falta).toBe('Fotos');
+    expect(hayFiltros(filtros)).toBe(true);
+    expect(parametrosDesdeFiltros(filtros)).toEqual({ atencion: 'Renovar', falta: 'Fotos' });
+    expect(consultaDesdeFiltros(filtros, null)).toEqual({ pagina: 1, tamanoPagina: 25, atencion: 'Renovar', falta: 'Fotos' });
+    expect(filtrosDesdeParametros({ atencion: 'Inventado', falta: 'Nada' }).atencion).toBeNull();
+  });
+
   it('al cambiar un filtro se vuelve a la primera página', () => {
     const enPagina4 = { ...FILTROS_INICIALES, pagina: 4 };
     const filtrado = cambiarFiltro(enPagina4, 'garantia', 'Vigente');

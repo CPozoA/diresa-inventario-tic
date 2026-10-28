@@ -1,6 +1,8 @@
+import { DatoFaltante } from '../../../api/models/dato-faltante';
 import { EstadoGarantia } from '../../../api/models/estado-garantia';
+import { MotivoAtencion } from '../../../api/models/motivo-atencion';
 import { SituacionRenovacion } from '../../../api/models/situacion-renovacion';
-import { GARANTIAS, RENOVACIONES } from './textos-activo';
+import { ATENCIONES, FALTAS, GARANTIAS, RENOVACIONES } from './textos-activo';
 
 /** Filtros y página de la lista del inventario. Viven en la dirección (?buscar=…&pagina=2) para volver a ellos. */
 export interface FiltrosInventario {
@@ -10,6 +12,10 @@ export interface FiltrosInventario {
   readonly estadoActivoId: string | null;
   readonly garantia: EstadoGarantia | null;
   readonly renovacion: SituacionRenovacion | null;
+  /** Desde el resumen del inicio: los que requieren atención por ese motivo (sin los de baja). */
+  readonly atencion: NonNullable<MotivoAtencion> | null;
+  /** Desde el resumen del inicio: los que no tienen ese dato en su ficha (sin los de baja). */
+  readonly falta: NonNullable<DatoFaltante> | null;
   /** Desde 1, como en la API. */
   readonly pagina: number;
   readonly tamanoPagina: number;
@@ -24,6 +30,8 @@ export const FILTROS_INICIALES: FiltrosInventario = {
   estadoActivoId: null,
   garantia: null,
   renovacion: null,
+  atencion: null,
+  falta: null,
   pagina: 1,
   tamanoPagina: 25,
 };
@@ -53,6 +61,8 @@ export function filtrosDesdeParametros(parametros: Parametros): FiltrosInventari
     estadoActivoId: texto(parametros['estado']),
     garantia: deLista(parametros['garantia'], GARANTIAS),
     renovacion: deLista(parametros['renovacion'], RENOVACIONES),
+    atencion: deLista(parametros['atencion'], ATENCIONES),
+    falta: deLista(parametros['falta'], FALTAS),
     pagina: entero(parametros['pagina'], FILTROS_INICIALES.pagina),
     tamanoPagina: entero(parametros['filas'], FILTROS_INICIALES.tamanoPagina, TAMANOS_PAGINA),
   };
@@ -68,6 +78,8 @@ export function parametrosDesdeFiltros(filtros: FiltrosInventario): Record<strin
   if (filtros.estadoActivoId) parametros['estado'] = filtros.estadoActivoId;
   if (filtros.garantia) parametros['garantia'] = filtros.garantia;
   if (filtros.renovacion) parametros['renovacion'] = filtros.renovacion;
+  if (filtros.atencion) parametros['atencion'] = filtros.atencion;
+  if (filtros.falta) parametros['falta'] = filtros.falta;
   if (filtros.pagina !== FILTROS_INICIALES.pagina) parametros['pagina'] = String(filtros.pagina);
   if (filtros.tamanoPagina !== FILTROS_INICIALES.tamanoPagina) parametros['filas'] = String(filtros.tamanoPagina);
   return parametros;
@@ -90,7 +102,9 @@ export function hayFiltros(filtros: FiltrosInventario): boolean {
     filtros.tipoActivoId !== null ||
     filtros.estadoActivoId !== null ||
     filtros.garantia !== null ||
-    filtros.renovacion !== null
+    filtros.renovacion !== null ||
+    filtros.atencion !== null ||
+    filtros.falta !== null
   );
 }
 

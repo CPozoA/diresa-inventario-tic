@@ -1,3 +1,7 @@
+import { DatoFaltante } from '../../../api/models/dato-faltante';
+import { GrupoEstado } from '../../../api/models/grupo-estado';
+import { MotivoAtencion } from '../../../api/models/motivo-atencion';
+import { RangoAntiguedad } from '../../../api/models/rango-antiguedad';
 import { Conservacion } from '../../../api/models/conservacion';
 import { Criticidad } from '../../../api/models/criticidad';
 import { EstadoGarantia } from '../../../api/models/estado-garantia';
@@ -115,6 +119,73 @@ export const FAMILIAS_GENERACIONES: readonly NonNullable<GeneracionesProcesador>
 function lector<T extends string, R>(mapa: Readonly<Record<T, R>>, vacio: R): (valor: T | null | undefined) => R {
   return (valor) => (valor === null || valor === undefined ? vacio : (mapa[valor] ?? vacio));
 }
+
+// ---------- Resumen del inicio y alertas (§5.11, D48, D49) ----------
+
+/** Filtro "requieren atención" del inventario; nunca incluye los activos de baja. */
+export const TEXTO_ATENCION: Readonly<Record<NonNullable<MotivoAtencion>, string>> = {
+  Cualquiera: 'Requieren atención',
+  FueraDeServicio: 'Fuera de servicio',
+  Renovar: 'Renovar',
+  ProximoARenovar: 'Próximos a renovar',
+  EnMantenimiento: 'En mantenimiento',
+  GarantiaVencida: 'Garantía vencida',
+};
+
+export const ATENCIONES = Object.keys(TEXTO_ATENCION) as readonly NonNullable<MotivoAtencion>[];
+
+export const TONO_ATENCION: Readonly<Record<NonNullable<MotivoAtencion>, Tono>> = {
+  Cualquiera: 'alerta',
+  FueraDeServicio: 'mal',
+  Renovar: 'mal',
+  ProximoARenovar: 'alerta',
+  EnMantenimiento: 'alerta',
+  GarantiaVencida: 'alerta',
+};
+
+/** Filtro "fichas por completar" del inventario. */
+export const TEXTO_FALTA: Readonly<Record<NonNullable<DatoFaltante>, string>> = {
+  Fotos: 'Sin fotos',
+  FechaAdquisicion: 'Sin fecha de adquisición',
+  Responsable: 'Sin responsable',
+  NumeroSerie: 'Sin número de serie',
+};
+
+export const FALTAS = Object.keys(TEXTO_FALTA) as readonly NonNullable<DatoFaltante>[];
+
+/** Grupo de cada estado del catálogo (D48). */
+export const TEXTO_GRUPO_ESTADO: Readonly<Record<NonNullable<GrupoEstado>, string>> = {
+  EnUso: 'En uso',
+  EnMantenimiento: 'En mantenimiento',
+  FueraDeServicio: 'Fuera de servicio',
+  EnAlmacen: 'En almacén',
+  DeBaja: 'De baja',
+};
+
+export const GRUPOS_ESTADO = Object.keys(TEXTO_GRUPO_ESTADO) as readonly NonNullable<GrupoEstado>[];
+
+export const DESCRIPCION_GRUPO_ESTADO: Readonly<Record<NonNullable<GrupoEstado>, string>> = {
+  EnUso: 'Funciona y se usa. Cuenta como operativo.',
+  EnMantenimiento: 'En reparación o revisión; volverá a usarse.',
+  FueraDeServicio: 'No funciona. Aparece en "Requieren atención".',
+  EnAlmacen: 'Funciona pero está guardado, sin asignar.',
+  DeBaja: 'Ya no se usa: no cuenta en las alertas ni en las fichas por completar.',
+};
+
+export const TEXTO_ANTIGUEDAD: Readonly<Record<NonNullable<RangoAntiguedad>, string>> = {
+  MenosDe2: 'Menos de 2 años',
+  De2A4: '2 a 4 años',
+  De4A6: '4 a 6 años',
+  MasDe6: 'Más de 6 años',
+  SinFecha: 'Sin fecha',
+};
+
+export const textoAtencion = lector(TEXTO_ATENCION, '');
+export const tonoAtencion = lector<NonNullable<MotivoAtencion>, Tono>(TONO_ATENCION, 'neutra');
+export const textoFalta = lector(TEXTO_FALTA, '');
+export const textoGrupoEstado = lector(TEXTO_GRUPO_ESTADO, 'En uso');
+export const descripcionGrupoEstado = lector(DESCRIPCION_GRUPO_ESTADO, '');
+export const textoAntiguedad = lector(TEXTO_ANTIGUEDAD, '');
 
 export const textoGarantia = lector(TEXTO_GARANTIA, 'Sin dato');
 export const tonoGarantia = lector<NonNullable<EstadoGarantia>, Tono>(TONO_GARANTIA, 'neutra');

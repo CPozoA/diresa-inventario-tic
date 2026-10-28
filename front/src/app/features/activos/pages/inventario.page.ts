@@ -39,6 +39,8 @@ import { urlFoto } from '../data/fotos';
 import { InventarioStore } from '../data/inventario.store';
 import {
   cantidad,
+  textoAtencion,
+  textoFalta,
   textoGarantia,
   textoRenovacion,
   tonoEstado,
@@ -93,6 +95,8 @@ export class InventarioPage {
   protected readonly textoRenovacion = textoRenovacion;
   protected readonly tonoRenovacion = tonoRenovacion;
   protected readonly tonoEstado = tonoEstado;
+  protected readonly textoAtencion = textoAtencion;
+  protected readonly textoFalta = textoFalta;
   protected readonly garantias: readonly NonNullable<EstadoGarantia>[] = ['Vigente', 'Vencida', 'SinDato'];
   protected readonly renovaciones: readonly NonNullable<SituacionRenovacion>[] = ['Vigente', 'ProximoARenovar', 'Renovar', 'SinDato'];
 
@@ -143,7 +147,9 @@ export class InventarioPage {
   /** Filtros aplicados fuera de la búsqueda (para el botón "Filtros" en pantallas angostas). */
   protected readonly cantidadFiltros = computed(() => {
     const f = this.filtros();
-    return [f.establecimientoId, f.tipoActivoId, f.estadoActivoId, f.garantia, f.renovacion].filter((x) => x !== null).length;
+    return [f.establecimientoId, f.tipoActivoId, f.estadoActivoId, f.garantia, f.renovacion, f.atencion, f.falta].filter(
+      (x) => x !== null,
+    ).length;
   });
 
   protected readonly subtitulo = computed(() => {
@@ -200,7 +206,7 @@ export class InventarioPage {
     });
   }
 
-  protected filtrar<K extends 'establecimientoId' | 'tipoActivoId' | 'estadoActivoId' | 'garantia' | 'renovacion'>(
+  protected filtrar<K extends 'establecimientoId' | 'tipoActivoId' | 'estadoActivoId' | 'garantia' | 'renovacion' | 'atencion' | 'falta'>(
     campo: K,
     valor: FiltrosInventario[K],
   ): void {

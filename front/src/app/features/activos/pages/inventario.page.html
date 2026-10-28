@@ -90,6 +90,31 @@
     </div>
   </div>
 
+  <!-- Filtros que llegan desde el resumen del inicio (§5.11): no están en el panel, se quitan aquí. -->
+  @if (filtros().atencion || filtros().falta) {
+    <div class="filtros-resumen">
+      @if (filtros().atencion; as a) {
+        <span class="chip-filtro">
+          <mat-icon aria-hidden="true">warning_amber</mat-icon>
+          {{ textoAtencion(a) }}
+          <button mat-icon-button type="button" [attr.aria-label]="'Quitar el filtro «' + textoAtencion(a) + '»'" (click)="filtrar('atencion', null)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </span>
+      }
+      @if (filtros().falta; as f) {
+        <span class="chip-filtro">
+          <mat-icon aria-hidden="true">assignment_late</mat-icon>
+          {{ textoFalta(f) }}
+          <button mat-icon-button type="button" [attr.aria-label]="'Quitar el filtro «' + textoFalta(f) + '»'" (click)="filtrar('falta', null)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </span>
+      }
+      <span class="atenuado nota-filtro">Sin contar los activos de baja.</span>
+    </div>
+  }
+
   @if (store.error(); as e) {
     <app-aviso>{{ e.mensaje }}</app-aviso>
   }

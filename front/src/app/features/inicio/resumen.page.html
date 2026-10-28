@@ -1,0 +1,295 @@
+<div class="pagina">
+  <header class="pagina-encabezado">
+    <div class="pagina-titulo">
+      <h1>Resumen</h1>
+      <span class="atenuado">
+        {{ ambito() }}
+        @if (fecha()) {
+          · situación al {{ fecha() }}
+        }
+      </span>
+    </div>
+  </header>
+
+  @if (!puedeVer()) {
+    <section class="tarjeta vacio">
+      <span class="icono-vacio"><mat-icon aria-hidden="true">waving_hand</mat-icon></span>
+      <h2>Bienvenido</h2>
+      <p class="atenuado">Use el menú para ir a las secciones que tiene a su cargo.</p>
+    </section>
+  } @else {
+    @if (recurso.isLoading() && !resumen()) {
+      <mat-progress-bar mode="indeterminate" aria-label="Cargando el resumen" />
+    }
+
+    @if (error(); as e) {
+      <app-aviso>{{ e }}</app-aviso>
+    }
+
+    @if (resumen(); as r) {
+      @if (vacio() && !todas()) {
+        <section class="tarjeta vacio">
+          <span class="icono-vacio"><mat-icon aria-hidden="true">computer</mat-icon></span>
+          <h2>Todavía no hay activos registrados</h2>
+          <p class="atenuado">
+            Cuando registre los equipos de la red, aquí verá cuántos hay, en qué estado están y cuáles necesitan atención.
+          </p>
+          <a *siTienePermiso="permisos.Activos.Crear" mat-flat-button routerLink="/inventario/nuevo">Registrar el primero</a>
+          @if (establecimientos(); as e) {
+            @if (e.total > 0) {
+              <div class="aviso-sin-activos en-vacio">
+                <span>
+                  <strong>{{ e.sinActivos }} {{ e.sinActivos === 1 ? 'establecimiento' : 'establecimientos' }}</strong>
+                  de la red, todavía sin activos registrados
+                </span>
+                <button mat-button type="button" (click)="verSinActivos()">Ver cuáles</button>
+              </div>
+            }
+          }
+        </section>
+      } @else {
+        <!-- Cifras principales: cada tarjeta abre el inventario con su filtro. -->
+        <section class="cifras" aria-label="Cifras principales">
+          @for (t of tarjetas(); track t.titulo) {
+            <a class="cifra" [class]="t.color" routerLink="/inventario" [queryParams]="t.filtro">
+              <span class="icono" aria-hidden="true"><mat-icon>{{ t.icono }}</mat-icon></span>
+              <span class="cifra-textos">
+                <span class="cifra-titulo">{{ t.titulo }}</span>
+                <span class="cifra-valor">{{ miles(t.valor) }}</span>
+                <span class="cifra-detalle">{{ t.detalle }}</span>
+              </span>
+            </a>
+          }
+        </section>
+
+        @if (todas()) {
+          <section class="tarjeta sin-relleno" aria-labelledby="t-redes">
+            <div class="encabezado relleno">
+              <div class="titulos">
+                <h2 id="t-redes">Por red de salud</h2>
+                <span class="atenuado">Toque una red para ver su resumen</span>
+              </div>
+              <label class="ordenar">
+                Ordenar por
+                <select (change)="ordenar($event)">
+                  <option value="activos">Activos</option>
+                  <option value="renovar">Renovar</option>
+                  <option value="completas">Fichas completas</option>
+                  <option value="sinActivos">Establecimientos sin activos</option>
+                </select>
+              </label>
+            </div>
+            <div class="tabla-contenedor">
+              <table class="tabla tabla-redes">
+                <thead>
+                  <tr>
+                    <th scope="col">Red</th>
+                    <th scope="col" class="numero">Activos</th>
+                    <th scope="col" class="col-uso">En uso</th>
+                    <th scope="col" class="numero">Renovar</th>
+                    <th scope="col" class="numero">Próximos a renovar</th>
+                    <th scope="col" class="numero">Garantía vencida</th>
+                    <th scope="col" class="numero">Fichas completas</th>
+                    <th scope="col" class="numero">Establec. sin activos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (f of redes(); track f.sedeId) {
+                    <tr>
+                      <td>
+                        <button type="button" class="enlace" (click)="verRed(f)">{{ f.nombre }}</button>
+                      </td>
+                      <td class="numero fuerte">{{ miles(f.activos) }}</td>
+                      <td class="col-uso">
+                        <span class="barra-uso">
+                          <span class="pista"><span class="relleno verde" [style.width.%]="f.enUsoPorcentaje"></span></span>
+                          <span class="numero">{{ f.enUsoPorcentaje }}%</span>
+                        </span>
+                      </td>
+                      <td class="numero texto-rojo fuerte">{{ miles(f.renovar) }}</td>
+                      <td class="numero texto-ambar">{{ miles(f.proximos) }}</td>
+                      <td class="numero">{{ miles(f.garantia) }}</td>
+                      <td class="numero" [class.texto-rojo]="f.completasPorcentaje !== null && f.completasPorcentaje < 50">
+                        {{ f.completasPorcentaje === null ? '—' : f.completasPorcentaje + '%' }}
+                      </td>
+                      <td class="numero" [class.texto-rojo]="f.atrasada">{{ f.sinActivos }} de {{ f.establecimientos }}</td>
+                    </tr>
+                  }
+                </tbody>
+                @if (totalRedes(); as t) {
+                  <tfoot>
+                    <tr>
+                      <td>Total</td>
+                      <td class="numero">{{ miles(t.activos) }}</td>
+                      <td class="col-uso numero-izq">{{ t.enUsoPorcentaje }}%</td>
+                      <td class="numero">{{ miles(t.renovar) }}</td>
+                      <td class="numero">{{ miles(t.proximos) }}</td>
+                      <td class="numero">{{ miles(t.garantia) }}</td>
+                      <td class="numero">{{ t.completasPorcentaje === null ? '—' : t.completasPorcentaje + '%' }}</td>
+                      <td class="numero">{{ t.sinActivos }} de {{ t.establecimientos }}</td>
+                    </tr>
+                  </tfoot>
+                }
+              </table>
+            </div>
+            <p class="nota relleno">
+              Ficha completa: tiene número de serie, fecha de adquisición, responsable y al menos una foto.
+              Establecimientos sin activos: los vigentes de la red donde todavía no se registró ningún equipo.
+            </p>
+          </section>
+        }
+
+        <div class="rejilla">
+          <section class="tarjeta" aria-labelledby="t-estado">
+            <div class="encabezado">
+              <h2 id="t-estado">Estado de los activos</h2>
+              <span class="atenuado">{{ miles(total()) }} activos</span>
+            </div>
+            <div class="barra-estados" role="img" [attr.aria-label]="estadosAria()">
+              @for (e of estados(); track e.id) {
+                <span [class]="e.color" [style.width.%]="e.ancho"></span>
+              }
+            </div>
+            <ul class="lista">
+              @for (e of estados(); track e.id) {
+                <li>
+                  <a class="fila-estado" routerLink="/inventario" [queryParams]="{ estado: e.id }">
+                    <span class="muestra" [class]="e.color" aria-hidden="true"></span>
+                    <span>{{ e.nombre }}</span>
+                    <span class="numero fuerte">{{ miles(e.cantidad) }}</span>
+                    <span class="numero atenuado">{{ e.porcentaje }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </section>
+
+          @if (!todas()) {
+            <section class="tarjeta" aria-labelledby="t-edad">
+              <div class="titulos">
+                <h2 id="t-edad">Antigüedad</h2>
+                <span class="atenuado">Años desde la fecha de adquisición, sin contar los de baja</span>
+              </div>
+              <div class="barras">
+                @for (a of antiguedad(); track a.texto) {
+                  <div class="fila-barra">
+                    <span [class.atenuado]="a.atenuado">{{ a.texto }}</span>
+                    <span class="pista"><span class="relleno" [class]="a.color" [style.width.%]="a.ancho"></span></span>
+                    <span class="numero fuerte">{{ miles(a.cantidad) }}</span>
+                  </div>
+                }
+              </div>
+              @if (sinFecha() > 0) {
+                <p class="nota">
+                  {{ miles(sinFecha()) }} {{ sinFecha() === 1 ? 'activo no tiene' : 'activos no tienen' }} fecha de adquisición: no se
+                  puede calcular su antigüedad ni su renovación.
+                  <a routerLink="/inventario" [queryParams]="{ falta: 'FechaAdquisicion' }">Completarlos</a>
+                </p>
+              }
+            </section>
+
+            <section class="tarjeta" aria-labelledby="t-atencion">
+              <div class="encabezado">
+                <h2 id="t-atencion">Requieren atención</h2>
+                @if (totalAtencion() > 0) {
+                  <a class="ver-todos" routerLink="/inventario" [queryParams]="{ atencion: 'Cualquiera' }">Ver los {{ miles(totalAtencion()) }}</a>
+                }
+              </div>
+              <ul class="lista">
+                @for (a of atencion(); track a.id) {
+                  <li>
+                    <a class="fila-atencion" [routerLink]="['/inventario', a.id]">
+                      <span class="linea">
+                        <span class="codigo mono">{{ a.codigoPatrimonial }}</span>
+                        <span class="pastilla" [class]="tonoAtencion(a.motivo)">{{ textoAtencion(a.motivo) }}</span>
+                      </span>
+                      <span class="atenuado detalle">{{ a.detalle }}</span>
+                    </a>
+                  </li>
+                } @empty {
+                  <li class="sin-datos">Ningún activo requiere atención. ¡Bien!</li>
+                }
+              </ul>
+            </section>
+          }
+
+          <section class="tarjeta" aria-labelledby="t-tipo">
+            <h2 id="t-tipo">Activos por tipo</h2>
+            <div class="barras">
+              @for (t of tipos(); track t.id) {
+                <a class="fila-barra" routerLink="/inventario" [queryParams]="{ tipo: t.id }">
+                  <span>{{ t.nombre }}</span>
+                  <span class="pista"><span class="relleno azul" [style.width.%]="t.ancho"></span></span>
+                  <span class="numero fuerte">{{ miles(t.cantidad) }}</span>
+                </a>
+              }
+            </div>
+            @if (otrosTipos() > 0) {
+              <p class="nota">Y {{ miles(otrosTipos()) }} de otros tipos.</p>
+            }
+          </section>
+
+          @if (!todas() && establecimientos(); as e) {
+            <section class="tarjeta sin-relleno" aria-labelledby="t-est">
+              <div class="encabezado relleno">
+                <h2 id="t-est">Por establecimiento</h2>
+                <span class="atenuado">{{ e.conActivos }} de {{ e.total }} con activos</span>
+              </div>
+              <div class="tabla-contenedor">
+                <table class="tabla">
+                  <thead>
+                    <tr>
+                      <th scope="col">Establecimiento</th>
+                      <th scope="col" class="numero">Activos</th>
+                      <th scope="col" class="numero">En uso</th>
+                      <th scope="col" class="numero">Renovar</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (p of e.principales; track p.id) {
+                      <tr>
+                        <td><a routerLink="/inventario" [queryParams]="{ establecimiento: p.id }">{{ p.nombre }}</a></td>
+                        <td class="numero">{{ miles(p.activos) }}</td>
+                        <td class="numero">{{ miles(p.enUso) }}</td>
+                        <td class="numero" [class.texto-rojo]="p.renovar > 0" [class.atenuado]="p.renovar === 0">{{ miles(p.renovar) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              @if (e.sinActivos > 0) {
+                <div class="aviso-sin-activos">
+                  <span>
+                    <strong>{{ e.sinActivos }} {{ e.sinActivos === 1 ? 'establecimiento' : 'establecimientos' }}</strong>
+                    sin activos registrados
+                  </span>
+                  <button mat-button type="button" (click)="verSinActivos()">Ver cuáles</button>
+                </div>
+              }
+            </section>
+
+            <section class="tarjeta" aria-labelledby="t-fichas">
+              <div class="encabezado">
+                <div class="titulos">
+                  <h2 id="t-fichas">Fichas por completar</h2>
+                  <span class="atenuado">Completas: {{ fichasCompletas() }} · sin contar los de baja</span>
+                </div>
+              </div>
+              <ul class="lista">
+                @for (f of fichas(); track f.falta) {
+                  <li>
+                    <a class="fila-ficha" routerLink="/inventario" [queryParams]="{ falta: f.falta }">
+                      <span>{{ f.texto }}</span>
+                      <span class="pista delgada"><span class="relleno ambar" [style.width.%]="f.ancho"></span></span>
+                      <span class="numero fuerte">{{ miles(f.cantidad) }}</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        </div>
+      }
+    }
+  }
+</div>

@@ -15,12 +15,14 @@ import { Api } from '../../../api/api';
 import { activarElementoCatalogo } from '../../../api/fn/catalogos/activar-elemento-catalogo';
 import { cambiarFichaTipoActivo } from '../../../api/fn/catalogos/cambiar-ficha-tipo-activo';
 import { cambiarGeneracionesProcesador } from '../../../api/fn/catalogos/cambiar-generaciones-procesador';
+import { cambiarGrupoEstadoActivo } from '../../../api/fn/catalogos/cambiar-grupo-estado-activo';
 import { crearElementoCatalogo } from '../../../api/fn/catalogos/crear-elemento-catalogo';
 import { desactivarElementoCatalogo } from '../../../api/fn/catalogos/desactivar-elemento-catalogo';
 import { listarElementosCatalogo } from '../../../api/fn/catalogos/listar-elementos-catalogo';
 import { ElementoCatalogoDto } from '../../../api/models/elemento-catalogo-dto';
 import { FichaTecnica } from '../../../api/models/ficha-tecnica';
 import { GeneracionesProcesador } from '../../../api/models/generaciones-procesador';
+import { GrupoEstado } from '../../../api/models/grupo-estado';
 import { TipoCatalogoDto } from '../../../api/models/tipo-catalogo-dto';
 import { ErrorApi, aErrorApi } from '../../../core/http/error-api';
 import { NotificacionesService } from '../../../core/notificaciones.service';
@@ -29,15 +31,19 @@ import { confirmar } from '../../../shared/ui/confirmacion.dialog';
 import {
   FAMILIAS_GENERACIONES,
   FICHAS,
+  GRUPOS_ESTADO,
   descripcionFicha,
   descripcionGeneraciones,
+  descripcionGrupoEstado,
   textoFicha,
   textoGeneraciones,
+  textoGrupoEstado,
 } from '../../activos/data/textos-activo';
 import { buscarMismoNombre, filtrarPorNombre, normalizarNombre } from '../data/busqueda-catalogo';
 import { DatosRenombrar, RenombrarDialog } from './renombrar.dialog';
 
 const CODIGO_TIPOS_ACTIVO = 'tipos-activo';
+const CODIGO_ESTADOS = 'estados-activo';
 const CODIGO_PROCESADORES = 'procesadores';
 
 /** "Solo nombre de equipo, IP y MAC." → "solo nombre de equipo, IP y MAC." (sin tocar las siglas). */
@@ -87,8 +93,16 @@ export class CatalogoEditorComponent {
   protected readonly textoGeneraciones = textoGeneraciones;
   protected readonly descripcionGeneraciones = descripcionGeneraciones;
 
+  /** Los estados llevan, además, a qué grupo pertenecen (D48): el resumen cuenta por grupo. */
+  protected readonly esEstados = computed(() => this.tipo().codigo === CODIGO_ESTADOS);
+  protected readonly grupos = GRUPOS_ESTADO;
+  protected readonly textoGrupoEstado = textoGrupoEstado;
+  protected readonly descripcionGrupoEstado = descripcionGrupoEstado;
+
   /** Columnas de la tabla (para el mensaje de "sin elementos"). */
-  protected readonly columnas = computed(() => 3 + (this.esTiposActivo() || this.esProcesadores() ? 1 : 0));
+  protected readonly columnas = computed(
+    () => 3 + (this.esTiposActivo() || this.esProcesadores() || this.esEstados() ? 1 : 0),
+  );
 
   protected readonly mostrarInactivos = signal(false);
   // Sin "required": el campo también sirve para buscar, así que vacío es un estado normal (puedeAgregar lo controla).
@@ -234,6 +248,36 @@ export class CatalogoEditorComponent {
     try {
       await this.api.invoke(cambiarGeneracionesProcesador, { id: elemento.id, body: { generaciones } });
       this.notificaciones.exito(`«${elemento.nombre}» ahora ofrece las generaciones de «${textoGeneraciones(generaciones)}».`);
+      this.elementos.reload();
+    } catch (error: unknown) {
+      this.notificaciones.error(error);
+    }
+  }
+
+  /** El grupo de un estado; sin dato (no debería pasar) se trata como "En uso". */
+  protected grupoDe(elemento: ElementoCatalogoDto): NonNullable<GrupoEstado> {
+    return elemento.grupo ?? 'EnUso';
+  }
+
+  protected async cambiarGrupo(elemento: ElementoCatalogoDto, grupo: NonNullable<GrupoEstado>): Promise<void> {
+    if (grupo === this.grupoDe(elemento)) {
+      return;
+    }
+
+    const confirmado = await confirmar(this.dialogos, {
+      titulo: `Grupo de «${elemento.nombre}»`,
+      mensaje:
+        `Pasará al grupo «${textoGrupoEstado(grupo)}»: ${enMinusculaInicial(descripcionGrupoEstado(grupo))} ` +
+        'El resumen del inicio y las alertas cambian al momento para todos los activos con este estado.',
+      confirmar: 'Cambiar',
+    });
+    if (!confirmado) {
+      return;
+    }
+
+    try {
+      await this.api.invoke(cambiarGrupoEstadoActivo, { id: elemento.id, body: { grupo } });
+      this.notificaciones.exito(`«${elemento.nombre}» ahora es del grupo «${textoGrupoEstado(grupo)}».`);
       this.elementos.reload();
     } catch (error: unknown) {
       this.notificaciones.error(error);

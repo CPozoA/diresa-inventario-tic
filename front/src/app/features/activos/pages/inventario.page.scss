@@ -212,3 +212,43 @@ mat-paginator {
     gap: 8px;
   }
 }
+
+// ---------- Filtros que vienen del resumen del inicio ----------
+
+.filtros-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.chip-filtro {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 2px 0 12px;
+  border-radius: 999px;
+  background: var(--inv-alerta-fondo);
+  color: var(--inv-alerta);
+  font-weight: 500;
+  font-size: 14px;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  button {
+    --mat-icon-button-state-layer-size: 32px;
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+    color: inherit;
+  }
+}
+
+.nota-filtro {
+  font-size: 13px;
+}

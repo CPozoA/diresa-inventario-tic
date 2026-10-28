@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.24 · 27/10/2026 · Cambios: D48 (grupo de cada estado del activo), D49 (los activos de baja no cuentan en las alertas), §5.11 resumen del inicio (Paso 8-1).
+> Versión 0.25 · 27/10/2026 · Cambios: resumen del inicio en las pantallas (Paso 8-2, §5.11).
 
 ---
 
@@ -349,6 +349,7 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 - **Los de baja** cuentan en el total y en los estados, pero no en las alertas ni en las fichas (D49).
 - **Enlaces a la lista:** cada cifra abre el inventario ya filtrado con los mismos criterios: `?atencion=` (`Cualquiera`, `FueraDeServicio`, `Renovar`, `ProximoARenovar`, `EnMantenimiento`, `GarantiaVencida`), `?falta=` (`Fotos`, `FechaAdquisicion`, `Responsable`, `NumeroSerie`), `?estadoActivoId=`, `?tipoActivoId=` y `?establecimientoId=`. `GET /api/establecimientos?sinActivos=true` lista los establecimientos todavía sin inventariar.
 - Los filtros compartidos están en `Application/Activos/Consultar/AlertasActivo.cs`, para que el resumen y la lista no se aparten.
+- **En la pantalla (Paso 8-2):** es la página de inicio. El superadministrador usa el selector de sede del encabezado: con "Todas las sedes" ve la tabla por red; al tocar una red se selecciona esa sede y ve su resumen. Sin `Activos.Ver` se muestra una bienvenida. En la lista del inventario, `atencion` y `falta` aparecen como etiquetas que se quitan; el grupo de cada estado se cambia en Catálogos generales.
 
 ---
 

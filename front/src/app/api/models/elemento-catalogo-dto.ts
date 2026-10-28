@@ -3,10 +3,12 @@
 
 import { FichaTecnica } from '../models/ficha-tecnica';
 import { GeneracionesProcesador } from '../models/generaciones-procesador';
+import { GrupoEstado } from '../models/grupo-estado';
 export interface ElementoCatalogoDto {
   activo: boolean;
   ficha: (null | FichaTecnica);
   generaciones: (null | GeneracionesProcesador);
+  grupo: (null | GrupoEstado);
   id: string;
   nombre: string;
 }

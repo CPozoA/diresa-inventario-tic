@@ -74,6 +74,9 @@
             @if (esProcesadores()) {
               <th scope="col">Generaciones</th>
             }
+            @if (esEstados()) {
+              <th scope="col">Grupo</th>
+            }
             <th scope="col">Estado</th>
             @if (tipo().puedeGestionar) {
               <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
@@ -137,6 +140,34 @@
                     </mat-menu>
                   } @else {
                     {{ textoGeneraciones(generacionesDe(elemento)) }}
+                  }
+                </td>
+              }
+              @if (esEstados()) {
+                <td>
+                  @if (tipo().puedeGestionar) {
+                    <button
+                      mat-button
+                      type="button"
+                      class="boton-ficha"
+                      [matMenuTriggerFor]="menuGrupo"
+                      [attr.aria-label]="'Grupo de ' + elemento.nombre + ': ' + textoGrupoEstado(grupoDe(elemento)) + '. Cambiar'"
+                    >
+                      {{ textoGrupoEstado(grupoDe(elemento)) }} <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+                    </button>
+                    <mat-menu #menuGrupo="matMenu">
+                      @for (g of grupos; track g) {
+                        <button mat-menu-item type="button" class="opcion-ficha" (click)="cambiarGrupo(elemento, g)">
+                          <mat-icon>{{ g === grupoDe(elemento) ? 'radio_button_checked' : 'radio_button_unchecked' }}</mat-icon>
+                          <span class="dos-lineas-menu">
+                            <span>{{ textoGrupoEstado(g) }}</span>
+                            <span class="atenuado">{{ descripcionGrupoEstado(g) }}</span>
+                          </span>
+                        </button>
+                      }
+                    </mat-menu>
+                  } @else {
+                    {{ textoGrupoEstado(grupoDe(elemento)) }}
                   }
                 </td>
               }

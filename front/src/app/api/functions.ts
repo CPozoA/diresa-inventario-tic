@@ -69,6 +69,8 @@ export type { CambiarFichaTipoActivo$Params as CambiarFichaTipoActivo$Params } f
 export { cambiarFichaTipoActivo as cambiarFichaTipoActivo } from './fn/catalogos/cambiar-ficha-tipo-activo';
 export type { CambiarGeneracionesProcesador$Params as CambiarGeneracionesProcesador$Params } from './fn/catalogos/cambiar-generaciones-procesador';
 export { cambiarGeneracionesProcesador as cambiarGeneracionesProcesador } from './fn/catalogos/cambiar-generaciones-procesador';
+export type { CambiarGrupoEstadoActivo$Params as CambiarGrupoEstadoActivo$Params } from './fn/catalogos/cambiar-grupo-estado-activo';
+export { cambiarGrupoEstadoActivo as cambiarGrupoEstadoActivo } from './fn/catalogos/cambiar-grupo-estado-activo';
 export type { DesactivarElementoCatalogo$Params as DesactivarElementoCatalogo$Params } from './fn/catalogos/desactivar-elemento-catalogo';
 export { desactivarElementoCatalogo as desactivarElementoCatalogo } from './fn/catalogos/desactivar-elemento-catalogo';
 export type { ListarEstablecimientos$Params as ListarEstablecimientos$Params } from './fn/establecimientos/listar-establecimientos';
@@ -113,3 +115,5 @@ export type { EliminarFotoActivo$Params as EliminarFotoActivo$Params } from './f
 export { eliminarFotoActivo as eliminarFotoActivo } from './fn/fotos-de-activos/eliminar-foto-activo';
 export type { MarcarFotoPrincipalActivo$Params as MarcarFotoPrincipalActivo$Params } from './fn/fotos-de-activos/marcar-foto-principal-activo';
 export { marcarFotoPrincipalActivo as marcarFotoPrincipalActivo } from './fn/fotos-de-activos/marcar-foto-principal-activo';
+export type { ObtenerResumen$Params as ObtenerResumen$Params } from './fn/resumen/obtener-resumen';
+export { obtenerResumen as obtenerResumen } from './fn/resumen/obtener-resumen';

@@ -26,6 +26,8 @@ export function consultaDesdeFiltros(filtros: FiltrosInventario, sedeId: string 
   if (filtros.estadoActivoId) consulta.estadoActivoId = filtros.estadoActivoId;
   if (filtros.garantia) consulta.garantia = filtros.garantia;
   if (filtros.renovacion) consulta.renovacion = filtros.renovacion;
+  if (filtros.atencion) consulta.atencion = filtros.atencion;
+  if (filtros.falta) consulta.falta = filtros.falta;
   return consulta;
 }
 

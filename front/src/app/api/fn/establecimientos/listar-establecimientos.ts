@@ -14,6 +14,7 @@ export interface ListarEstablecimientos$Params {
   buscar?: string;
   incluirInactivos?: boolean;
   maximo?: (number | string);
+  sinActivos?: boolean;
 }
 
 export function listarEstablecimientos(http: HttpClient, rootUrl: string, params?: ListarEstablecimientos$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<EstablecimientoDto>>> {
@@ -23,6 +24,7 @@ export function listarEstablecimientos(http: HttpClient, rootUrl: string, params
     rb.query('buscar', params.buscar, {});
     rb.query('incluirInactivos', params.incluirInactivos, {});
     rb.query('maximo', params.maximo, {});
+    rb.query('sinActivos', params.sinActivos, {});
   }
 
   return http.request(

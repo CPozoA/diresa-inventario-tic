@@ -55,7 +55,7 @@ src/app/
 ├─ shared/ui/      piezas visuales sin lógica de negocio (avisos, logo, plantilla de las pantallas de acceso)
 └─ features/       una carpeta por funcionalidad, con carga diferida
    ├─ cuenta/      iniciar sesión, olvidé mi contraseña, restablecer (enlace del correo), cambiar contraseña
-   ├─ inicio/      resumen (por ahora, estado vacío) y página técnica /estado
+   ├─ inicio/      resumen del inicio (cifras, estados, atención, fichas por completar, tabla por red) y página técnica /estado
    ├─ sedes/       sedes (solo superadmin): crear, renombrar, activar y desactivar
    ├─ usuarios/    usuarios: crear, editar, roles, activar/desactivar, restablecer contraseña, desbloquear
    ├─ roles/       roles de la sede con sus permisos
@@ -77,8 +77,9 @@ src/app/
 | `/sedes` | `Sedes.Gestionar` | Solo el superadmin. |
 | `/areas` | `Catalogos.GestionarSede` | Áreas de la sede (buscar o agregar en un solo campo); el superadmin elige la sede arriba. |
 | `/establecimientos` | `Establecimientos.Gestionar` | Solo el superadmin. Lista con búsqueda y filtro por estado, registro y corrección, e importación desde Excel con la lista de filas a corregir. |
-| `/catalogos` | `Catalogos.GestionarGlobales` | Tipos de activo (con la ficha técnica de cada uno), marcas, estados, sistemas operativos, procesadores (con sus generaciones), antivirus o EDR y tipos de licencia. |
-| `/inventario` | `Activos.Ver` | Lista paginada en la API, con búsqueda y filtros que quedan en la dirección, y la miniatura de la foto principal. En celular, tarjetas. |
+| `/catalogos` | `Catalogos.GestionarGlobales` | Tipos de activo (con la ficha técnica de cada uno), marcas, estados (con su grupo: en uso, en mantenimiento, fuera de servicio, en almacén o de baja), sistemas operativos, procesadores (con sus generaciones), antivirus o EDR y tipos de licencia. |
+| `/` (Resumen) | `Activos.Ver` (sin él, una bienvenida) | Cuatro tarjetas de color (activos, renovar, próximos a renovar, garantía vencida), estado de los activos, antigüedad, requieren atención, activos por tipo, por establecimiento (con los que no tienen activos) y fichas por completar. El superadministrador con "Todas las sedes" ve la tabla por red; al tocar una red, o al elegirla arriba, ve su resumen. Cada cifra abre el inventario ya filtrado. |
+| `/inventario` | `Activos.Ver` | Lista paginada en la API, con búsqueda y filtros que quedan en la dirección, y la miniatura de la foto principal. Los filtros que vienen del resumen (`?atencion=`, `?falta=`) se muestran como etiquetas que se quitan con ✕. En celular, tarjetas. |
 | `/inventario/{id}` | `Activos.Ver` (Editar y Eliminar según permiso) | Ficha técnica de solo lectura; las secciones dependen de la ficha del tipo. Galería de fotos y visor a pantalla completa; con `Activos.Editar` se agregan fotos al momento y en el visor se marca la principal, se describe o se elimina. |
 | `/inventario/nuevo`, `/inventario/{id}/editar` | `Activos.Crear`, `Activos.Editar` | Formulario de la ficha: establecimiento por búsqueda, secciones según el tipo, discos y RAM. Los catálogos largos se eligen escribiendo (`app-selector-catalogo`) y quien administra el catálogo puede agregar desde ahí. Pregunta antes de salir con cambios sin guardar. Con `Activos.Editar`, sección Fotos: tomar foto (celular), elegir o arrastrar archivos; se reducen en el navegador y se suben al guardar, después de la ficha. |
 | `/` y demás secciones del menú | Con sesión | Estructura con menú según permisos. Las secciones aún no construidas muestran "próxima versión". |
