@@ -92,6 +92,23 @@ internal sealed partial class InicializadorDatos(
         }
 
         await CompletarFichasTecnicasAsync(cancellationToken);
+        await CompletarGruposDeEstadoAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Los estados registrados antes del Paso 8 no tienen grupo (D48): se les asigna el que corresponde por su nombre.
+    /// Solo ocurre una vez; después lo cambia el superadministrador.
+    /// </summary>
+    private async Task CompletarGruposDeEstadoAsync(CancellationToken cancellationToken)
+    {
+        var pendientes = await db.EstadosActivo.Where(e => e.GrupoAsignado == null).ToListAsync(cancellationToken);
+        var completados = pendientes.Count(e => e.CompletarGrupoSiFalta());
+
+        if (completados > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            LogGruposCompletados(logger, completados);
+        }
     }
 
     /// <summary>
@@ -197,4 +214,7 @@ internal sealed partial class InicializadorDatos(
 
     [LoggerMessage(EventId = 1008, Level = LogLevel.Information, Message = "Ficha técnica asignada por su nombre a {Cantidad} tipos de activo.")]
     private static partial void LogFichasCompletadas(ILogger logger, int cantidad);
+
+    [LoggerMessage(EventId = 1009, Level = LogLevel.Information, Message = "Grupo asignado por su nombre a {Cantidad} estados del activo.")]
+    private static partial void LogGruposCompletados(ILogger logger, int cantidad);
 }

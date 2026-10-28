@@ -436,6 +436,11 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.Property<Guid?>("CreadoPor")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("GrupoAsignado")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Grupo");
+
                     b.Property<DateTimeOffset?>("ModificadoEn")
                         .HasColumnType("datetimeoffset");
 

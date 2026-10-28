@@ -38,6 +38,8 @@ public sealed record PaginaActivosDto(IReadOnlyList<ActivoResumenDto> Activos, i
 /// <param name="EstadoActivoId">Filtra por estado.</param>
 /// <param name="Garantia">Filtra por estado de la garantía hoy.</param>
 /// <param name="Renovacion">Filtra por situación de renovación hoy.</param>
+/// <param name="Atencion">Los que requieren atención por ese motivo, sin los de baja (como en el resumen, D49).</param>
+/// <param name="Falta">Los que no tienen ese dato en su ficha, sin los de baja.</param>
 /// <param name="Buscar">Código patrimonial, serie, modelo, responsable, marca, IP o nombre de equipo.</param>
 /// <param name="Pagina">Desde 1.</param>
 /// <param name="TamanoPagina">Entre 1 y 100 (por omisión, 25).</param>
@@ -50,6 +52,8 @@ public sealed record ListarActivosQuery(
     Guid? EstadoActivoId,
     EstadoGarantia? Garantia,
     SituacionRenovacion? Renovacion,
+    MotivoAtencion? Atencion,
+    DatoFaltante? Falta,
     string? Buscar,
     int? Pagina,
     int? TamanoPagina) : IQuery<PaginaActivosDto>;
@@ -110,6 +114,16 @@ internal sealed class ListarActivosHandler(IAppDbContext db, TimeProvider reloj)
             SituacionRenovacion.Vigente => activos.Where(a => a.FechaRenovacion > enUnAnio),
             _ => activos,
         };
+
+        if (query.Atencion is MotivoAtencion motivo)
+        {
+            activos = activos.ConMotivo(db, motivo, hoy);
+        }
+
+        if (query.Falta is DatoFaltante falta)
+        {
+            activos = activos.ConFalta(db, falta);
+        }
 
         var filas =
             from a in activos

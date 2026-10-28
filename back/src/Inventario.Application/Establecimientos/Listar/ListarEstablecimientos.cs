@@ -41,7 +41,8 @@ public sealed record EstablecimientoDto(
 /// <param name="Buscar">Código único, Id_Establecimiento exacto, o parte del nombre.</param>
 /// <param name="IncluirInactivos">Falso (por omisión) para ofrecerlos al registrar; verdadero para administrarlos.</param>
 /// <param name="Maximo">Cantidad máxima de resultados (para las búsquedas mientras se escribe).</param>
-public sealed record ListarEstablecimientosQuery(Guid? SedeId, string? Buscar, bool IncluirInactivos, int? Maximo)
+/// <param name="SinActivos">Verdadero: solo los que todavía no tienen ningún activo registrado (resumen del inicio).</param>
+public sealed record ListarEstablecimientosQuery(Guid? SedeId, string? Buscar, bool IncluirInactivos, int? Maximo, bool SinActivos = false)
     : IQuery<IReadOnlyList<EstablecimientoDto>>;
 
 internal sealed class ListarEstablecimientosHandler(IAppDbContext db)
@@ -62,6 +63,11 @@ internal sealed class ListarEstablecimientosHandler(IAppDbContext db)
         if (!query.IncluirInactivos)
         {
             consulta = consulta.Where(e => e.Activo);
+        }
+
+        if (query.SinActivos)
+        {
+            consulta = consulta.Where(e => !db.Activos.Any(a => a.EstablecimientoId == e.Id));
         }
 
         var buscar = query.Buscar?.Trim();

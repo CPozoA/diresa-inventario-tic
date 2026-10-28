@@ -64,7 +64,15 @@ internal sealed class MarcaConfiguration : IEntityTypeConfiguration<Marca>
 
 internal sealed class EstadoActivoConfiguration : IEntityTypeConfiguration<EstadoActivo>
 {
-    public void Configure(EntityTypeBuilder<EstadoActivo> builder) => ConfiguracionCatalogo.General(builder, "EstadosActivo");
+    public void Configure(EntityTypeBuilder<EstadoActivo> builder)
+    {
+        ConfiguracionCatalogo.General(builder, "EstadosActivo");
+
+        // D48: "EnUso", "EnMantenimiento", "FueraDeServicio", "EnAlmacen" o "DeBaja". Nulo solo hasta que el
+        // inicializador lo completa (estados anteriores al Paso 8).
+        builder.Property(e => e.GrupoAsignado).HasColumnName("Grupo").HasConversion<string>().HasMaxLength(20);
+        builder.Ignore(e => e.Grupo);
+    }
 }
 
 internal sealed class SistemaOperativoConfiguration : IEntityTypeConfiguration<SistemaOperativo>

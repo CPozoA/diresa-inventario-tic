@@ -25,7 +25,7 @@ internal static class EstablecimientosEndpoints
 
         grupo.MapGet("/", ListarAsync)
             .WithName("ListarEstablecimientos")
-            .WithSummary("Establecimientos ordenados por nombre. ?buscar= código único, Id_Establecimiento o parte del nombre.");
+            .WithSummary("Establecimientos ordenados por nombre. ?buscar= código único, Id_Establecimiento o parte del nombre. ?sinActivos=true: los que no tienen ningún activo registrado.");
 
         const string gestionar = Permisos.Establecimientos.Gestionar;
 
@@ -70,10 +70,11 @@ internal static class EstablecimientosEndpoints
         string? buscar,
         bool? incluirInactivos,
         int? maximo,
+        bool? sinActivos,
         IQueryHandler<ListarEstablecimientosQuery, IReadOnlyList<EstablecimientoDto>> handler,
         CancellationToken cancellationToken) =>
         (await handler.Handle(
-            new ListarEstablecimientosQuery(sedeId, buscar, incluirInactivos ?? false, maximo),
+            new ListarEstablecimientosQuery(sedeId, buscar, incluirInactivos ?? false, maximo, sinActivos ?? false),
             cancellationToken)).ToHttpResult();
 
     private static async Task<Results<Created<IdCreado>, ProblemHttpResult>> CrearAsync(

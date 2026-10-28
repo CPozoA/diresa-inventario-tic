@@ -50,6 +50,11 @@ internal static class CatalogosEndpoints
             .WithName("CambiarGeneracionesProcesador")
             .WithSummary("Cambia qué generaciones ofrece una familia de procesadores: IntelCore, IntelCoreUltra, AmdRyzen o Ninguna.");
 
+        grupo.MapPut("/estados-activo/{id:guid}/grupo", CambiarGrupoEstadoAsync)
+            .RequirePermiso(Permisos.Catalogos.GestionarGlobales)
+            .WithName("CambiarGrupoEstadoActivo")
+            .WithSummary("Cambia a qué grupo pertenece un estado: EnUso, EnMantenimiento, FueraDeServicio, EnAlmacen o DeBaja.");
+
         grupo.MapPost("/{tipo}/{id:guid}/desactivar", DesactivarAsync)
             .WithName("DesactivarElementoCatalogo")
             .WithSummary("Deja de ofrecer el elemento al registrar; se conserva en los registros que ya lo usan.");
@@ -114,6 +119,13 @@ internal static class CatalogosEndpoints
         ICommandHandler<CambiarGeneracionesProcesadorCommand, Vacio> handler,
         CancellationToken cancellationToken) =>
         (await handler.Handle(new CambiarGeneracionesProcesadorCommand(id, cuerpo.Generaciones), cancellationToken)).ToNoContentResult();
+
+    private static async Task<Results<NoContent, ProblemHttpResult>> CambiarGrupoEstadoAsync(
+        Guid id,
+        CambiarGrupoEstadoActivoRequest cuerpo,
+        ICommandHandler<CambiarGrupoEstadoActivoCommand, Vacio> handler,
+        CancellationToken cancellationToken) =>
+        (await handler.Handle(new CambiarGrupoEstadoActivoCommand(id, cuerpo.Grupo), cancellationToken)).ToNoContentResult();
 }
 
 internal sealed record CrearElementoCatalogoRequest(Guid? SedeId, string Nombre);
@@ -121,5 +133,7 @@ internal sealed record CrearElementoCatalogoRequest(Guid? SedeId, string Nombre)
 internal sealed record CambiarFichaTipoActivoRequest(FichaTecnica Ficha);
 
 internal sealed record CambiarGeneracionesProcesadorRequest(GeneracionesProcesador Generaciones);
+
+internal sealed record CambiarGrupoEstadoActivoRequest(GrupoEstado Grupo);
 
 internal sealed record RenombrarElementoCatalogoRequest(string Nombre);

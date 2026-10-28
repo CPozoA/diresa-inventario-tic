@@ -335,6 +335,27 @@ en las copias de seguridad.
 
 `GET /api/activos` trae `fotoPrincipalId` en cada activo (nulo si no tiene fotos).
 
+## Paso 8-1: resumen del inicio (D48, D49)
+
+Este paso **cambia el modelo**: agrega la columna `Grupo` a `catalogos.EstadosActivo`. Desde `back`, con la API detenida:
+
+```powershell
+dotnet ef migrations add GrupoEstado --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+Al arrancar, la API asigna a los estados existentes el grupo que corresponde por su nombre (Operativo → `EnUso`,
+Inoperativo → `FueraDeServicio`, De baja → `DeBaja`…) y lo anota en el registro.
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/resumen?sedeId=` | `Activos.Ver` | Cifras del inicio (§5.11). El superadministrador sin `sedeId` recibe además `redes` |
+| `PUT /api/catalogos/estados-activo/{id}/grupo` | `Catalogos.GestionarGlobales` | `{ "grupo": "EnUso" }`: `EnUso`, `EnMantenimiento`, `FueraDeServicio`, `EnAlmacen` o `DeBaja` |
+| `GET /api/activos?atencion=&falta=` | `Activos.Ver` | Filtros nuevos, sin los activos de baja (D49) |
+| `GET /api/establecimientos?sinActivos=true` | Con sesión | Establecimientos sin ningún activo registrado |
+
+`GET /api/catalogos/estados-activo` trae `grupo` en cada estado.
+
 ### Correo en producción
 
 En el servidor se configura `Correo:Modo = Smtp` y los datos del SMTP (`Servidor`, `Puerto`, `Remitente`, `Usuario`,
@@ -357,9 +378,9 @@ dotnet test
 
 | Proyecto | Qué comprueba |
 |---|---|
-| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles, catálogos, establecimientos (datos válidos, ubigeo, reconocimiento de la red), activos (ficha, IP y MAC, discos y RAM, garantía y renovación), fotos (formato por el contenido, limpieza de EXIF, límites) |
+| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles, catálogos, establecimientos (datos válidos, ubigeo, reconocimiento de la red), activos (ficha, IP y MAC, discos y RAM, garantía y renovación), fotos (formato por el contenido, limpieza de EXIF, límites), grupo de cada estado por su nombre |
 | `ArchitectureTests` | Que el dominio no dependa de nada, que Application no dependa de Infrastructure ni de la Api, que los handlers sean internos |
-| `Api.IntegrationTests` | Protección CSRF (sin token → 400; el token de antes de iniciar sesión no sirve después). Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan. Fotos (7D-1): sin EXIF al descargar, principal, máximo de 6, solo imágenes, permisos, otra red recibe 404, los archivos se borran con la foto y con el activo |
+| `Api.IntegrationTests` | Protección CSRF (sin token → 400; el token de antes de iniciar sesión no sirve después). Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan. Fotos (7D-1): sin EXIF al descargar, principal, máximo de 6, solo imágenes, permisos, otra red recibe 404, los archivos se borran con la foto y con el activo. Resumen (8-1): cifras exactas en una red nueva, los de baja fuera de las alertas, los filtros de la lista coinciden con el resumen, tabla por red solo para el superadministrador, solo él cambia el grupo de un estado |
 
 Para ejecutar solo un proyecto: `dotnet test --project tests/Inventario.Domain.Tests`.
 

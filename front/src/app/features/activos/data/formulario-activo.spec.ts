@@ -153,9 +153,9 @@ describe('formulario del activo', () => {
 
   it('ofrece los elementos activos y el ya elegido aunque esté desactivado', () => {
     const lista: ElementoCatalogoDto[] = [
-      { id: 'a', nombre: 'HP', activo: true, ficha: null, generaciones: null },
-      { id: 'b', nombre: 'Compaq', activo: false, ficha: null, generaciones: null },
-      { id: 'c', nombre: 'Acer', activo: false, ficha: null, generaciones: null },
+      { id: 'a', nombre: 'HP', activo: true, ficha: null, generaciones: null, grupo: null },
+      { id: 'b', nombre: 'Compaq', activo: false, ficha: null, generaciones: null, grupo: null },
+      { id: 'c', nombre: 'Acer', activo: false, ficha: null, generaciones: null, grupo: null },
     ];
 
     expect(opcionesDeCatalogo(lista, null).map((e) => e.id)).toEqual(['a']);

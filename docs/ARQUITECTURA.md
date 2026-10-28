@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.23 · 25/10/2026 · Cambios: fotos en las pantallas (Paso 7D-2): galería y visor en la ficha, sección Fotos del formulario y miniatura en la lista (§5.8).
+> Versión 0.24 · 27/10/2026 · Cambios: D48 (grupo de cada estado del activo), D49 (los activos de baja no cuentan en las alertas), §5.11 resumen del inicio (Paso 8-1).
 
 ---
 
@@ -85,6 +85,8 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D45 | Listas y sugerencias en la ficha | Se eligen de lista: **antivirus o EDR** (catálogo general), **tarjeta gráfica** (Integrada o Dedicada; el modelo solo si es dedicada), **pantalla** (medidas comunes u "Otra…") y **puertos** y **accesorios** (se marcan varios de listas fijas; se guardan como nombres separados por comas). Siguen escritos pero **sugieren lo ya registrado en la red**, lo más usado primero: modelo (según la marca), proveedor, dominio, versión del sistema operativo (según el sistema), ubicación física (según el establecimiento) y marca y modelo de discos y RAM | Lo que se repite mucho y tiene pocas variantes se elige, para poder contar y filtrar. Lo que tiene demasiados valores o cambia seguido se sigue escribiendo, pero las sugerencias evitan las variantes ("Latitude 5440" y "latitude5440"). |
 | D46 | Elegir escribiendo y agregar al catálogo | Los catálogos largos (tipo de activo, marca, área, procesador, sistema operativo, antivirus; y en los filtros del inventario, establecimiento y tipo) se eligen **escribiendo parte del nombre**: la lista se acorta mostrando primero los que empiezan así, sin distinguir mayúsculas ni tildes, pero el valor siempre es uno del catálogo; lo escrito que no existe se descarta con un aviso. Las listas cortas (estado, criticidad, tipos de disco o RAM) siguen como listas. Quien ya puede modificar ese catálogo ve además **"Agregar «…» al catálogo"**: se confirma en un diálogo que avisa nombres iguales o parecidos y deja elegir la ficha técnica (tipos) o las generaciones (procesadores); los catálogos generales, solo el superadministrador; las áreas, también el administrador de la red | En listas de decenas de elementos, desplazarse es lento (sobre todo en el celular) y con dos o tres letras queda una opción. Agregar sin salir del formulario evita perder lo escrito; usa la misma API y los mismos permisos que Catálogos generales. |
 | D47 | Miniatura y limpieza de las fotos | Con cada foto (reducida en el navegador a 1600 px; no se guarda el original) se sube una **miniatura** de unos 320 px, que usan la lista y las tarjetas. El servidor reconoce el formato por el contenido y a las **JPEG les quita los metadatos** (EXIF con ubicación GPS y modelo del celular, XMP, comentarios; conserva el perfil de color). Las fotos se gestionan con `Activos.Editar`; en el formulario se suben al guardar y desde la ficha, al momento | La lista de 25 activos con fotos de 300 KB pesaría 7 MB; con miniaturas, menos de medio MB. Reducir en el navegador ya suele quitar el EXIF, pero no se confía en la interfaz: la limpieza en el servidor protege también las fotos subidas por otros medios. |
+| D48 | Grupo de cada estado | Cada estado del catálogo indica a qué **grupo** pertenece: en uso, en mantenimiento, fuera de servicio, en almacén o de baja. Los estados nuevos lo toman por su nombre ("Inoperativo" → fuera de servicio, "De baja" → de baja…) y el superadministrador lo cambia en Catálogos generales. El resumen y las alertas cuentan por grupo, nunca por el nombre | Los estados son un catálogo libre: si alguien renombra "Operativo" a "En uso", contar por nombre dejaría el resumen en cero. Es el mismo patrón que la ficha de cada tipo (D43). |
+| D49 | Los activos de baja no son alertas | Un activo cuyo estado es del grupo "de baja" cuenta en el total y en los estados, pero **no** en renovar, próximos a renovar, garantía vencida, requieren atención, antigüedad ni fichas por completar. Los filtros del inventario `atencion` y `falta` siguen la misma regla, para que el número del resumen y la lista coincidan | Un equipo dado de baja ya no se renueva ni necesita su ficha al día; contarlo inflaría las alertas. |
 
 ### Decisiones pendientes de confirmar
 
@@ -236,7 +238,7 @@ Es la pieza de seguridad más importante del sistema.
 
 | Globales (superadmin, permiso `Catalogos.GestionarGlobales`) | Por sede (permiso `Catalogos.GestionarSede`) |
 |---|---|
-| Tipos de activo, marcas, estados del activo, sistemas operativos, tipos de licencia | Áreas o dependencias |
+| Tipos de activo (con su ficha, D43), marcas, estados del activo (con su grupo, D48), sistemas operativos, procesadores (con sus generaciones, D44), antivirus, tipos de licencia | Áreas o dependencias |
 
 - **Implementados en el Paso 6B.** El catálogo de ubicaciones físicas se retira en el Paso 6D (D40). Los tipos de mantenimiento se agregarán con su módulo.
 - Cada catálogo es una tabla en el esquema `catalogos` con nombre y estado (activo o desactivado). Los de sede llevan `SedeId` (`IPerteneceASede`), así que usan el mismo filtro y la misma protección de §5.6.
@@ -331,6 +333,22 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 - **Avisos:** número de serie ya registrado en la red (no impide guardar), renovación prevista según la fecha de adquisición y la vida útil.
 - **Cambios sin guardar:** pregunta antes de salir por un enlace o con Cancelar; al recargar o cerrar la pestaña, el navegador muestra su propia pregunta.
 - Un elemento de catálogo desactivado se sigue mostrando (marcado) si el activo ya lo tenía.
+
+### 5.11 Resumen del inicio
+
+- **Endpoint:** `GET /api/resumen` (`Activos.Ver`). Un usuario de sede recibe su red. El superadministrador recibe todas las redes, con una fila por red, o una sola con `?sedeId=`.
+- **Contenido**, en una sola respuesta:
+  - **Cifras:** activos registrados (y cuántos en uso), renovar, próximos a renovar y garantía vencida. No se muestran montos.
+  - **Estados:** activos por estado, agrupados por su grupo (D48).
+  - **Antigüedad:** menos de 2 años, 2 a 4, 4 a 6, más de 6 y sin fecha de adquisición.
+  - **Tipos:** activos por tipo, de más a menos.
+  - **Establecimientos:** los vigentes, cuántos todavía no tienen activos, y los 6 con más activos (con en uso y renovar).
+  - **Requieren atención:** total y los 6 primeros. Primero los fuera de servicio, luego para renovar (los más vencidos primero), próximos a renovar y en mantenimiento; cada activo una sola vez, con su motivo más urgente.
+  - **Fichas por completar:** sin fotos, sin fecha de adquisición, sin responsable y sin número de serie. Ficha completa = las cuatro cosas.
+  - **Por red** (solo el superadministrador): activos, en uso, renovar, próximos, garantía vencida, fichas completas y establecimientos sin activos.
+- **Los de baja** cuentan en el total y en los estados, pero no en las alertas ni en las fichas (D49).
+- **Enlaces a la lista:** cada cifra abre el inventario ya filtrado con los mismos criterios: `?atencion=` (`Cualquiera`, `FueraDeServicio`, `Renovar`, `ProximoARenovar`, `EnMantenimiento`, `GarantiaVencida`), `?falta=` (`Fotos`, `FechaAdquisicion`, `Responsable`, `NumeroSerie`), `?estadoActivoId=`, `?tipoActivoId=` y `?establecimientoId=`. `GET /api/establecimientos?sinActivos=true` lista los establecimientos todavía sin inventariar.
+- Los filtros compartidos están en `Application/Activos/Consultar/AlertasActivo.cs`, para que el resumen y la lista no se aparten.
 
 ---
 
@@ -525,5 +543,7 @@ Consideraciones del hosting compartido:
 | **7C-5** | Catálogos largos que se eligen escribiendo y agregar al catálogo desde el formulario (D46) | `npm test` y prueba manual (también en celular) |
 | **7D-1** | Fotos en la API (D38, D47, §5.8): almacenamiento en carpeta, subir con miniatura, principal, descripción, quitar; limpieza de EXIF; `fotoPrincipalId` en la lista | `dotnet test` y prueba en Scalar |
 | **7D-2** | Fotos en Angular: reducción y miniatura en el navegador, cámara del celular, fotos en el formulario y galería y visor en la ficha, miniatura en la lista | `npm test` y prueba en celular |
+| **8-1** | Resumen del inicio en la API (§5.11): grupo de cada estado (D48), los de baja fuera de las alertas (D49), filtros `atencion` y `falta` en el inventario, establecimientos sin activos | `dotnet test` y prueba en Scalar |
+| **8-2** | Resumen del inicio en Angular (bosquejos del Paso 8): tarjetas de color, estados, antigüedad, atención, tipos, establecimientos, fichas por completar, tabla por red; filtros nuevos en la lista; grupo del estado en Catálogos generales | `npm test` y prueba manual |
 
-Fases posteriores: licencias, mantenimiento, asignaciones, resumen, exportación a Excel, registro de auditoría y endurecimiento.
+Fases posteriores: asignaciones, mantenimiento, licencias, exportación a Excel, registro de auditoría y endurecimiento.

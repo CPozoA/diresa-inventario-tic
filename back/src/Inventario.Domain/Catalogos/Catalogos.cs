@@ -99,7 +99,29 @@ public sealed class Marca : ElementoCatalogo
     public static Marca Crear(string nombre) => new(nombre);
 }
 
-/// <summary>Estado de un activo (Operativo, En mantenimiento, De baja…).</summary>
+/// <summary>
+/// A qué grupo pertenece un estado del activo (docs/ARQUITECTURA.md D48). El resumen cuenta por grupo, así que un
+/// estado se puede renombrar ("Operativo" → "En uso") sin que cambien las cifras.
+/// </summary>
+public enum GrupoEstado
+{
+    /// <summary>Funciona y se usa (Operativo).</summary>
+    EnUso,
+
+    /// <summary>En reparación o revisión, volverá a usarse.</summary>
+    EnMantenimiento,
+
+    /// <summary>No funciona (Inoperativo, Malogrado).</summary>
+    FueraDeServicio,
+
+    /// <summary>Funciona pero está guardado, sin asignar.</summary>
+    EnAlmacen,
+
+    /// <summary>Dado de baja: ya no se renueva ni cuenta en las alertas (D49).</summary>
+    DeBaja,
+}
+
+/// <summary>Estado de un activo (Operativo, En mantenimiento, De baja…), con el grupo al que pertenece.</summary>
 public sealed class EstadoActivo : ElementoCatalogo
 {
     private EstadoActivo()
@@ -109,9 +131,41 @@ public sealed class EstadoActivo : ElementoCatalogo
     private EstadoActivo(string nombre)
         : base(nombre)
     {
+        GrupoAsignado = CatalogosIniciales.GrupoPorOmision(Nombre);
     }
 
+    /// <summary>
+    /// Grupo guardado. Es nulo solo en los estados registrados antes de que existiera este dato: al arrancar, el sistema
+    /// les asigna el que corresponde por su nombre (<see cref="CatalogosIniciales.GrupoPorOmision"/>).
+    /// </summary>
+    public GrupoEstado? GrupoAsignado { get; private set; }
+
+    /// <summary>Grupo del estado.</summary>
+    public GrupoEstado Grupo => GrupoAsignado ?? GrupoEstado.EnUso;
+
     public static EstadoActivo Crear(string nombre) => new(nombre);
+
+    public void CambiarGrupo(GrupoEstado grupo)
+    {
+        if (!Enum.IsDefined(grupo))
+        {
+            throw new DominioException("El grupo del estado no es válido.");
+        }
+
+        GrupoAsignado = grupo;
+    }
+
+    /// <summary>Asigna el grupo por omisión a un estado registrado antes de que existiera este dato. Devuelve si cambió.</summary>
+    public bool CompletarGrupoSiFalta()
+    {
+        if (GrupoAsignado is not null)
+        {
+            return false;
+        }
+
+        GrupoAsignado = CatalogosIniciales.GrupoPorOmision(Nombre);
+        return true;
+    }
 }
 
 /// <summary>Sistema operativo instalado en un equipo.</summary>

@@ -127,7 +127,7 @@ export class AgregarElementoDialog {
         ...(this.datos.sedeId ? { sedeId: this.datos.sedeId } : {}),
       });
       this.referencia.close(
-        lista.find((e) => e.id === id) ?? { id, nombre: limpio, activo: true, ficha: null, generaciones: null },
+        lista.find((e) => e.id === id) ?? { id, nombre: limpio, activo: true, ficha: null, generaciones: null, grupo: null },
       );
     } catch (error: unknown) {
       this.error.set(aErrorApi(error));

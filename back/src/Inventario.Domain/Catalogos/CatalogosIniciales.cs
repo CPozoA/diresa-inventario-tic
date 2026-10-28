@@ -53,6 +53,9 @@ public static class CatalogosIniciales
 
     private static readonly string[] TiposComputo = ["LAPTOP", "PC DE ESCRITORIO", "ALL IN ONE", "SERVIDOR", "TABLET", "WORKSTATION"];
 
+    private static readonly string[] PalabrasFueraDeServicio =
+        ["INOPERATIV", "MALOGRAD", "AVERIAD", "DANAD", "FUERA DE SERVICIO", "NO FUNCIONA"];
+
     private static readonly string[] TiposRed =
     [
         "IMPRESORA", "MULTIFUNCIONAL", "ESCANER", "SWITCH", "ROUTER", "ACCESS POINT", "FIREWALL", "TELEFONO IP",
@@ -91,6 +94,32 @@ public static class CatalogosIniciales
         }
 
         return clave.StartsWith("AMD RYZEN", StringComparison.Ordinal) ? GeneracionesProcesador.AmdRyzen : GeneracionesProcesador.Ninguna;
+    }
+
+    /// <summary>
+    /// Grupo que corresponde a un estado por su nombre (D48): "De baja" y "Dado de baja" → de baja; "Inoperativo",
+    /// "Malogrado"… → fuera de servicio; los que hablan de mantenimiento o reparación → en mantenimiento; "En almacén"
+    /// → en almacén; el resto (Operativo, En uso…) → en uso. El superadministrador lo puede cambiar después.
+    /// </summary>
+    public static GrupoEstado GrupoPorOmision(string nombre)
+    {
+        var clave = Clave(nombre);
+        if (clave.Contains("BAJA", StringComparison.Ordinal))
+        {
+            return GrupoEstado.DeBaja;
+        }
+
+        if (PalabrasFueraDeServicio.Any(p => clave.Contains(p, StringComparison.Ordinal)))
+        {
+            return GrupoEstado.FueraDeServicio;
+        }
+
+        if (clave.Contains("MANTENIMIENTO", StringComparison.Ordinal) || clave.Contains("REPARACION", StringComparison.Ordinal))
+        {
+            return GrupoEstado.EnMantenimiento;
+        }
+
+        return clave.Contains("ALMACEN", StringComparison.Ordinal) ? GrupoEstado.EnAlmacen : GrupoEstado.EnUso;
     }
 
     /// <summary>Mayúsculas, sin tildes y con un espacio entre palabras ("All-in-one" → "ALL IN ONE").</summary>

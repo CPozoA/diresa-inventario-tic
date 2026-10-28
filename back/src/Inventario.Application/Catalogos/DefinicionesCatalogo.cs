@@ -55,7 +55,7 @@ internal sealed class DefinicionCatalogo<T>(
     where T : ElementoCatalogo
 {
     private readonly Expression<Func<T, ElementoCatalogoDto>> _proyeccion =
-        proyeccion ?? (e => new ElementoCatalogoDto(e.Id, e.Nombre, e.Activo, null, null));
+        proyeccion ?? (e => new ElementoCatalogoDto(e.Id, e.Nombre, e.Activo, null, null, null));
 
     public override Task<List<ElementoCatalogoDto>> ListarAsync(
         IAppDbContext db, Guid? sedeId, bool incluirInactivos, CancellationToken cancellationToken)
@@ -103,10 +103,15 @@ internal static class DefinicionesCatalogo
             "Tipo de activo",
             db => db.TiposActivo,
             (_, n) => TipoActivo.Crear(n),
-            t => new ElementoCatalogoDto(t.Id, t.Nombre, t.Activo, t.FichaAsignada ?? FichaTecnica.Ninguna, null)),
+            t => new ElementoCatalogoDto(t.Id, t.Nombre, t.Activo, t.FichaAsignada ?? FichaTecnica.Ninguna, null, null)),
         new DefinicionCatalogo<Marca>("marcas", "Marcas", "Marca", db => db.Marcas, (_, n) => Marca.Crear(n)),
         new DefinicionCatalogo<EstadoActivo>(
-            "estados-activo", "Estados del activo", "Estado", db => db.EstadosActivo, (_, n) => EstadoActivo.Crear(n)),
+            "estados-activo",
+            "Estados del activo",
+            "Estado",
+            db => db.EstadosActivo,
+            (_, n) => EstadoActivo.Crear(n),
+            e => new ElementoCatalogoDto(e.Id, e.Nombre, e.Activo, null, null, e.GrupoAsignado ?? GrupoEstado.EnUso)),
         new DefinicionCatalogo<SistemaOperativo>(
             "sistemas-operativos", "Sistemas operativos", "Sistema operativo", db => db.SistemasOperativos,
             (_, n) => SistemaOperativo.Crear(n)),
@@ -116,7 +121,7 @@ internal static class DefinicionesCatalogo
             "Procesador",
             db => db.Procesadores,
             (_, n) => Procesador.Crear(n),
-            p => new ElementoCatalogoDto(p.Id, p.Nombre, p.Activo, null, p.Generaciones)),
+            p => new ElementoCatalogoDto(p.Id, p.Nombre, p.Activo, null, p.Generaciones, null)),
         new DefinicionCatalogo<Antivirus>(
             "antivirus", "Antivirus o EDR", "Antivirus o EDR", db => db.Antivirus, (_, n) => Antivirus.Crear(n)),
         new DefinicionCatalogo<TipoLicencia>(

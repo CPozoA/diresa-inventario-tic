@@ -24,7 +24,7 @@ internal static class ActivosEndpoints
         grupo.MapGet("/", ListarAsync)
             .RequirePermiso(Permisos.Activos.Ver)
             .WithName("ListarActivos")
-            .WithSummary("Inventario paginado, con filtros. ?buscar= código patrimonial, serie, modelo, responsable, marca, IP o nombre de equipo.");
+            .WithSummary("Inventario paginado, con filtros. ?buscar= código patrimonial, serie, modelo, responsable, marca, IP o nombre de equipo. ?atencion= y ?falta= como en el resumen (sin los de baja).");
 
         grupo.MapGet("/listas", ListasAsync)
             .RequirePermiso(Permisos.Activos.Ver)
@@ -72,6 +72,8 @@ internal static class ActivosEndpoints
         Guid? estadoActivoId,
         EstadoGarantia? garantia,
         SituacionRenovacion? renovacion,
+        MotivoAtencion? atencion,
+        DatoFaltante? falta,
         string? buscar,
         int? pagina,
         int? tamanoPagina,
@@ -79,7 +81,7 @@ internal static class ActivosEndpoints
         CancellationToken cancellationToken)
     {
         var consulta = new ListarActivosQuery(
-            sedeId, establecimientoId, tipoActivoId, areaId, estadoActivoId, garantia, renovacion, buscar, pagina, tamanoPagina);
+            sedeId, establecimientoId, tipoActivoId, areaId, estadoActivoId, garantia, renovacion, atencion, falta, buscar, pagina, tamanoPagina);
         return (await handler.Handle(consulta, cancellationToken)).ToHttpResult();
     }
 
