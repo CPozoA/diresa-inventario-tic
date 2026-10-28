@@ -167,3 +167,24 @@ form {
   color: var(--inv-atenuado);
   font-size: 14px;
 }
+
+// ---------- Asignación al registrar (D51) ----------
+
+.titulo-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .opcional {
+    color: var(--inv-atenuado);
+    font-weight: 400;
+  }
+}
+
+.persona-asignada {
+  max-width: 560px;
+}
+
+.campos-asignacion {
+  max-width: 560px;
+}

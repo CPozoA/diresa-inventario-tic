@@ -1,0 +1,51 @@
+@if (elegido(); as p) {
+  <div class="elegida">
+    <span class="avatar" aria-hidden="true">{{ iniciales(p.nombreCompleto) }}</span>
+    <span class="datos">
+      <span class="nombre">{{ p.nombreCompleto }}</span>
+      <span class="atenuado">DNI <span class="mono">{{ p.dni }}</span> · {{ p.detalle }}</span>
+    </span>
+    <button mat-icon-button type="button" [attr.aria-label]="'Quitar a ' + p.nombreCompleto" (click)="quitar()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+} @else {
+  <mat-form-field class="campo" subscriptSizing="dynamic" floatLabel="always">
+    <mat-label>{{ etiqueta() }}</mat-label>
+    <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+    <input
+      #campo
+      matInput
+      autocomplete="off"
+      placeholder="DNI o nombre completo"
+      [formControl]="busqueda"
+      [matAutocomplete]="lista"
+    />
+    <mat-autocomplete #lista="matAutocomplete" [displayWith]="mostrar" (optionSelected)="elegir($event)">
+      @for (p of opciones(); track p.id) {
+        <mat-option [value]="p" class="opcion-persona">
+          <span class="opcion">
+            <span class="principal">{{ p.nombreCompleto }} <span class="mono atenuado">{{ p.dni }}</span></span>
+            <span class="atenuado">{{ detallePersona(p) }}</span>
+          </span>
+        </mat-option>
+      }
+      @if (texto() !== '') {
+        <mat-option [value]="nueva" class="opcion-nueva">
+          <mat-icon>person_add</mat-icon> Registrar a una persona nueva
+        </mat-option>
+      }
+    </mat-autocomplete>
+    @if (marcarError()) {
+      <mat-hint class="error">Elija a la persona.</mat-hint>
+    }
+  </mat-form-field>
+  <div class="pie">
+    @if (sinCoincidencias()) {
+      <span class="atenuado" role="status">Nadie del personal activo coincide con «{{ texto() }}».</span>
+    }
+    <button mat-button type="button" class="registrar" (click)="registrarNueva()">
+      <mat-icon>person_add</mat-icon> Registrar a una persona nueva
+    </button>
+  </div>
+}

@@ -24,6 +24,7 @@ import { AvisoComponent } from '../../../shared/ui/aviso.component';
 import { confirmar } from '../../../shared/ui/confirmacion.dialog';
 import { urlFoto } from '../../activos/data/fotos';
 import { formatoFecha, textoConservacion } from '../../activos/data/textos-activo';
+import { abrirDevolverDialog } from '../components/devolver.dialog';
 import { abrirPersonaDialog } from '../components/persona.dialog';
 import { conservacionHistorial, iniciales, textoEquipos } from '../data/personal';
 
@@ -58,6 +59,7 @@ export class FichaPersonaPage {
   protected readonly textoConservacion = textoConservacion;
   protected readonly conservacionHistorial = conservacionHistorial;
   protected readonly esSuperAdmin = this.sesion.esSuperAdmin;
+  protected readonly puedeEditar = this.sesion.tienePermiso(Permisos.Activos.Editar);
 
   protected readonly recurso = resource({
     params: () => ({ id: this.id() }),
@@ -92,6 +94,21 @@ export class FichaPersonaPage {
   protected async editar(p: PersonaDto): Promise<void> {
     if (await abrirPersonaDialog(this.dialogos, { persona: p, sedeId: p.sedeId })) {
       this.notificaciones.exito('Datos guardados.');
+      this.recurso.reload();
+    }
+  }
+
+  protected async devolver(p: PersonaDto, e: EquipoPersonaDto): Promise<void> {
+    const devuelto = await abrirDevolverDialog(this.dialogos, {
+      activoId: e.activoId,
+      titulo: `${e.codigoPatrimonial} · ${e.marca} ${e.modelo}`,
+      persona: p.nombreCompleto,
+      desde: e.fechaEntrega,
+      conservacion: e.conservacionEntrega,
+    });
+    if (devuelto) {
+      this.notificaciones.exito('Devolución registrada.');
+      this.avisoCese.set(false);
       this.recurso.reload();
     }
   }

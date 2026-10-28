@@ -83,7 +83,6 @@
             </div>
             <div><dt>Área</dt><dd>{{ f.generales.area.nombre }}</dd></div>
             <div><dt>Ubicación física</dt><dd>{{ f.generales.ubicacionFisica ?? '—' }}</dd></div>
-            <div><dt>Responsable</dt><dd>{{ f.generales.responsable ?? '—' }}</dd></div>
             @if (f.generales.descripcion) {
               <div class="ancho"><dt>Descripción</dt><dd>{{ f.generales.descripcion }}</dd></div>
             }
@@ -194,6 +193,9 @@
           </section>
         }
       </div>
+
+      <!-- Quién lo tiene (D51); el responsable escrito antes se muestra ahí mientras no haya asignación (D52). -->
+      <app-asignacion-activo class="asignacion" [ficha]="f" [puedeEditar]="puedeEditarFotos" (cambio)="recurso.reload()" />
 
       <div class="columna lateral">
         @if (ciclo(); as c) {

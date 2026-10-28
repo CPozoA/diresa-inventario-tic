@@ -31,6 +31,7 @@ import { catchError, debounceTime, distinctUntilChanged, from, map, of, switchMa
 import { Api } from '../../../api/api';
 import { ApiConfiguration } from '../../../api/api-configuration';
 import { buscarSerieActivo } from '../../../api/fn/activos/buscar-serie-activo';
+import { asignarActivo } from '../../../api/fn/asignaciones/asignar-activo';
 import { crearActivo } from '../../../api/fn/activos/crear-activo';
 import { editarActivo } from '../../../api/fn/activos/editar-activo';
 import { obtenerFichaActivo } from '../../../api/fn/activos/obtener-ficha-activo';
@@ -38,6 +39,7 @@ import { obtenerListasActivo } from '../../../api/fn/activos/obtener-listas-acti
 import { listarFotosActivo } from '../../../api/fn/fotos-de-activos/listar-fotos-activo';
 import { listarElementosCatalogo } from '../../../api/fn/catalogos/listar-elementos-catalogo';
 import { ActivoConSerieDto } from '../../../api/models/activo-con-serie-dto';
+import { Conservacion } from '../../../api/models/conservacion';
 import { ElementoCatalogoDto } from '../../../api/models/elemento-catalogo-dto';
 import { Permisos } from '../../../core/auth/permisos';
 import { ErrorApi, aErrorApi } from '../../../core/http/error-api';
@@ -47,6 +49,8 @@ import { NotificacionesService } from '../../../core/notificaciones.service';
 import { AvisoComponent } from '../../../shared/ui/aviso.component';
 import { confirmar } from '../../../shared/ui/confirmacion.dialog';
 import { ConCambiosSinGuardar } from '../../../shared/util/cambios-sin-guardar';
+import { BuscadorPersonaComponent } from '../../asignaciones/components/buscador-persona.component';
+import { PersonaElegida } from '../../asignaciones/data/asignacion';
 import { SelectorCatalogoComponent } from '../../catalogos/components/selector-catalogo.component';
 import { BuscadorEstablecimientoComponent, EstablecimientoElegido } from '../components/buscador-establecimiento.component';
 import { FotosFormularioComponent } from '../components/fotos-formulario.component';
@@ -98,6 +102,7 @@ const CAMPOS_DE_RED = ['nombreEquipo', 'direccionIp', 'direccionMac'] as const;
     MatSelectModule,
     AvisoComponent,
     BuscadorEstablecimientoComponent,
+    BuscadorPersonaComponent,
     FotosFormularioComponent,
     SelectorCatalogoComponent,
   ],
@@ -140,6 +145,20 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   protected readonly puedeFotos = this.sesion.tienePermiso(Permisos.Activos.Editar);
   protected readonly fotos = new EdicionFotos(this.api, inject(ApiConfiguration).rootUrl);
   protected readonly errorFotos = signal<string | null>(null);
+
+  /**
+   * Asignación opcional al registrar (D51): se hace después de guardar la ficha. Requiere Activos.Editar. Al editar no
+   * se ofrece: se asigna desde la ficha.
+   */
+  protected readonly puedeAsignar = this.sesion.tienePermiso(Permisos.Activos.Editar);
+  protected readonly personaAsignada = signal<PersonaElegida | null>(null);
+  protected readonly asignacion = this.fb.group({
+    fecha: [hoyIso(), [Validators.required, noPosteriorA(() => hoyIso())]],
+    conservacion: new FormControl<string>('Bueno', { nonNullable: true }),
+  });
+  protected readonly errorAsignacion = signal<string | null>(null);
+  /** Ya se asignó (si algo falló después, no se vuelve a asignar al reintentar). */
+  private asignado = false;
 
   // ---------- Formulario ----------
 
@@ -362,6 +381,14 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
   constructor() {
     inject(DestroyRef).onDestroy(() => this.fotos.liberar());
 
+    // La conservación al entregar sigue a la del activo mientras no se cambie a mano.
+    const conservacion = this.generales.conservacion.valueChanges.subscribe((valor) => {
+      if (!this.asignacion.controls.conservacion.dirty && valor) {
+        this.asignacion.controls.conservacion.setValue(valor);
+      }
+    });
+    inject(DestroyRef).onDestroy(() => conservacion.unsubscribe());
+
     // Al editar: las fotos guardadas, una sola vez.
     effect(() => {
       const fotos = this.fotosActuales.value();
@@ -530,9 +557,10 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
     const anterior = this.establecimiento();
     this.establecimiento.set(elegido);
     this.formulario.markAsDirty();
-    // Otra red (superadministrador): el área elegida es de la red anterior.
+    // Otra red (superadministrador): el área y la persona elegidas son de la red anterior.
     if (elegido && anterior && elegido.sedeId !== anterior.sedeId) {
       this.generales.areaId.setValue(null);
+      this.personaAsignada.set(null);
     }
   }
 
@@ -551,14 +579,17 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
     const establecimiento = this.establecimiento();
     const ficha = this.ficha();
 
-    if (this.formulario.invalid || !establecimiento || !ficha) {
+    const conAsignacion = this.puedeAsignar && !this.esEdicion() && this.personaAsignada() !== null;
+    if (this.formulario.invalid || !establecimiento || !ficha || (conAsignacion && this.asignacion.invalid)) {
       this.formulario.markAllAsTouched();
+      this.asignacion.markAllAsTouched();
       this.enfocarPrimerError();
       return;
     }
 
     this.guardando.set(true);
     this.errorFotos.set(null);
+    this.errorAsignacion.set(null);
     try {
       const cuerpo = fichaDesdeFormulario(this.valorActual(), establecimiento.id, ficha);
       const id = this.idActivo();
@@ -578,6 +609,23 @@ export class FormularioActivoPage implements ConCambiosSinGuardar {
         this.errorFotos.set(errorFotos);
         this.elemento.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
+      }
+
+      // La asignación va al final: la ficha y las fotos ya quedaron guardadas.
+      const persona = this.personaAsignada();
+      if (conAsignacion && persona && !this.asignado) {
+        try {
+          const a = this.asignacion.getRawValue();
+          await this.api.invoke(asignarActivo, {
+            id: destino,
+            body: { personaId: persona.id, fechaEntrega: a.fecha, conservacion: a.conservacion as Conservacion },
+          });
+          this.asignado = true;
+        } catch (error: unknown) {
+          this.errorAsignacion.set(aErrorApi(error).mensaje);
+          this.elemento.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return;
+        }
       }
 
       this.guardado = true;

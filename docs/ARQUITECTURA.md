@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.27 · 28/10/2026 · Cambios: pantallas del personal de la red (Paso 9-2A, §5.12).
+> Versión 0.28 · 28/10/2026 · Cambios: asignar, reasignar y devolver en las pantallas (Paso 9-2B, §5.12).
 
 ---
 
@@ -362,7 +362,7 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 - **Endpoints de asignaciones:** `GET /api/activos/{id}/asignaciones` (historial), `POST /api/activos/{id}/asignaciones` (asignar o reasignar), `POST /api/activos/{id}/asignaciones/devolver` y `GET /api/asignaciones/movimientos` (entregas y devoluciones recientes de la red). La ficha del activo trae la asignación vigente (`asignacion`) y el grupo de su estado (`grupoEstado`).
 - **Errores:** `Personal.*` y `Asignaciones.*`; si RENIEC no responde al verificar, **503** (`Personal.ReniecNoDisponible`, nuevo tipo de error `NoDisponible`).
 - **Pantallas (Paso 9-2A):** menú "Asignaciones" con `Activos.Ver`; página con las pestañas Personal y Entregas y devoluciones (filtros en la dirección); diálogo "Nueva persona" (`features/asignaciones/components/persona.dialog.ts`, se abre con `abrirPersonaDialog`), que primero busca el DNI y solo deja escribir los nombres si RENIEC no los da, y que sirve también para editar; ficha de la persona con sus equipos, historial, verificar, cesar y reactivar. Un 503 con código (RENIEC no responde) muestra su mensaje en lugar del genérico.
-- **Pantallas (Paso 9-2B):** asignar, reasignar y devolver desde la ficha del activo; "Responsable anterior (sin registrar)"; asignación opcional al registrar un activo (con "+ Registrar a una persona nueva", el mismo diálogo); quién lo tiene en la lista del inventario.
+- **Pantallas (Paso 9-2B):** en la ficha del activo, la sección "Asignación" (`app-asignacion-activo`) muestra quién lo tiene, desde cuándo y en qué estado lo recibió, con Devolver y Reasignar; sin asignación, "Asignar a una persona" (no en un activo de baja) y el "Responsable anterior (sin registrar)"; debajo, el historial con observaciones. El diálogo de asignar busca a la persona por DNI o nombre (`app-buscador-persona`, solo personal activo de la red) y ofrece "Registrar a una persona nueva" (el mismo diálogo de Asignaciones); no deja elegir una fecha anterior al último movimiento. El de devolver propone el primer estado del grupo "en almacén". En el formulario se quita el campo "Responsable" (al editar se conserva y se muestra como nota) y, al registrar, hay una sección "Asignación" opcional que se guarda después de la ficha y las fotos; si falla, la ficha queda guardada y se reintenta solo la asignación. En la lista, la columna Responsable muestra a quien lo tiene, o el responsable anterior marcado como tal, o "Sin asignar". En la ficha de la persona, "Devolver" en cada equipo a su cargo.
 
 ---
 

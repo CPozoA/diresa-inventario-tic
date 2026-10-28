@@ -1,0 +1,59 @@
+<section class="tarjeta" aria-labelledby="titulo-asignacion">
+  <h2 id="titulo-asignacion">Asignación</h2>
+
+  @if (vigente(); as a) {
+    <div class="persona">
+      <span class="avatar" aria-hidden="true">{{ iniciales(a.nombreCompleto) }}</span>
+      <span class="datos">
+        <a class="nombre" [routerLink]="['/asignaciones/personal', a.personaId]">{{ a.nombreCompleto }}</a>
+        <span class="atenuado">{{ detalle(a) }}</span>
+        @if (!a.verificada) {
+          <span class="pastilla alerta">Sin verificar en RENIEC</span>
+        }
+      </span>
+    </div>
+    <dl class="filas">
+      <div><dt>Desde</dt><dd>{{ formatoFecha(a.fechaEntrega) }}</dd></div>
+      <div><dt>Lo recibió en estado</dt><dd>{{ textoConservacion(a.conservacionEntrega) }}</dd></div>
+    </dl>
+    @if (puedeEditar()) {
+      <div class="botones">
+        <button mat-stroked-button type="button" (click)="devolver(a)">Devolver</button>
+        <button mat-flat-button type="button" (click)="asignar()">Reasignar</button>
+      </div>
+    }
+  } @else {
+    <p class="sin-asignar">Sin asignar: nadie tiene este equipo a su cargo.</p>
+    @if (responsableAnterior(); as r) {
+      <div class="anterior">
+        <span class="atenuado">Responsable anterior (sin registrar)</span>
+        <span>{{ r }}</span>
+      </div>
+    }
+    @if (puedeEditar()) {
+      @if (deBaja()) {
+        <p class="atenuado nota">Un activo de baja no se asigna.</p>
+      } @else {
+        <button mat-flat-button type="button" (click)="asignar()"><mat-icon>person_add</mat-icon> Asignar a una persona</button>
+      }
+    }
+  }
+</section>
+
+@if (anteriores().length > 0) {
+  <section class="tarjeta" aria-labelledby="titulo-historial-asignaciones">
+    <h2 id="titulo-historial-asignaciones">Historial de asignaciones</h2>
+    <ul class="historial">
+      @for (a of anteriores(); track a.id) {
+        <li>
+          <a class="nombre" [routerLink]="['/asignaciones/personal', a.personaId]">{{ a.nombreCompleto }}</a>
+          <span class="atenuado">{{ periodo(a) }}</span>
+          <span class="atenuado">Conservación: {{ conservacion(a) }}</span>
+          @if (a.observaciones) {
+            <span class="observacion">«{{ a.observaciones }}»</span>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+}

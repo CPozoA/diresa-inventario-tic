@@ -20,6 +20,7 @@ import { NotificacionesService } from '../../../core/notificaciones.service';
 import { rutaInternaSegura } from '../../../core/rutas';
 import { AvisoComponent } from '../../../shared/ui/aviso.component';
 import { confirmar } from '../../../shared/ui/confirmacion.dialog';
+import { AsignacionActivoComponent } from '../../asignaciones/components/asignacion-activo.component';
 import { GaleriaFotosComponent } from '../components/galeria-fotos.component';
 import { abrirVisorFotos } from '../components/visor-fotos.dialog';
 import { ordenarFotos, urlFoto } from '../data/fotos';
@@ -60,6 +61,7 @@ const LISTA = '/inventario';
     AvisoComponent,
     GaleriaFotosComponent,
     SiTienePermisoDirective,
+    AsignacionActivoComponent,
   ],
   templateUrl: './ficha-activo.page.html',
   styleUrl: './ficha-activo.page.scss',

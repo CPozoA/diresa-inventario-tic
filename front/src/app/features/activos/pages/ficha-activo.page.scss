@@ -110,6 +110,7 @@
   // En pantallas angostas las fotos van primero, debajo de la cabecera.
   grid-template-areas:
     'fotos'
+    'asignacion'
     'principal'
     'lateral';
   gap: 16px;
@@ -128,13 +129,19 @@
   grid-area: lateral;
 }
 
+.asignacion {
+  grid-area: asignacion;
+  min-width: 0;
+}
+
 @media (min-width: 1100px) {
   .columnas {
     grid-template-columns: minmax(0, 1fr) 340px;
     grid-template-areas:
       'principal fotos'
+      'principal asignacion'
       'principal lateral';
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto auto 1fr;
   }
 }
 

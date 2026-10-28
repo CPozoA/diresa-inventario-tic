@@ -18,6 +18,12 @@
     @if (errorGuardar(); as e) {
       <app-aviso>{{ e.mensaje }}</app-aviso>
     }
+    @if (errorAsignacion(); as e) {
+      <app-aviso tono="alerta">
+        La ficha se guardó, pero no se pudo asignar: {{ e }} Corrija la asignación y pulse «Guardar cambios», o quítela y asígnela
+        después desde la ficha del activo.
+      </app-aviso>
+    }
     @if (errorFotos(); as e) {
       <app-aviso tono="alerta">
         La ficha se guardó, pero no todas las fotos: {{ e }} Pulse «Guardar cambios» para reintentar lo que falta.
@@ -153,10 +159,6 @@
             </mat-autocomplete>
           </mat-form-field>
           <mat-form-field>
-            <mat-label>Responsable o usuario</mat-label>
-            <input matInput formControlName="responsable" maxlength="150" placeholder="Nombres y apellidos" />
-          </mat-form-field>
-          <mat-form-field>
             <mat-label>Estado</mat-label>
             <mat-select formControlName="estadoActivoId" required>
               @for (e of opcionesEstado(); track e.id) {
@@ -187,6 +189,12 @@
           <mat-label>Observaciones</mat-label>
           <textarea matInput formControlName="observaciones" maxlength="1000" rows="2"></textarea>
         </mat-form-field>
+              @if (esEdicion() && generales.responsable.value) {
+          <p class="nota">
+            Responsable anterior (sin registrar): <strong>{{ generales.responsable.value }}</strong>. Para dejar a alguien a
+            cargo del equipo, use «Asignar» en la ficha del activo.
+          </p>
+        }
       </section>
 
       <!-- Adquisición y garantía -->
@@ -589,6 +597,39 @@
         </section>
       }
 
+      <!-- Asignación opcional al registrar (D51). -->
+      @if (puedeAsignar && !esEdicion()) {
+        <section class="tarjeta" aria-labelledby="titulo-asignacion" [formGroup]="asignacion">
+          <div class="titulo-seccion">
+            <h2 id="titulo-asignacion">Asignación <span class="opcional">· opcional</span></h2>
+            <span class="nota">Si el equipo se entrega a alguien al registrarlo, búsquelo por DNI o por nombre. Si no, déjelo sin asignar.</span>
+          </div>
+          @if (establecimiento(); as e) {
+            <app-buscador-persona class="persona-asignada" etiqueta="Asignar a" [sedeId]="e.sedeId" [(elegido)]="personaAsignada" />
+            @if (personaAsignada()) {
+              <div class="campos campos-asignacion">
+                <mat-form-field>
+                  <mat-label>Fecha de entrega</mat-label>
+                  <input matInput type="date" formControlName="fecha" [max]="hoy" required />
+                  <mat-error>Elija una fecha que no sea posterior a hoy.</mat-error>
+                </mat-form-field>
+                <mat-form-field>
+                  <mat-label>Conservación al entregar</mat-label>
+                  <mat-select formControlName="conservacion" required>
+                    @for (c of listas.value()?.conservaciones ?? []; track c.valor) {
+                      <mat-option [value]="c.valor">{{ c.texto }}</mat-option>
+                    }
+                  </mat-select>
+                  <mat-hint>Se toma de «Ubicación y estado»; puede cambiarla.</mat-hint>
+                </mat-form-field>
+              </div>
+            }
+          } @else {
+            <p class="nota">Elija primero el establecimiento: se asigna al personal de su red.</p>
+          }
+        </section>
+      }
+
       <!-- Sugerencias compartidas por todas las filas de discos y de RAM. -->
       <mat-autocomplete #acDisco="matAutocomplete">
       @for (o of sDisco.opciones(); track o) {
@@ -633,7 +674,7 @@
         }
         <a mat-button [routerLink]="rutaCancelar()">Cancelar</a>
         <button mat-flat-button type="submit" [disabled]="guardando() || fotos.preparando() > 0">
-          <mat-icon>save</mat-icon> {{ guardando() ? 'Guardando…' : esEdicion() || errorFotos() ? 'Guardar cambios' : 'Guardar activo' }}
+          <mat-icon>save</mat-icon> {{ guardando() ? 'Guardando…' : esEdicion() || errorFotos() || errorAsignacion() ? 'Guardar cambios' : 'Guardar activo' }}
         </button>
       </div>
     </form>

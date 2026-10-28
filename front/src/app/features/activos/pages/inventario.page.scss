@@ -252,3 +252,23 @@ mat-paginator {
 .nota-filtro {
   font-size: 13px;
 }
+
+// ---------- Quién tiene el equipo (D51, D52) ----------
+
+.atenuado-texto {
+  color: #3a464e;
+}
+
+.a-cargo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    color: var(--inv-atenuado);
+  }
+}

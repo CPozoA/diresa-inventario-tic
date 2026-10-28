@@ -14,7 +14,7 @@
         <input
           matInput
           autocomplete="off"
-          placeholder="Código, serie, IP, nombre de equipo, modelo, responsable o marca"
+          placeholder="Código, serie, IP, nombre de equipo, modelo, marca o persona"
           [formControl]="busqueda"
           (keydown.escape)="limpiarBusqueda()"
         />
@@ -171,7 +171,18 @@
                     </span>
                   </div>
                 </td>
-                <td>{{ a.responsable ?? '—' }}</td>
+                <td>
+                  @if (a.responsableAsignado) {
+                    {{ a.responsable }}
+                  } @else if (a.responsable) {
+                    <span class="dos-lineas">
+                      <span class="atenuado-texto">{{ a.responsable }}</span>
+                      <span class="atenuado">Anterior, sin registrar</span>
+                    </span>
+                  } @else {
+                    <span class="atenuado">Sin asignar</span>
+                  }
+                </td>
                 <td><span class="pastilla" [class]="tonoEstado(a.estado)">{{ a.estado }}</span></td>
                 <td><span class="pastilla" [class]="tonoGarantia(a.garantia)">{{ textoGarantia(a.garantia) }}</span></td>
                 <td><span class="pastilla" [class]="tonoRenovacion(a.renovacion)">{{ textoRenovacion(a.renovacion) }}</span></td>
@@ -201,6 +212,9 @@
                     }
                   </span>
                 </span>
+                @if (a.responsableAsignado) {
+                  <span class="a-cargo"><mat-icon aria-hidden="true">person</mat-icon> {{ a.responsable }}</span>
+                }
                 <span class="chips">
                   <span class="pastilla" [class]="tonoGarantia(a.garantia)">Garantía: {{ textoGarantia(a.garantia) | lowercase }}</span>
                   <span class="pastilla" [class]="tonoRenovacion(a.renovacion)">{{ textoRenovacion(a.renovacion) }}</span>

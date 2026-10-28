@@ -68,7 +68,11 @@
                 <span class="principal">{{ equipo(e) }}</span>
                 <span class="atenuado">Desde el {{ formatoFecha(e.fechaEntrega) }} · recibido en estado {{ textoConservacion(e.conservacionEntrega).toLowerCase() }}</span>
               </div>
-              <a class="ver" [routerLink]="['/inventario', e.activoId]">Ver ficha</a>
+              @if (puedeEditar) {
+                <button mat-button type="button" class="ver" (click)="devolver(p, e)">Devolver</button>
+              } @else {
+                <a class="ver" [routerLink]="['/inventario', e.activoId]">Ver ficha</a>
+              }
             </article>
           }
         </div>
