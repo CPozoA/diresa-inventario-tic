@@ -1,0 +1,144 @@
+<h2 mat-dialog-title>Registrar mantenimiento</h2>
+<mat-dialog-content class="contenido">
+  @if (titulo(); as t) {
+    <span class="atenuado subtitulo">{{ t }}</span>
+  }
+  @if (error(); as e) {
+    <app-aviso>{{ e.mensaje }}</app-aviso>
+  }
+
+  @if (eligeActivo) {
+    @if (activoId() && valorDe(ficha); as f) {
+      <div class="activo-elegido">
+        <span class="dos-lineas">
+          <span class="mono codigo">{{ f.generales.codigoPatrimonial }}</span>
+          <span class="atenuado">{{ f.generales.marca.nombre }} {{ f.generales.modelo }} · {{ f.establecimiento.nombre }}</span>
+        </span>
+        <button mat-stroked-button type="button" (click)="cambiarActivo()"><mat-icon>swap_horiz</mat-icon> Cambiar</button>
+      </div>
+    } @else {
+      <mat-form-field subscriptSizing="dynamic" floatLabel="always">
+        <mat-label>Activo</mat-label>
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <input matInput autocomplete="off" placeholder="Código patrimonial, serie o modelo" [formControl]="busquedaActivo" [matAutocomplete]="listaActivos" />
+        <mat-autocomplete #listaActivos="matAutocomplete" [displayWith]="mostrarActivo" (optionSelected)="elegirActivo($event)">
+          @for (a of activosEncontrados(); track a.id) {
+            <mat-option [value]="a">
+              <span class="opcion"><span class="mono">{{ a.codigoPatrimonial }}</span> · {{ a.marca }} {{ a.modelo }}<span class="atenuado"> · {{ a.establecimiento }}</span></span>
+            </mat-option>
+          }
+        </mat-autocomplete>
+        @if (intento() && !activoId()) {
+          <mat-hint class="error">Elija el activo.</mat-hint>
+        }
+      </mat-form-field>
+    }
+  }
+
+  @if (activoId() && (ficha.isLoading() || delActivo.isLoading())) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (yaEnCurso(); as m) {
+    <app-aviso tono="alerta">
+      Este activo ya tiene un mantenimiento en curso desde el {{ formatoFecha(m.fechaInicio) }}. Ciérrelo antes de
+      registrar otro.
+    </app-aviso>
+  } @else if (deBaja()) {
+    <app-aviso tono="alerta">El activo está de baja: no se le registran mantenimientos.</app-aviso>
+  }
+
+  <form [formGroup]="formulario" class="formulario" novalidate (ngSubmit)="guardar()" id="formulario-mantenimiento">
+    <div class="fila">
+      <div class="grupo">
+        <span class="etiqueta" id="etiqueta-tipo">Tipo *</span>
+        <mat-button-toggle-group formControlName="tipo" aria-labelledby="etiqueta-tipo" hideSingleSelectionIndicator>
+          <mat-button-toggle value="Preventivo">Preventivo</mat-button-toggle>
+          <mat-button-toggle value="Correctivo">Correctivo</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+      <mat-form-field subscriptSizing="dynamic" class="campo-fecha">
+        <mat-label>Fecha de inicio</mat-label>
+        <input matInput type="date" formControlName="fechaInicio" [max]="hoy" required />
+        <mat-error>Elija una fecha que no sea posterior a hoy.</mat-error>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>{{ tipo() === 'Correctivo' ? 'Problema reportado' : 'Actividades previstas (opcional)' }}</mat-label>
+      <textarea
+        matInput
+        formControlName="detalle"
+        rows="2"
+        maxlength="1000"
+        [placeholder]="tipo() === 'Correctivo' ? 'Qué falla, desde cuándo, quién lo reportó' : 'Limpieza interna, revisión de ventiladores, actualizaciones…'"
+      ></textarea>
+      <mat-error>Describa el problema reportado.</mat-error>
+    </mat-form-field>
+
+    <div class="grupo">
+      <span class="etiqueta" id="etiqueta-ejecutor">Realizado por *</span>
+      <mat-button-toggle-group formControlName="ejecutor" aria-labelledby="etiqueta-ejecutor" hideSingleSelectionIndicator>
+        <mat-button-toggle value="PersonalTi">Personal de TI</mat-button-toggle>
+        <mat-button-toggle value="Proveedor">Proveedor externo</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    @if (ejecutor() === 'PersonalTi') {
+      <mat-form-field subscriptSizing="dynamic" class="campo-tecnico">
+        <mat-label>Técnico</mat-label>
+        <mat-select formControlName="tecnicoId" required>
+          @for (t of valorDe(tecnicos) ?? []; track t.id) {
+            <mat-option [value]="t.id">{{ t.nombreCompleto }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>Usuarios de la red con permiso de mantenimiento.</mat-hint>
+        <mat-error>Elija al técnico.</mat-error>
+      </mat-form-field>
+    } @else {
+      <div class="rejilla-proveedor">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Empresa</mat-label>
+          <input matInput formControlName="proveedor" maxlength="150" required autocomplete="off" />
+          <mat-error>Escriba la empresa.</mat-error>
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>N° de orden de servicio</mat-label>
+          <input matInput formControlName="ordenServicio" maxlength="50" class="mono" autocomplete="off" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Costo</mat-label>
+          <span matTextPrefix>S/&nbsp;</span>
+          <input matInput type="number" min="0" step="0.01" formControlName="costo" class="numero" />
+        </mat-form-field>
+      </div>
+    }
+
+    <mat-checkbox formControlName="terminado">Ya terminó: registrarlo como cerrado</mat-checkbox>
+  </form>
+
+  @if (terminado()) {
+    <div class="bloque-cierre">
+      <app-campos-cierre
+        [grupo]="cierre"
+        [estados]="valorDe(estados) ?? []"
+        [conProveedor]="ejecutor() === 'Proveedor'"
+        [tipo]="tipo()"
+        [minima]="formulario.controls.fechaInicio.value"
+      />
+    </div>
+  } @else {
+    <app-aviso tono="info">Mientras esté abierto, el equipo queda «En mantenimiento». Al cerrarlo se elige cómo queda.</app-aviso>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Cancelar</button>
+  <button
+    mat-flat-button
+    type="submit"
+    form="formulario-mantenimiento"
+    [disabled]="guardando() || !!yaEnCurso() || deBaja()"
+  >
+    {{ guardando() ? 'Guardando…' : terminado() ? 'Registrar y cerrar' : 'Registrar' }}
+  </button>
+</mat-dialog-actions>

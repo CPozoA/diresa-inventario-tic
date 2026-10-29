@@ -194,6 +194,13 @@ public sealed class MantenimientosTests(FabricaApi api)
         Assert.Equal(HttpStatusCode.Created, (await RegistrarAsync(editor, activo, Correctivo(Hoy))).StatusCode);
         Assert.Empty((await editor.GetFromJsonAsync<List<ProgramadoDto>>($"/api/mantenimientos/programados?buscar={codigo}", Json, Ct))!);
         Assert.Empty((await editor.GetFromJsonAsync<PaginaActivosDto>($"/api/activos?atencion=MantenimientoVencido&buscar={codigo}", Json, Ct))!.Activos);
+
+        // Al cerrar el correctivo puede quedar el preventivo vencido que ya tenía: vuelve a figurar en Programados.
+        var correctivo = (await DelActivoAsync(editor, activo))!.EnCurso!;
+        var cierre = await editor.PostAsJsonAsync(
+            $"/api/mantenimientos/{correctivo.Id}/cerrar", Cierre(Hoy, r.Operativo, Hoy.AddDays(-10), costo: 350m), Ct);
+        Assert.Equal(HttpStatusCode.NoContent, cierre.StatusCode);
+        Assert.True(Assert.Single((await editor.GetFromJsonAsync<List<ProgramadoDto>>($"/api/mantenimientos/programados?buscar={codigo}", Json, Ct))!).Vencido);
     }
 
     [Fact]

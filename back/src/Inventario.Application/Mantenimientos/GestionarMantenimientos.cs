@@ -158,7 +158,11 @@ internal sealed class AplicadorCierre(IAppDbContext db)
 
         mantenimiento.Cerrar(new DatosCierre(cierre.FechaFin, cierre.TrabajoRealizado, cierre.Resultado, cierre.Costo), hoy);
         activo.CambiarSituacion(cierre.EstadoActivoId, cierre.Conservacion);
-        activo.ProgramarMantenimiento(cierre.ProximoMantenimiento, cierre.FechaFin);
+        if (cierre.ProximoMantenimiento != activo.ProximoMantenimiento)
+        {
+            // Solo se valida si cambia: un correctivo puede dejar pendiente el preventivo que ya estaba vencido.
+            activo.ProgramarMantenimiento(cierre.ProximoMantenimiento, cierre.FechaFin);
+        }
         return Vacio.Valor;
     }
 }

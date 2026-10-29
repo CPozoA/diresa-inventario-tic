@@ -1,0 +1,70 @@
+<section class="tarjeta" aria-labelledby="titulo-mantenimiento">
+  <h2 id="titulo-mantenimiento">Mantenimiento</h2>
+
+  @if (enCurso(); as m) {
+    <div class="en-curso">
+      <span class="cabecera">
+        <span class="pastilla alerta">En curso</span>
+        <strong>{{ textoTipo(m.tipo) }}</strong>
+      </span>
+      <span>Desde el {{ formatoFecha(m.fechaInicio) }} · {{ haceCuanto(m.fechaInicio, hoy) }}</span>
+      <span>{{ quien(m).principal }} · {{ quien(m).detalle }}</span>
+      @if (m.detalle) {
+        <span class="atenuado detalle">{{ m.tipo === 'Correctivo' ? 'Problema' : 'Actividades' }}: {{ m.detalle }}</span>
+      }
+    </div>
+    @if (puedeGestionar()) {
+      <button mat-flat-button type="button" (click)="cerrar()">Cerrar mantenimiento</button>
+    }
+  } @else {
+    <dl class="filas">
+      <div><dt>Último preventivo</dt><dd>{{ formatoFecha(valorDe(datos)?.ultimoPreventivo) }}</dd></div>
+      <div>
+        <dt>Próximo preventivo</dt>
+        <dd>
+          @if (proximo(); as p) {
+            {{ formatoFecha(p.fecha) }}
+            @if (p.tono === 'mal') {
+              <span class="pastilla mal">Vencido</span>
+            }
+          } @else {
+            Sin programar
+          }
+        </dd>
+      </div>
+    </dl>
+    @if (puedeGestionar()) {
+      @if (deBaja()) {
+        <p class="atenuado nota">Un activo de baja no recibe mantenimiento.</p>
+      } @else {
+        <button mat-flat-button type="button" (click)="registrar()"><mat-icon>build</mat-icon> Registrar mantenimiento</button>
+      }
+    }
+  }
+</section>
+
+@if (historial().length > 0) {
+  <section class="tarjeta" aria-labelledby="titulo-historial-mantenimiento">
+    <h2 id="titulo-historial-mantenimiento">Historial de mantenimiento</h2>
+    <ol class="historial">
+      @for (m of historial(); track m.id) {
+        <li>
+          <span class="cabecera">
+            <span class="pastilla" [class]="tonoTipo(m.tipo)">{{ textoTipo(m.tipo) }}</span>
+            <span class="fecha">{{ fechas(m) }}</span>
+            @if (m.resultado === 'SinReparacion') {
+              <span class="pastilla mal">Sin reparación</span>
+            }
+          </span>
+          <span>{{ m.trabajoRealizado }}</span>
+          <span class="atenuado">
+            {{ quien(m).principal }}
+            @if (m.costo !== null) {
+              · {{ textoCosto(m.costo) }}
+            }
+          </span>
+        </li>
+      }
+    </ol>
+  </section>
+}

@@ -1,0 +1,103 @@
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// Espacio para que no se corten el subtítulo ni la etiqueta del primer campo.
+.contenido.mat-mdc-dialog-content {
+  padding-top: 8px;
+}
+
+.subtitulo {
+  margin-top: -8px;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: flex-end;
+}
+
+.campo-fecha {
+  width: 200px;
+}
+
+.campo-tecnico {
+  max-width: 360px;
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.etiqueta {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.rejilla-proveedor {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.8fr;
+  gap: 12px;
+}
+
+.numero {
+  text-align: right;
+}
+
+.bloque-cierre {
+  border-left: 3px solid #c7d3f5;
+  padding-left: 14px;
+}
+
+.activo-elegido {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--inv-borde);
+  border-radius: 8px;
+}
+
+.dos-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .atenuado {
+    font-size: 13px;
+  }
+}
+
+.codigo {
+  font-weight: 500;
+}
+
+.opcion .atenuado {
+  font-size: 13px;
+}
+
+.error {
+  color: var(--inv-mal);
+}
+
+@media (max-width: 560px) {
+  .rejilla-proveedor {
+    grid-template-columns: 1fr;
+  }
+}

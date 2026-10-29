@@ -1,0 +1,277 @@
+@use 'sass:list';
+
+// Ancho desde el que se usa la tabla (el mismo del inventario).
+$ancho-tabla: 784px;
+
+$colores: (
+  azul: (#2447c8, #e3e9fa, #2447c8),
+  rojo: (#c2362b, #f9dedb, #9b1c14),
+  ambar: (#e8b64a, #fbefd3, #7a4f00),
+);
+
+// ---------- Cifras ----------
+
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.cifra {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  min-width: 0;
+  background: var(--inv-superficie);
+  border: 1px solid var(--inv-borde);
+  border-top-width: 4px;
+  border-radius: 10px;
+  color: var(--inv-tinta);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: box-shadow 120ms;
+
+  &:hover {
+    box-shadow: 0 4px 14px rgba(23, 32, 38, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--inv-primario);
+    outline-offset: 2px;
+  }
+
+  .icono {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+  }
+
+  @each $nombre, $c in $colores {
+    &.#{$nombre} {
+      border-top-color: list.nth($c, 1);
+
+      .icono {
+        background: list.nth($c, 2);
+        color: list.nth($c, 3);
+      }
+
+      .cifra-valor {
+        color: list.nth($c, 3);
+      }
+    }
+  }
+}
+
+.cifra-textos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cifra-titulo {
+  color: #3a464e;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.cifra-valor {
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cifra-detalle {
+  color: var(--inv-atenuado);
+  font-size: 12px;
+}
+
+// ---------- Pestañas y filtros ----------
+
+.pestanas {
+  --mat-tab-header-divider-color: var(--inv-borde);
+  --mat-tab-header-divider-height: 1px;
+}
+
+// En pantallas angostas: cifras en una fila, sin icono ni detalle, y pestañas más juntas para que entren las tres.
+@media (max-width: 599px) {
+  .cifras {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .cifra {
+    padding: 10px;
+
+    .icono,
+    .cifra-detalle {
+      display: none;
+    }
+  }
+
+  .cifra-titulo {
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .cifra-valor {
+    font-size: 22px;
+  }
+
+  .pestanas .mat-mdc-tab-link {
+    min-width: 0;
+    padding: 0 12px;
+  }
+}
+
+.contenido-pestana {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+}
+
+.buscador {
+  flex: 1 1 280px;
+  max-width: 520px;
+}
+
+.filtro-tipo {
+  flex: 1 1 130px;
+  max-width: 200px;
+}
+
+.filtro-establecimiento {
+  flex: 1 1 180px;
+  max-width: 300px;
+}
+
+// ---------- Tabla ----------
+
+.dos-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  .atenuado {
+    font-size: 12px;
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.codigo {
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.fecha {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.celda-activo {
+  min-width: 190px;
+}
+
+.texto-largo {
+  max-width: 280px;
+  white-space: normal;
+}
+
+.accion {
+  text-align: end;
+  white-space: nowrap;
+}
+
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  color: var(--inv-atenuado);
+  text-align: center;
+
+  p {
+    margin: 0;
+    max-width: 480px;
+    line-height: 1.5;
+  }
+}
+
+mat-paginator {
+  border-top: 1px solid var(--inv-borde);
+}
+
+// ---------- Tarjetas (pantallas angostas) ----------
+
+.vista-tarjetas {
+  list-style: none;
+  margin: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-mantenimiento {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+
+  .cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+
+  .atenuado {
+    font-size: 13px;
+  }
+
+  .accion-tarjeta {
+    align-self: flex-start;
+    margin-top: 8px;
+  }
+}
+
+.vista-tabla {
+  display: none;
+}
+
+@media (min-width: $ancho-tabla) {
+  .vista-tabla {
+    display: block;
+  }
+
+  .vista-tarjetas {
+    display: none;
+  }
+}

@@ -240,6 +240,7 @@ table.tabla {
   &.alerta { background: var(--inv-alerta-fondo); color: var(--inv-alerta); }
   &.mal { background: var(--inv-mal-fondo); color: var(--inv-mal); }
   &.neutra { background: #e8ebe9; color: #3a464e; }
+  &.info { background: var(--inv-info-fondo); color: var(--inv-primario-oscuro); }
 }
 
 .chips .pastilla {

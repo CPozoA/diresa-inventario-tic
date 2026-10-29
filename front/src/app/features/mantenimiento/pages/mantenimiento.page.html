@@ -1,0 +1,322 @@
+<div class="pagina">
+  <header class="pagina-encabezado">
+    <div class="pagina-titulo">
+      <h1>Mantenimiento</h1>
+      <span class="atenuado">Preventivos y correctivos de {{ ambito() }}</span>
+    </div>
+    @if (puedeGestionar) {
+      <button mat-flat-button type="button" (click)="registrar()"><mat-icon>add</mat-icon> Registrar mantenimiento</button>
+    }
+  </header>
+
+  <!-- Cifras: cada tarjeta abre su pestaña. -->
+  <section class="cifras" aria-label="Cifras de mantenimiento">
+    <button type="button" class="cifra azul" [class.actual]="vista() === 'curso'" (click)="verVista('curso')">
+      <span class="icono" aria-hidden="true"><mat-icon>build</mat-icon></span>
+      <span class="cifra-textos">
+        <span class="cifra-titulo">En curso</span>
+        <span class="cifra-valor">{{ enCurso() }}</span>
+        <span class="cifra-detalle">Equipos en mantenimiento ahora</span>
+      </span>
+    </button>
+    <button type="button" class="cifra rojo" [class.actual]="vista() === 'programados'" (click)="verVista('programados')">
+      <span class="icono" aria-hidden="true"><mat-icon>event_busy</mat-icon></span>
+      <span class="cifra-textos">
+        <span class="cifra-titulo">Preventivos vencidos</span>
+        <span class="cifra-valor">{{ vencidos() }}</span>
+        <span class="cifra-detalle">Ya pasó la fecha programada</span>
+      </span>
+    </button>
+    <button type="button" class="cifra ambar" [class.actual]="vista() === 'programados'" (click)="verVista('programados')">
+      <span class="icono" aria-hidden="true"><mat-icon>event</mat-icon></span>
+      <span class="cifra-textos">
+        <span class="cifra-titulo">Próximos {{ dias() }} días</span>
+        <span class="cifra-valor">{{ proximos() }}</span>
+        <span class="cifra-detalle">Preventivos por hacer</span>
+      </span>
+    </button>
+  </section>
+
+  <nav mat-tab-nav-bar class="pestanas" [tabPanel]="panel" [mat-stretch-tabs]="false" mat-align-tabs="start" aria-label="Vistas">
+    <a mat-tab-link [active]="vista() === 'curso'" (click)="verVista('curso')">En curso · {{ enCurso() }}</a>
+    <a mat-tab-link [active]="vista() === 'programados'" (click)="verVista('programados')">Programados · {{ vencidos() + proximos() }}</a>
+    <a mat-tab-link [active]="vista() === 'historial'" (click)="verVista('historial')">Historial</a>
+  </nav>
+
+  <mat-tab-nav-panel #panel class="contenido-pestana">
+    <div class="filtros">
+      <mat-form-field subscriptSizing="dynamic" floatLabel="always" class="buscador">
+        <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+        <mat-label>Buscar</mat-label>
+        <input
+          matInput
+          autocomplete="off"
+          [placeholder]="vista() === 'programados' ? 'Código, marca o modelo' : 'Código, marca, modelo, técnico, proveedor u OS'"
+          [formControl]="busqueda"
+          (keydown.escape)="limpiarBusqueda()"
+        />
+        @if (busqueda.value) {
+          <button matSuffix mat-icon-button type="button" aria-label="Limpiar la búsqueda" (click)="limpiarBusqueda()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      @if (vista() !== 'programados') {
+        <mat-form-field subscriptSizing="dynamic" class="filtro-tipo">
+          <mat-label>Tipo</mat-label>
+          <mat-select [value]="filtros().tipo" (selectionChange)="filtrarTipo($event.value)">
+            <mat-option [value]="null">Todos</mat-option>
+            @for (t of tipos; track t) {
+              <mat-option [value]="t">{{ textoTipo(t) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (!todasLasSedes()) {
+        <app-selector-catalogo
+          class="filtro-establecimiento"
+          [formControl]="filtroEstablecimiento"
+          etiqueta="Establecimiento"
+          opcionVacia="Todos"
+          [compacto]="true"
+          [elementos]="valorDe(establecimientos) ?? []"
+        />
+      }
+    </div>
+
+    @if (error(); as e) {
+      <app-aviso>{{ e }}</app-aviso>
+    }
+
+    <section class="tarjeta-tabla">
+      @if (cargando()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+
+      @switch (vista()) {
+        @case ('programados') {
+          @if (filasProgramadas().length > 0) {
+            <div class="tabla-contenedor vista-tabla">
+              <table class="tabla">
+                <thead>
+                  <tr>
+                    <th scope="col">Activo</th>
+                    <th scope="col">Establecimiento</th>
+                    <th scope="col">Responsable</th>
+                    <th scope="col">Último preventivo</th>
+                    <th scope="col">Toca</th>
+                    @if (puedeGestionar) {
+                      <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (p of filasProgramadas(); track p.activoId) {
+                    <tr>
+                      <td class="celda-activo">
+                        <span class="dos-lineas">
+                          <a class="codigo mono" [routerLink]="['/inventario', p.activoId]">{{ p.codigoPatrimonial }}</a>
+                          <span class="atenuado">{{ equipo(p) }}</span>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="dos-lineas">
+                          <span>{{ p.establecimiento }}</span>
+                          @if (todasLasSedes()) {
+                            <span class="atenuado">{{ p.sedeNombre }}</span>
+                          }
+                        </span>
+                      </td>
+                      <td>{{ p.responsable ?? '—' }}</td>
+                      <td class="fecha">{{ p.ultimoPreventivo ? formatoFecha(p.ultimoPreventivo) : 'Nunca' }}</td>
+                      <td>
+                        <span class="dos-lineas">
+                          <span class="fecha">{{ formatoFecha(p.proximoMantenimiento) }}</span>
+                          <span><span class="pastilla" [class]="cuando(p).tono">{{ cuando(p).texto }}</span></span>
+                        </span>
+                      </td>
+                      @if (puedeGestionar) {
+                        <td class="accion">
+                          <button mat-stroked-button type="button" (click)="registrar(p.activoId)">Registrar preventivo</button>
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <ul class="vista-tarjetas" aria-label="Preventivos programados">
+              @for (p of filasProgramadas(); track p.activoId) {
+                <li class="tarjeta-mantenimiento">
+                  <span class="cabecera">
+                    <a class="codigo mono" [routerLink]="['/inventario', p.activoId]">{{ p.codigoPatrimonial }}</a>
+                    <span class="pastilla" [class]="cuando(p).tono">{{ cuando(p).texto }}</span>
+                  </span>
+                  <span class="atenuado">{{ equipo(p) }}</span>
+                  <span class="atenuado">
+                    {{ p.establecimiento }}
+                    @if (todasLasSedes()) {
+                      · {{ p.sedeNombre }}
+                    }
+                    @if (p.responsable) {
+                      · {{ p.responsable }}
+                    }
+                  </span>
+                  <span class="atenuado">
+                    Programado para el {{ formatoFecha(p.proximoMantenimiento) }} · último:
+                    {{ p.ultimoPreventivo ? formatoFecha(p.ultimoPreventivo) : 'nunca' }}
+                  </span>
+                  @if (puedeGestionar) {
+                    <button mat-stroked-button type="button" class="accion-tarjeta" (click)="registrar(p.activoId)">Registrar preventivo</button>
+                  }
+                </li>
+              }
+            </ul>
+          } @else if (!cargando() && !error()) {
+            <div class="vacio">
+              @if (conFiltros()) {
+                <p>Ningún preventivo coincide con la búsqueda.</p>
+                <button mat-stroked-button type="button" (click)="quitarFiltros()">Quitar filtros</button>
+              } @else {
+                <p>No hay preventivos vencidos ni por hacer en los próximos {{ dias() }} días. La fecha del próximo se fija al cerrar cada mantenimiento.</p>
+              }
+            </div>
+          }
+        }
+
+        @default {
+          @if (filas().length > 0) {
+            <div class="tabla-contenedor vista-tabla">
+              <table class="tabla">
+                <thead>
+                  <tr>
+                    <th scope="col">Activo</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">{{ vista() === 'curso' ? 'Desde' : 'Fechas' }}</th>
+                    <th scope="col">{{ vista() === 'curso' ? 'Motivo' : 'Trabajo realizado' }}</th>
+                    <th scope="col">Quién</th>
+                    @if (vista() === 'historial') {
+                      <th scope="col">Resultado</th>
+                      <th scope="col" class="numero">Costo</th>
+                    } @else if (puedeGestionar) {
+                      <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of filas(); track m.id) {
+                    <tr>
+                      <td class="celda-activo">
+                        <span class="dos-lineas">
+                          <a class="codigo mono" [routerLink]="['/inventario', m.activoId]">{{ m.codigoPatrimonial }}</a>
+                          <span class="atenuado">{{ equipo(m) }}</span>
+                          <span class="atenuado">
+                            {{ m.establecimiento }}
+                            @if (todasLasSedes()) {
+                              · {{ m.sedeNombre }}
+                            }
+                          </span>
+                        </span>
+                      </td>
+                      <td><span class="pastilla" [class]="tonoTipo(m.tipo)">{{ textoTipo(m.tipo) }}</span></td>
+                      <td>
+                        @if (vista() === 'curso') {
+                          <span class="dos-lineas">
+                            <span class="fecha">{{ formatoFecha(m.fechaInicio) }}</span>
+                            <span class="atenuado">{{ haceCuanto(m.fechaInicio, hoy) }}</span>
+                          </span>
+                        } @else {
+                          <span class="fecha">{{ fechas(m) }}</span>
+                        }
+                      </td>
+                      <td class="texto-largo">{{ (vista() === 'curso' ? m.detalle : m.trabajoRealizado) ?? '—' }}</td>
+                      <td>
+                        <span class="dos-lineas">
+                          <span>{{ quien(m).principal }}</span>
+                          <span class="atenuado">{{ quien(m).detalle }}</span>
+                        </span>
+                      </td>
+                      @if (vista() === 'historial') {
+                        <td><span class="pastilla" [class]="tonoResultado(m.resultado)">{{ textoResultado(m.resultado) }}</span></td>
+                        <td class="numero">{{ textoCosto(m.costo) }}</td>
+                      } @else if (puedeGestionar) {
+                        <td class="accion">
+                          <button mat-stroked-button type="button" (click)="cerrar(m)">Cerrar</button>
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <ul class="vista-tarjetas" [attr.aria-label]="vista() === 'curso' ? 'Mantenimientos en curso' : 'Historial de mantenimientos'">
+              @for (m of filas(); track m.id) {
+                <li class="tarjeta-mantenimiento">
+                  <span class="cabecera">
+                    <a class="codigo mono" [routerLink]="['/inventario', m.activoId]">{{ m.codigoPatrimonial }}</a>
+                    <span class="chips">
+                      <span class="pastilla" [class]="tonoTipo(m.tipo)">{{ textoTipo(m.tipo) }}</span>
+                      @if (vista() === 'historial') {
+                        <span class="pastilla" [class]="tonoResultado(m.resultado)">{{ textoResultado(m.resultado) }}</span>
+                      }
+                    </span>
+                  </span>
+                  <span class="atenuado">{{ equipo(m) }}</span>
+                  <span class="atenuado">
+                    {{ m.establecimiento }}
+                    @if (todasLasSedes()) {
+                      · {{ m.sedeNombre }}
+                    }
+                  </span>
+                  @if (vista() === 'curso') {
+                    @if (m.detalle) {
+                      <span>{{ m.detalle }}</span>
+                    }
+                    <span class="atenuado">Desde el {{ formatoFecha(m.fechaInicio) }} ({{ haceCuanto(m.fechaInicio, hoy) }}) · {{ quien(m).principal }}</span>
+                    @if (puedeGestionar) {
+                      <button mat-stroked-button type="button" class="accion-tarjeta" (click)="cerrar(m)">Cerrar mantenimiento</button>
+                    }
+                  } @else {
+                    @if (m.trabajoRealizado) {
+                      <span>{{ m.trabajoRealizado }}</span>
+                    }
+                    <span class="atenuado">
+                      {{ fechas(m) }} · {{ quien(m).principal }}
+                      @if (m.costo !== null) {
+                        · {{ textoCosto(m.costo) }}
+                      }
+                    </span>
+                  }
+                </li>
+              }
+            </ul>
+          } @else if (!cargando() && !error()) {
+            <div class="vacio">
+              @if (conFiltros()) {
+                <p>Ningún mantenimiento coincide con la búsqueda.</p>
+                <button mat-stroked-button type="button" (click)="quitarFiltros()">Quitar filtros</button>
+              } @else if (vista() === 'curso') {
+                <p>No hay equipos en mantenimiento ahora.</p>
+              } @else {
+                <p>Todavía no hay mantenimientos cerrados.</p>
+              }
+            </div>
+          }
+
+          @if (total() > tamanoPagina) {
+            <mat-paginator
+              [length]="total()"
+              [pageIndex]="filtros().pagina - 1"
+              [pageSize]="tamanoPagina"
+              [hidePageSize]="true"
+              (page)="cambiarPagina($event)"
+              aria-label="Páginas de mantenimientos"
+            />
+          }
+        }
+      }
+    </section>
+  </mat-tab-nav-panel>
+</div>

@@ -111,6 +111,7 @@
   grid-template-areas:
     'fotos'
     'asignacion'
+    'mantenimiento'
     'principal'
     'lateral';
   gap: 16px;
@@ -134,14 +135,20 @@
   min-width: 0;
 }
 
+.mantenimiento {
+  grid-area: mantenimiento;
+  min-width: 0;
+}
+
 @media (min-width: 1100px) {
   .columnas {
     grid-template-columns: minmax(0, 1fr) 340px;
     grid-template-areas:
       'principal fotos'
       'principal asignacion'
+      'principal mantenimiento'
       'principal lateral';
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto auto auto 1fr;
   }
 }
 

@@ -197,6 +197,11 @@
       <!-- Quién lo tiene (D51); el responsable escrito antes se muestra ahí mientras no haya asignación (D52). -->
       <app-asignacion-activo class="asignacion" [ficha]="f" [puedeEditar]="puedeEditarFotos" (cambio)="recurso.reload()" />
 
+      <!-- Mantenimiento (D53): en curso, último y próximo preventivo, historial. -->
+      @if (puedeVerMantenimiento) {
+        <app-mantenimiento-activo class="mantenimiento" [ficha]="f" [puedeGestionar]="puedeGestionarMantenimiento" (cambio)="recurso.reload()" />
+      }
+
       <div class="columna lateral">
         @if (ciclo(); as c) {
           <section class="tarjeta">

@@ -21,6 +21,7 @@ import { rutaInternaSegura } from '../../../core/rutas';
 import { AvisoComponent } from '../../../shared/ui/aviso.component';
 import { confirmar } from '../../../shared/ui/confirmacion.dialog';
 import { AsignacionActivoComponent } from '../../asignaciones/components/asignacion-activo.component';
+import { MantenimientoActivoComponent } from '../../mantenimiento/components/mantenimiento-activo.component';
 import { GaleriaFotosComponent } from '../components/galeria-fotos.component';
 import { abrirVisorFotos } from '../components/visor-fotos.dialog';
 import { ordenarFotos, urlFoto } from '../data/fotos';
@@ -62,6 +63,7 @@ const LISTA = '/inventario';
     GaleriaFotosComponent,
     SiTienePermisoDirective,
     AsignacionActivoComponent,
+    MantenimientoActivoComponent,
   ],
   templateUrl: './ficha-activo.page.html',
   styleUrl: './ficha-activo.page.scss',
@@ -97,7 +99,10 @@ export class FichaActivoPage {
   protected readonly aNumero = aNumero;
 
   protected readonly eliminando = signal(false);
-  protected readonly puedeEditarFotos = inject(SesionStore).tienePermiso(Permisos.Activos.Editar);
+  private readonly sesion = inject(SesionStore);
+  protected readonly puedeEditarFotos = this.sesion.tienePermiso(Permisos.Activos.Editar);
+  protected readonly puedeVerMantenimiento = this.sesion.tienePermiso(Permisos.Mantenimiento.Ver);
+  protected readonly puedeGestionarMantenimiento = this.sesion.tienePermiso(Permisos.Mantenimiento.Gestionar);
 
   protected readonly recurso = resource({
     params: () => ({ id: this.id() }),

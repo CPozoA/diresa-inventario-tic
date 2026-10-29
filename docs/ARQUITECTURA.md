@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.29 · 28/10/2026 · Cambios: mantenimiento en la API (Paso 10-1, D53, §5.13).
+> Versión 0.30 · 28/10/2026 · Cambios: pantallas de mantenimiento (Paso 10-2, §5.13); al cerrar, el próximo preventivo solo se valida si cambia.
 
 ---
 
@@ -371,7 +371,8 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 - **Endpoints:** `GET /api/mantenimientos?vista=EnCurso|Historial` (paginado, con `buscar`, `tipo`, `establecimientoId`), `GET /api/mantenimientos/programados?dias=30` (vencidos y próximos, sin los de baja ni los que tienen uno en curso), `GET /api/mantenimientos/cifras`, `GET /api/mantenimientos/tecnicos`, `POST /api/mantenimientos/{id}/cerrar`, `GET /api/activos/{id}/mantenimientos` (en curso, último y próximo preventivo, historial) y `POST /api/activos/{id}/mantenimientos` (con `cierre` opcional para registrarlo terminado). Consultar: `Mantenimiento.Ver`; registrar y cerrar: `Mantenimiento.Gestionar`.
 - **Resumen:** "Requieren atención" suma los preventivos vencidos (después de los en mantenimiento); el inventario filtra con `?atencion=MantenimientoVencido`.
 - **Errores:** `Mantenimientos.*` (`YaHayUnoAbierto` 409, `ActivoDeBaja` y `YaCerrado` 422, `TecnicoInvalido`, `EstadoInvalido` y `FechaFutura` 400).
-- **Pantallas (Paso 10-2):** según los bosquejos del Paso 10: página Mantenimiento (en curso, programados, historial), sección en la ficha del activo y diálogos para registrar y cerrar.
+- **Cierre y próximo preventivo:** el próximo solo se valida (posterior al término) si cambia; así un correctivo puede cerrarse dejando el preventivo vencido que ya tenía, que sigue en Programados.
+- **Pantallas (Paso 10-2):** `/mantenimiento` con tres cifras (en curso, preventivos vencidos, próximos 30 días) y pestañas En curso (con Cerrar), Programados (vencidos y próximos, con Registrar preventivo) e Historial (resultado y costo); búsqueda, tipo y establecimiento quedan en la dirección. En la ficha del activo, sección Mantenimiento (el en curso con Cerrar, o último y próximo preventivo con Registrar) e historial. Diálogos Registrar (con búsqueda de activo si no viene dado, técnico propuesto = el usuario, "Ya terminó" para registrarlo cerrado) y Cerrar (propone estado según el resultado y el próximo a 6 meses en un preventivo). En celular, tarjetas.
 
 ---
 
