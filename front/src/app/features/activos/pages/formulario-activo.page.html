@@ -185,6 +185,37 @@
             }
           </mat-button-toggle-group>
         </div>
+        <!-- Responsable: se asigna a una persona del personal de la red (D51); opcional al registrar. -->
+        @if (puedeAsignar && !esEdicion()) {
+          <div class="responsable" [formGroup]="asignacion">
+            <span class="etiqueta">Responsable <span class="opcional">· opcional</span></span>
+            @if (establecimiento(); as e) {
+              <app-buscador-persona class="persona-asignada" etiqueta="Asignar a" [sedeId]="e.sedeId" [(elegido)]="personaAsignada" />
+              @if (personaAsignada()) {
+                <div class="campos campos-asignacion">
+                  <mat-form-field>
+                    <mat-label>Fecha de entrega</mat-label>
+                    <input matInput type="date" formControlName="fecha" [max]="hoy" required />
+                    <mat-error>Elija una fecha que no sea posterior a hoy.</mat-error>
+                  </mat-form-field>
+                  <mat-form-field>
+                    <mat-label>Conservación al entregar</mat-label>
+                    <mat-select formControlName="conservacion" required>
+                      @for (c of listas.value()?.conservaciones ?? []; track c.valor) {
+                        <mat-option [value]="c.valor">{{ c.texto }}</mat-option>
+                      }
+                    </mat-select>
+                    <mat-hint>Se toma de la conservación de arriba; puede cambiarla.</mat-hint>
+                  </mat-form-field>
+                </div>
+              } @else {
+                <span class="nota">Búsquelo por DNI o por nombre. Si nadie lo tiene todavía, déjelo vacío.</span>
+              }
+            } @else {
+              <span class="nota">Elija primero el establecimiento: se asigna al personal de su red.</span>
+            }
+          </div>
+        }
         <mat-form-field class="ancho">
           <mat-label>Observaciones</mat-label>
           <textarea matInput formControlName="observaciones" maxlength="1000" rows="2"></textarea>
@@ -594,39 +625,6 @@
       @if (puedeFotos) {
         <section class="tarjeta" aria-labelledby="titulo-fotos">
           <app-fotos-formulario [edicion]="fotos" [bloqueado]="guardando()" />
-        </section>
-      }
-
-      <!-- Asignación opcional al registrar (D51). -->
-      @if (puedeAsignar && !esEdicion()) {
-        <section class="tarjeta" aria-labelledby="titulo-asignacion" [formGroup]="asignacion">
-          <div class="titulo-seccion">
-            <h2 id="titulo-asignacion">Asignación <span class="opcional">· opcional</span></h2>
-            <span class="nota">Si el equipo se entrega a alguien al registrarlo, búsquelo por DNI o por nombre. Si no, déjelo sin asignar.</span>
-          </div>
-          @if (establecimiento(); as e) {
-            <app-buscador-persona class="persona-asignada" etiqueta="Asignar a" [sedeId]="e.sedeId" [(elegido)]="personaAsignada" />
-            @if (personaAsignada()) {
-              <div class="campos campos-asignacion">
-                <mat-form-field>
-                  <mat-label>Fecha de entrega</mat-label>
-                  <input matInput type="date" formControlName="fecha" [max]="hoy" required />
-                  <mat-error>Elija una fecha que no sea posterior a hoy.</mat-error>
-                </mat-form-field>
-                <mat-form-field>
-                  <mat-label>Conservación al entregar</mat-label>
-                  <mat-select formControlName="conservacion" required>
-                    @for (c of listas.value()?.conservaciones ?? []; track c.valor) {
-                      <mat-option [value]="c.valor">{{ c.texto }}</mat-option>
-                    }
-                  </mat-select>
-                  <mat-hint>Se toma de «Ubicación y estado»; puede cambiarla.</mat-hint>
-                </mat-form-field>
-              </div>
-            }
-          } @else {
-            <p class="nota">Elija primero el establecimiento: se asigna al personal de su red.</p>
-          }
         </section>
       }
 
