@@ -144,6 +144,9 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<DateOnly?>("ProximoMantenimiento")
+                        .HasColumnType("date");
+
                     b.Property<string>("PuertosGuardados")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)")
@@ -211,6 +214,8 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .IsUnique();
 
                     b.HasIndex("SedeId", "NumeroSerie");
+
+                    b.HasIndex("SedeId", "ProximoMantenimiento");
 
                     b.ToTable("Activos", "inventario");
                 });
@@ -765,6 +770,88 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.ToTable("Establecimientos", "organizacion");
                 });
 
+            modelBuilder.Entity("Inventario.Domain.Mantenimientos.Mantenimiento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ActivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("Costo")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Detalle")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Ejecutor")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateOnly?>("FechaFin")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("FechaInicio")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("OrdenServicio")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Proveedor")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Resultado")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("SedeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("TecnicoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("TrabajoRealizado")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActivoId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Mantenimientos_ActivoAbierto")
+                        .HasFilter("[FechaFin] IS NULL");
+
+                    b.HasIndex("TecnicoId");
+
+                    b.HasIndex("ActivoId", "FechaInicio");
+
+                    b.HasIndex("SedeId", "FechaFin", "FechaInicio");
+
+                    b.ToTable("Mantenimientos", "inventario");
+                });
+
             modelBuilder.Entity("Inventario.Domain.Personal.Persona", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1271,6 +1358,26 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .HasForeignKey("SedeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Mantenimientos.Mantenimiento", b =>
+                {
+                    b.HasOne("Inventario.Domain.Activos.Activo", null)
+                        .WithMany()
+                        .HasForeignKey("ActivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Sedes.Sede", null)
+                        .WithMany()
+                        .HasForeignKey("SedeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Usuarios.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("TecnicoId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Inventario.Domain.Personal.Persona", b =>

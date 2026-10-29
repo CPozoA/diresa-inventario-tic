@@ -130,6 +130,7 @@ export const TEXTO_ATENCION: Readonly<Record<NonNullable<MotivoAtencion>, string
   ProximoARenovar: 'Próximos a renovar',
   EnMantenimiento: 'En mantenimiento',
   GarantiaVencida: 'Garantía vencida',
+  MantenimientoVencido: 'Preventivo vencido',
 };
 
 export const ATENCIONES = Object.keys(TEXTO_ATENCION) as readonly NonNullable<MotivoAtencion>[];
@@ -141,6 +142,7 @@ export const TONO_ATENCION: Readonly<Record<NonNullable<MotivoAtencion>, Tono>> 
   ProximoARenovar: 'alerta',
   EnMantenimiento: 'alerta',
   GarantiaVencida: 'alerta',
+  MantenimientoVencido: 'alerta',
 };
 
 /** Filtro "fichas por completar" del inventario. */

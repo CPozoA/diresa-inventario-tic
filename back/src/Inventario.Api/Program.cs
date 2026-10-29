@@ -77,6 +77,7 @@ api.MapActivosEndpoints();
 api.MapFotosActivoEndpoints();
 api.MapPersonalEndpoints();
 api.MapAsignacionesEndpoints();
+api.MapMantenimientosEndpoints();
 api.MapResumenEndpoints();
 
 await app.Services.InicializarBaseDatosAsync();

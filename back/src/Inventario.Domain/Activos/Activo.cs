@@ -194,6 +194,12 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
     /// </summary>
     public DateOnly? FechaRenovacion { get; private set; }
 
+    /// <summary>
+    /// Próximo mantenimiento preventivo (D53). Se fija al cerrar un mantenimiento; nulo = sin programar. Pasada la fecha,
+    /// el preventivo está vencido.
+    /// </summary>
+    public DateOnly? ProximoMantenimiento { get; private set; }
+
     // Características técnicas.
     public Guid? ProcesadorId { get; private set; }
 
@@ -321,6 +327,13 @@ public sealed partial class Activo : EntidadAuditable, IPerteneceASede
 
         EstadoActivoId = estadoActivoId;
         Conservacion = conservacion;
+    }
+
+    /// <summary>Programa el próximo preventivo (nulo = sin programar). Debe ser posterior a <paramref name="desde"/>.</summary>
+    public void ProgramarMantenimiento(DateOnly? fecha, DateOnly desde)
+    {
+        Exigir(fecha is not DateOnly f || f > desde, "El próximo preventivo debe ser posterior a la fecha de término.");
+        ProximoMantenimiento = fecha;
     }
 
     /// <summary>Antigüedad, garantía y renovación a la fecha indicada (hoy, en la zona horaria del sistema).</summary>

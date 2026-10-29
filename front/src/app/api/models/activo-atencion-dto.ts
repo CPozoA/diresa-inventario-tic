@@ -12,6 +12,7 @@ export interface ActivoAtencionDto {
   marca: string;
   modelo: string;
   motivo: MotivoAtencion;
+  proximoMantenimiento: (string | null);
   tipoActivo: string;
   vidaUtilAnios: (number | string | null);
 }

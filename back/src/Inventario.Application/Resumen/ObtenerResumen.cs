@@ -63,9 +63,13 @@ public sealed record ActivoAtencionDto(
     MotivoAtencion Motivo,
     DateOnly? FechaAdquisicion,
     int? VidaUtilAnios,
-    DateOnly? FechaRenovacion);
+    DateOnly? FechaRenovacion,
+    DateOnly? ProximoMantenimiento);
 
-/// <summary>Activos que requieren atención: primero los fuera de servicio, luego para renovar, próximos y en mantenimiento.</summary>
+/// <summary>
+/// Activos que requieren atención: primero los fuera de servicio, luego para renovar, próximos, en mantenimiento y con el
+/// preventivo vencido.
+/// </summary>
 /// <param name="Total">Todos los que la requieren (para "Ver los …").</param>
 /// <param name="Primeros">Los primeros (hasta 6).</param>
 public sealed record AtencionResumenDto(int Total, IReadOnlyList<ActivoAtencionDto> Primeros);
@@ -133,7 +137,7 @@ internal sealed class ObtenerResumenHandler(IAppDbContext db, IUsuarioActual usu
 
     /// <summary>Orden de "Requieren atención".</summary>
     private static readonly MotivoAtencion[] Prioridad =
-        [MotivoAtencion.FueraDeServicio, MotivoAtencion.Renovar, MotivoAtencion.ProximoARenovar, MotivoAtencion.EnMantenimiento];
+        [MotivoAtencion.FueraDeServicio, MotivoAtencion.Renovar, MotivoAtencion.ProximoARenovar, MotivoAtencion.EnMantenimiento, MotivoAtencion.MantenimientoVencido];
 
     public async Task<Result<ResumenDto>> Handle(ObtenerResumenQuery query, CancellationToken cancellationToken)
     {
@@ -295,9 +299,12 @@ internal sealed class ObtenerResumenHandler(IAppDbContext db, IUsuarioActual usu
             }
 
             var consulta = activos.ConMotivo(db, motivo, hoy);
-            consulta = motivo is MotivoAtencion.Renovar or MotivoAtencion.ProximoARenovar
-                ? consulta.OrderBy(a => a.FechaRenovacion).ThenBy(a => a.CodigoPatrimonial)
-                : consulta.OrderBy(a => a.CodigoPatrimonial);
+            consulta = motivo switch
+            {
+                MotivoAtencion.Renovar or MotivoAtencion.ProximoARenovar => consulta.OrderBy(a => a.FechaRenovacion).ThenBy(a => a.CodigoPatrimonial),
+                MotivoAtencion.MantenimientoVencido => consulta.OrderBy(a => a.ProximoMantenimiento).ThenBy(a => a.CodigoPatrimonial),
+                _ => consulta.OrderBy(a => a.CodigoPatrimonial),
+            };
 
             var ya = primeros.Select(p => p.Id).ToList();
             var filas = await (
@@ -317,13 +324,19 @@ internal sealed class ObtenerResumenHandler(IAppDbContext db, IUsuarioActual usu
                     motivo,
                     a.FechaAdquisicion,
                     a.VidaUtilAnios,
-                    a.FechaRenovacion)).ToListAsync(ct);
+                    a.FechaRenovacion,
+                    a.ProximoMantenimiento)).ToListAsync(ct);
 
             // El join no conserva el orden: se vuelve a ordenar igual que la consulta.
-            primeros.AddRange((motivo is MotivoAtencion.Renovar or MotivoAtencion.ProximoARenovar
-                    ? filas.OrderBy(f => f.FechaRenovacion).ThenBy(f => f.CodigoPatrimonial, StringComparer.Ordinal)
-                    : filas.OrderBy(f => f.CodigoPatrimonial, StringComparer.Ordinal))
-                .Take(MaximoEnLista - primeros.Count));
+            var ordenadas = motivo switch
+            {
+                MotivoAtencion.Renovar or MotivoAtencion.ProximoARenovar =>
+                    filas.OrderBy(f => f.FechaRenovacion).ThenBy(f => f.CodigoPatrimonial, StringComparer.Ordinal),
+                MotivoAtencion.MantenimientoVencido =>
+                    filas.OrderBy(f => f.ProximoMantenimiento).ThenBy(f => f.CodigoPatrimonial, StringComparer.Ordinal),
+                _ => filas.OrderBy(f => f.CodigoPatrimonial, StringComparer.Ordinal),
+            };
+            primeros.AddRange(ordenadas.Take(MaximoEnLista - primeros.Count));
         }
 
         return new AtencionResumenDto(total, primeros);

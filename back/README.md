@@ -398,6 +398,29 @@ quien lo tiene asignado o, si nadie, el texto escrito antes (`responsableAsignad
 también por nombre o DNI de la persona. "Sin responsable" del resumen y `falta=Responsable` cuentan los activos sin
 asignación (sin los que están en almacén), así que esa cifra sube hasta que se asignen los equipos.
 
+## Paso 10-1: mantenimiento (D53)
+
+Este paso **cambia el modelo**: agrega la tabla `inventario.Mantenimientos` y la columna `ProximoMantenimiento` a
+`inventario.Activos`. Desde `back`, con la API detenida:
+
+```powershell
+dotnet ef migrations add Mantenimiento --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/mantenimientos?vista=EnCurso\|Historial&buscar=&tipo=&establecimientoId=&pagina=&tamanoPagina=&sedeId=` | `Mantenimiento.Ver` | En curso (el más antiguo primero) o historial (el más reciente primero), paginado |
+| `GET /api/mantenimientos/programados?dias=30&buscar=&establecimientoId=&sedeId=` | `Mantenimiento.Ver` | Activos con el preventivo vencido o en los próximos días |
+| `GET /api/mantenimientos/cifras?dias=30&sedeId=` | `Mantenimiento.Ver` | En curso, vencidos y próximos |
+| `GET /api/mantenimientos/tecnicos?sedeId=` | `Mantenimiento.Gestionar` | Usuarios activos de la red que gestionan mantenimientos |
+| `GET /api/activos/{id}/mantenimientos` | `Mantenimiento.Ver` | En curso, último y próximo preventivo, e historial del activo |
+| `POST /api/activos/{id}/mantenimientos` | `Mantenimiento.Gestionar` | `{ tipo, fechaInicio, detalle, ejecutor: "PersonalTi"\|"Proveedor", tecnicoId \| proveedor, ordenServicio, costo, cierre? }`. Abierto, el activo pasa a "En mantenimiento" |
+| `POST /api/mantenimientos/{id}/cerrar` | `Mantenimiento.Gestionar` | `{ fechaFin, trabajoRealizado, resultado: "Operativo"\|"SinReparacion", costo, estadoActivoId, conservacion, proximoMantenimiento }` |
+
+El resumen y `GET /api/activos?atencion=` tienen el motivo nuevo `MantenimientoVencido` (preventivo vencido sin
+mantenimiento en curso).
+
 ### Correo en producción
 
 En el servidor se configura `Correo:Modo = Smtp` y los datos del SMTP (`Servidor`, `Puerto`, `Remitente`, `Usuario`,
@@ -420,9 +443,9 @@ dotnet test
 
 | Proyecto | Qué comprueba |
 |---|---|
-| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles, catálogos, establecimientos (datos válidos, ubigeo, reconocimiento de la red), activos (ficha, IP y MAC, discos y RAM, garantía y renovación), fotos (formato por el contenido, limpieza de EXIF, límites), grupo de cada estado por su nombre, personal (DNI de 8 dígitos, nombres en mayúsculas, verificados que no se corrigen a mano) y asignaciones (fechas de entrega y devolución) |
+| `Domain.Tests` | Códigos de sede, catálogo de permisos, roles del sistema e iniciales, reglas de asignación de roles, catálogos, establecimientos (datos válidos, ubigeo, reconocimiento de la red), activos (ficha, IP y MAC, discos y RAM, garantía y renovación), fotos (formato por el contenido, limpieza de EXIF, límites), grupo de cada estado por su nombre, personal (DNI de 8 dígitos, nombres en mayúsculas, verificados que no se corrigen a mano) y asignaciones (fechas de entrega y devolución), mantenimiento (correctivo con problema, técnico o proveedor, cierre con fechas y costo) y próximo preventivo |
 | `ArchitectureTests` | Que el dominio no dependa de nada, que Application no dependa de Infrastructure ni de la Api, que los handlers sean internos |
-| `Api.IntegrationTests` | Protección CSRF (sin token → 400; el token de antes de iniciar sesión no sirve después). Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan. Fotos (7D-1): sin EXIF al descargar, principal, máximo de 6, solo imágenes, permisos, otra red recibe 404, los archivos se borran con la foto y con el activo. Resumen (8-1): cifras exactas en una red nueva, los de baja fuera de las alertas, los filtros de la lista coinciden con el resumen, tabla por red solo para el superadministrador, solo él cambia el grupo de un estado. Personal y asignaciones (9-1): nombres de RENIEC o escritos a mano sin verificar, DNI único por red, verificar después, otra red no ve al personal, solo `Activos.Editar` registra; asignar, reasignar (cierra la anterior), devolver (queda en almacén y deja de faltar responsable), personal de otra red o cesado, activo de baja, fechas |
+| `Api.IntegrationTests` | Protección CSRF (sin token → 400; el token de antes de iniciar sesión no sirve después). Sin sesión → 401; sin permiso → 403; contraseña temporal → 403; un usuario de Huanta no ve ni puede tocar datos de Puquio; nadie cambia la sede de un registro; una petición anónima no ve nada. Gestión (4B): nadie otorga permisos que no tiene, nadie gestiona a quien tiene más permisos, solo el superadmin gestiona administradores y sedes, desactivar y restablecer funcionan. Fotos (7D-1): sin EXIF al descargar, principal, máximo de 6, solo imágenes, permisos, otra red recibe 404, los archivos se borran con la foto y con el activo. Resumen (8-1): cifras exactas en una red nueva, los de baja fuera de las alertas, los filtros de la lista coinciden con el resumen, tabla por red solo para el superadministrador, solo él cambia el grupo de un estado. Personal y asignaciones (9-1): nombres de RENIEC o escritos a mano sin verificar, DNI único por red, verificar después, otra red no ve al personal, solo `Activos.Editar` registra; asignar, reasignar (cierra la anterior), devolver (queda en almacén y deja de faltar responsable), personal de otra red o cesado, activo de baja, fechas. Mantenimiento (10-1): el activo pasa a "En mantenimiento" y al cerrar queda como se indica, uno abierto a la vez, preventivo terminado que programa el siguiente, vencido en programados y en atención (no si está en curso), técnicos de la red con permiso, activo de baja, otra red |
 
 Para ejecutar solo un proyecto: `dotnet test --project tests/Inventario.Domain.Tests`.
 

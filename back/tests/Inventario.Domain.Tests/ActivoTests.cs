@@ -202,4 +202,18 @@ public sealed class ActivoTests
         Assert.Equal(codigo, activo.CodigoPatrimonial);
         Assert.Throws<DominioException>(() => activo.CambiarSituacion(Guid.Empty, Conservacion.Bueno));
     }
+
+    [Fact]
+    public void ProgramarMantenimiento_DebeSerPosteriorAlTermino_YSePuedeQuitar()
+    {
+        var activo = Crear();
+
+        activo.ProgramarMantenimiento(new DateOnly(2027, 4, 28), new DateOnly(2026, 10, 28));
+        Assert.Equal(new DateOnly(2027, 4, 28), activo.ProximoMantenimiento);
+
+        Assert.Throws<DominioException>(() => activo.ProgramarMantenimiento(new DateOnly(2026, 10, 28), new DateOnly(2026, 10, 28)));
+
+        activo.ProgramarMantenimiento(null, new DateOnly(2026, 10, 28));
+        Assert.Null(activo.ProximoMantenimiento);
+    }
 }

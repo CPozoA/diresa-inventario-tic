@@ -6,11 +6,11 @@ namespace Inventario.Application.Activos.Consultar;
 
 /// <summary>
 /// Por qué un activo requiere atención (resumen del inicio, D49). Los activos de baja nunca la requieren.
-/// Como filtro del inventario, <see cref="Cualquiera"/> reúne los cuatro primeros motivos.
+/// Como filtro del inventario, <see cref="Cualquiera"/> reúne todos los motivos menos la garantía vencida.
 /// </summary>
 public enum MotivoAtencion
 {
-    /// <summary>Fuera de servicio, para renovar, próximo a renovar o en mantenimiento.</summary>
+    /// <summary>Fuera de servicio, para renovar, próximo a renovar, en mantenimiento o con el preventivo vencido.</summary>
     Cualquiera,
 
     /// <summary>Su estado es del grupo "fuera de servicio" (Inoperativo…).</summary>
@@ -27,6 +27,11 @@ public enum MotivoAtencion
 
     /// <summary>La garantía ya venció (solo como filtro: no se lista como atención, son demasiados).</summary>
     GarantiaVencida,
+
+    /// <summary>
+    /// Su próximo mantenimiento preventivo ya pasó (D53) y no tiene un mantenimiento en curso.
+    /// </summary>
+    MantenimientoVencido,
 }
 
 /// <summary>Dato que le falta a la ficha de un activo (resumen del inicio, "Fichas por completar").</summary>
@@ -72,8 +77,11 @@ internal static class AlertasActivo
             MotivoAtencion.Renovar => vigentes.Where(a => a.FechaRenovacion <= hoy),
             MotivoAtencion.ProximoARenovar => vigentes.Where(a => a.FechaRenovacion > hoy && a.FechaRenovacion <= enUnAnio),
             MotivoAtencion.GarantiaVencida => vigentes.Where(a => a.FinGarantia < hoy),
+            MotivoAtencion.MantenimientoVencido => vigentes.Where(a =>
+                a.ProximoMantenimiento < hoy && !db.Mantenimientos.Any(m => m.ActivoId == a.Id && m.FechaFin == null)),
             _ => vigentes.Where(a =>
                 a.FechaRenovacion <= enUnAnio
+                || (a.ProximoMantenimiento < hoy && !db.Mantenimientos.Any(m => m.ActivoId == a.Id && m.FechaFin == null))
                 || db.EstadosActivo.Any(e => e.Id == a.EstadoActivoId
                     && ((e.GrupoAsignado ?? GrupoEstado.EnUso) == GrupoEstado.FueraDeServicio
                         || (e.GrupoAsignado ?? GrupoEstado.EnUso) == GrupoEstado.EnMantenimiento))),

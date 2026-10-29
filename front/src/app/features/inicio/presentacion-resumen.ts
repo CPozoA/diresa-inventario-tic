@@ -119,6 +119,9 @@ export function detalleAtencion(a: ActivoAtencionDto, hoy: string): string {
     case 'ProximoARenovar':
       motivo = a.fechaRenovacion ? `le quedan ${decimal(Math.max(0, aniosEntre(hoy, a.fechaRenovacion)))} años de vida útil` : 'último año de vida útil';
       break;
+    case 'MantenimientoVencido':
+      motivo = a.proximoMantenimiento ? `preventivo vencido el ${fechaCorta(a.proximoMantenimiento)}` : 'preventivo vencido';
+      break;
     default:
       motivo = a.estado;
   }

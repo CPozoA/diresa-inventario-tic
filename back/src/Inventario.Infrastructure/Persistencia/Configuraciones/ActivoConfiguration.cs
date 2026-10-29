@@ -60,6 +60,7 @@ internal sealed class ActivoConfiguration : IEntityTypeConfiguration<Activo>
         builder.HasIndex(a => a.EstablecimientoId);
         builder.HasIndex(a => a.FinGarantia);
         builder.HasIndex(a => a.FechaRenovacion);
+        builder.HasIndex(a => new { a.SedeId, a.ProximoMantenimiento });
 
         // Las referencias no se borran mientras haya activos que las usen (los catálogos se desactivan, no se borran).
         builder.HasOne<Sede>().WithMany().HasForeignKey(a => a.SedeId).OnDelete(DeleteBehavior.Restrict);

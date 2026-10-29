@@ -43,6 +43,7 @@ function atencion(cambios: Partial<ActivoAtencionDto>): ActivoAtencionDto {
     fechaAdquisicion: '2020-08-27',
     vidaUtilAnios: 5,
     fechaRenovacion: '2025-08-27',
+    proximoMantenimiento: null,
     ...cambios,
   };
 }
@@ -97,6 +98,9 @@ describe('presentación del resumen', () => {
     );
     expect(detalleAtencion(atencion({ motivo: 'FueraDeServicio', estado: 'Inoperativo' }), hoy)).toBe(
       'HP ProDesk 400 G4 · Inoperativo · Hospital de Huanta',
+    );
+    expect(detalleAtencion(atencion({ motivo: 'MantenimientoVencido', proximoMantenimiento: '2026-10-10' }), hoy)).toBe(
+      'HP ProDesk 400 G4 · preventivo vencido el 10/10/2026 · Hospital de Huanta',
     );
     expect(aniosEntre('2020-10-27', '2026-10-27')).toBe(6);
   });

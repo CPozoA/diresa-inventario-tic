@@ -2348,6 +2348,335 @@
         }
       }
     },
+    "/api/mantenimientos": {
+      "get": {
+        "tags": [
+          "Mantenimiento"
+        ],
+        "summary": "Mantenimientos en curso (el más antiguo primero) o el historial (el más reciente primero), paginados. ?buscar= código, modelo, marca, proveedor, orden de servicio o técnico.",
+        "operationId": "ListarMantenimientos",
+        "parameters": [
+          {
+            "name": "vista",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/VistaMantenimientos"
+            }
+          },
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TipoMantenimiento"
+            }
+          },
+          {
+            "name": "establecimientoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamanoPagina",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaMantenimientosDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mantenimientos/programados": {
+      "get": {
+        "tags": [
+          "Mantenimiento"
+        ],
+        "summary": "Activos con el preventivo vencido o en los próximos ?dias= (por omisión 30), el más atrasado primero. Sin los de baja ni los que tienen uno en curso.",
+        "operationId": "ListarMantenimientosProgramados",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "establecimientoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dias",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProgramadoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mantenimientos/cifras": {
+      "get": {
+        "tags": [
+          "Mantenimiento"
+        ],
+        "summary": "En curso, preventivos vencidos y preventivos en los próximos ?dias=.",
+        "operationId": "ObtenerCifrasMantenimiento",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "dias",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CifrasMantenimientoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mantenimientos/tecnicos": {
+      "get": {
+        "tags": [
+          "Mantenimiento"
+        ],
+        "summary": "Usuarios activos de la red con permiso para gestionar mantenimientos. El superadministrador indica ?sedeId=.",
+        "operationId": "ListarTecnicosMantenimiento",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TecnicoDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mantenimientos/{id}/cerrar": {
+      "post": {
+        "tags": [
+          "Mantenimiento"
+        ],
+        "summary": "Cierra el mantenimiento: trabajo realizado, resultado, estado y conservación en que queda el activo y próximo preventivo.",
+        "operationId": "CerrarMantenimiento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CierreMantenimiento"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/api/activos/{id}/mantenimientos": {
+      "get": {
+        "tags": [
+          "Mantenimiento"
+        ],
+        "summary": "Mantenimiento del activo: el en curso, el último y el próximo preventivo, y el historial.",
+        "operationId": "ObtenerMantenimientosActivo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MantenimientosActivoDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Mantenimiento"
+        ],
+        "summary": "Registra un mantenimiento; abierto, el activo pasa a 'En mantenimiento'. Con 'cierre' se registra ya terminado.",
+        "operationId": "RegistrarMantenimiento",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarMantenimientoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdCreado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/resumen": {
       "get": {
         "tags": [
@@ -2410,7 +2739,8 @@
           "motivo",
           "fechaAdquisicion",
           "vidaUtilAnios",
-          "fechaRenovacion"
+          "fechaRenovacion",
+          "proximoMantenimiento"
         ],
         "type": "object",
         "properties": {
@@ -2456,6 +2786,13 @@
             "format": "int32"
           },
           "fechaRenovacion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "proximoMantenimiento": {
             "type": [
               "null",
               "string"
@@ -2848,6 +3185,53 @@
           }
         }
       },
+      "CierreMantenimiento": {
+        "required": [
+          "fechaFin",
+          "trabajoRealizado",
+          "resultado",
+          "costo",
+          "estadoActivoId",
+          "conservacion",
+          "proximoMantenimiento"
+        ],
+        "type": "object",
+        "properties": {
+          "fechaFin": {
+            "type": "string",
+            "format": "date"
+          },
+          "trabajoRealizado": {
+            "type": "string"
+          },
+          "resultado": {
+            "$ref": "#/components/schemas/ResultadoMantenimiento"
+          },
+          "costo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "estadoActivoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conservacion": {
+            "$ref": "#/components/schemas/Conservacion"
+          },
+          "proximoMantenimiento": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          }
+        }
+      },
       "CifrasEstablecimientoDto": {
         "required": [
           "establecimientoId",
@@ -2882,6 +3266,49 @@
             "format": "int32"
           },
           "renovar": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "CifrasMantenimientoDto": {
+        "required": [
+          "enCurso",
+          "vencidos",
+          "proximos",
+          "dias"
+        ],
+        "type": "object",
+        "properties": {
+          "enCurso": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "vencidos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "proximos": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "dias": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
@@ -3933,6 +4360,12 @@
           }
         }
       },
+      "EjecutorMantenimiento": {
+        "enum": [
+          "PersonalTi",
+          "Proveedor"
+        ]
+      },
       "ElementoCatalogoDto": {
         "required": [
           "id",
@@ -4820,6 +5253,173 @@
           }
         }
       },
+      "MantenimientoDto": {
+        "required": [
+          "id",
+          "activoId",
+          "codigoPatrimonial",
+          "tipoActivo",
+          "marca",
+          "modelo",
+          "establecimiento",
+          "tipo",
+          "fechaInicio",
+          "detalle",
+          "ejecutor",
+          "tecnicoId",
+          "tecnico",
+          "proveedor",
+          "ordenServicio",
+          "costo",
+          "fechaFin",
+          "trabajoRealizado",
+          "resultado",
+          "sedeNombre"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "activoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigoPatrimonial": {
+            "type": "string"
+          },
+          "tipoActivo": {
+            "type": "string"
+          },
+          "marca": {
+            "type": "string"
+          },
+          "modelo": {
+            "type": "string"
+          },
+          "establecimiento": {
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoMantenimiento"
+          },
+          "fechaInicio": {
+            "type": "string",
+            "format": "date"
+          },
+          "detalle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ejecutor": {
+            "$ref": "#/components/schemas/EjecutorMantenimiento"
+          },
+          "tecnicoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "tecnico": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "proveedor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ordenServicio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "costo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "fechaFin": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "trabajoRealizado": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "resultado": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ResultadoMantenimiento"
+              }
+            ]
+          },
+          "sedeNombre": {
+            "type": "string"
+          }
+        }
+      },
+      "MantenimientosActivoDto": {
+        "required": [
+          "enCurso",
+          "ultimoPreventivo",
+          "proximoMantenimiento",
+          "historial"
+        ],
+        "type": "object",
+        "properties": {
+          "enCurso": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MantenimientoDto"
+              }
+            ]
+          },
+          "ultimoPreventivo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "proximoMantenimiento": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "historial": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MantenimientoDto"
+            }
+          }
+        }
+      },
       "MotivoAtencion": {
         "enum": [
           "Cualquiera",
@@ -4828,6 +5428,7 @@
           "ProximoARenovar",
           "EnMantenimiento",
           "GarantiaVencida",
+          "MantenimientoVencido",
           null
         ]
       },
@@ -4918,6 +5519,47 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ActivoResumenDto"
+            }
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pagina": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "PaginaMantenimientosDto": {
+        "required": [
+          "mantenimientos",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "mantenimientos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MantenimientoDto"
             }
           },
           "total": {
@@ -5152,6 +5794,66 @@
           }
         }
       },
+      "ProgramadoDto": {
+        "required": [
+          "activoId",
+          "codigoPatrimonial",
+          "tipoActivo",
+          "marca",
+          "modelo",
+          "establecimiento",
+          "ultimoPreventivo",
+          "proximoMantenimiento",
+          "vencido",
+          "responsable",
+          "sedeNombre"
+        ],
+        "type": "object",
+        "properties": {
+          "activoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "codigoPatrimonial": {
+            "type": "string"
+          },
+          "tipoActivo": {
+            "type": "string"
+          },
+          "marca": {
+            "type": "string"
+          },
+          "modelo": {
+            "type": "string"
+          },
+          "establecimiento": {
+            "type": "string"
+          },
+          "ultimoPreventivo": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "proximoMantenimiento": {
+            "type": "string",
+            "format": "date"
+          },
+          "vencido": {
+            "type": "boolean"
+          },
+          "responsable": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sedeNombre": {
+            "type": "string"
+          }
+        }
+      },
       "Puerto": {
         "enum": [
           "UsbA",
@@ -5191,6 +5893,76 @@
           },
           "nombre": {
             "type": "string"
+          }
+        }
+      },
+      "RegistrarMantenimientoRequest": {
+        "required": [
+          "tipo",
+          "fechaInicio",
+          "detalle",
+          "ejecutor",
+          "tecnicoId",
+          "proveedor",
+          "ordenServicio",
+          "costo",
+          "cierre"
+        ],
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "$ref": "#/components/schemas/TipoMantenimiento"
+          },
+          "fechaInicio": {
+            "type": "string",
+            "format": "date"
+          },
+          "detalle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ejecutor": {
+            "$ref": "#/components/schemas/EjecutorMantenimiento"
+          },
+          "tecnicoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "proveedor": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ordenServicio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "costo": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "cierre": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CierreMantenimiento"
+              }
+            ]
           }
         }
       },
@@ -5351,6 +6123,13 @@
             }
           }
         }
+      },
+      "ResultadoMantenimiento": {
+        "enum": [
+          "Operativo",
+          "SinReparacion",
+          null
+        ]
       },
       "ResumenDto": {
         "required": [
@@ -5636,6 +6415,22 @@
           }
         }
       },
+      "TecnicoDto": {
+        "required": [
+          "id",
+          "nombreCompleto"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nombreCompleto": {
+            "type": "string"
+          }
+        }
+      },
       "TecnicosActivoDto": {
         "required": [
           "procesador",
@@ -5833,6 +6628,12 @@
           null
         ]
       },
+      "TipoMantenimiento": {
+        "enum": [
+          "Preventivo",
+          "Correctivo"
+        ]
+      },
       "TipoMovimiento": {
         "enum": [
           "Entrega",
@@ -5967,6 +6768,13 @@
             }
           }
         }
+      },
+      "VistaMantenimientos": {
+        "enum": [
+          "EnCurso",
+          "Historial",
+          null
+        ]
       }
     }
   },
@@ -6003,6 +6811,9 @@
     },
     {
       "name": "Personal"
+    },
+    {
+      "name": "Mantenimiento"
     },
     {
       "name": "Resumen"
