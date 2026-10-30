@@ -1,7 +1,9 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Auditoria;
 
 namespace Inventario.Application.Usuarios.Editar;
 
@@ -10,7 +12,7 @@ namespace Inventario.Application.Usuarios.Editar;
 public sealed record EditarUsuarioCommand(Guid Id, string Nombres, string Apellidos, string? Cargo, string Correo)
     : ICommand<Vacio>;
 
-internal sealed class EditarUsuarioHandler(IAppDbContext db, ReglasDeGestion reglas, IServicioIdentidad identidad)
+internal sealed class EditarUsuarioHandler(IAppDbContext db, ReglasDeGestion reglas, IServicioIdentidad identidad, IAuditoria auditoria)
     : ICommandHandler<EditarUsuarioCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(EditarUsuarioCommand command, CancellationToken cancellationToken)
@@ -34,6 +36,8 @@ internal sealed class EditarUsuarioHandler(IAppDbContext db, ReglasDeGestion reg
         }
 
         usuario.ActualizarDatos(command.Nombres, command.Apellidos, command.Cargo);
+
+        auditoria.Registrar(ModuloAuditoria.Usuarios, $"Editó los datos del usuario {usuario.Nombres} {usuario.Apellidos}", usuario.SedeId);
 
         var cuenta = await identidad.ObtenerDatosCuentaAsync(usuario.Id);
         var cambiaCorreo = !string.Equals(cuenta?.Correo, correo, StringComparison.OrdinalIgnoreCase);

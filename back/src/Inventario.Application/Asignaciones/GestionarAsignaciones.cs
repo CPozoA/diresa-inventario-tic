@@ -1,9 +1,11 @@
 using Inventario.Application.Activos;
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Domain.Activos;
 using Inventario.Domain.Asignaciones;
+using Inventario.Domain.Auditoria;
 using Inventario.Domain.Catalogos;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,7 +33,7 @@ public sealed record AsignarActivoCommand(Guid ActivoId, Guid PersonaId, DateOnl
 public sealed record DevolverActivoCommand(Guid ActivoId, DateOnly Fecha, Conservacion Conservacion, Guid EstadoActivoId, string? Observaciones)
     : ICommand<Vacio>;
 
-internal sealed class AsignarActivoHandler(IAppDbContext db, TimeProvider reloj) : ICommandHandler<AsignarActivoCommand, IdCreado>
+internal sealed class AsignarActivoHandler(IAppDbContext db, TimeProvider reloj, IAuditoria auditoria) : ICommandHandler<AsignarActivoCommand, IdCreado>
 {
     private const string EstadoPreferido = "Operativo";
 
@@ -55,7 +57,7 @@ internal sealed class AsignarActivoHandler(IAppDbContext db, TimeProvider reloj)
 
         var persona = await db.Personal.AsNoTracking()
             .Where(p => p.Id == command.PersonaId)
-            .Select(p => new { p.SedeId, p.Activa })
+            .Select(p => new { p.SedeId, p.Activa, p.NombreCompleto })
             .FirstOrDefaultAsync(cancellationToken);
         if (persona is null)
         {
@@ -104,6 +106,11 @@ internal sealed class AsignarActivoHandler(IAppDbContext db, TimeProvider reloj)
         activo.CambiarSituacion(estado, command.Conservacion);
 
         // Si alguien asignó el mismo equipo a la vez, el índice único de la asignación vigente lo impide.
+        auditoria.Registrar(
+            ModuloAuditoria.Asignaciones,
+            vigente is null ? $"Asignó {activo.CodigoPatrimonial} a {persona.NombreCompleto}" : $"Reasignó {activo.CodigoPatrimonial} a {persona.NombreCompleto}",
+            activo.SedeId,
+            activo.Id);
         await db.SaveChangesAsync(cancellationToken);
         return new IdCreado(asignacion.Id);
     }
@@ -118,7 +125,7 @@ internal sealed class AsignarActivoHandler(IAppDbContext db, TimeProvider reloj)
             .FirstOrDefaultAsync(cancellationToken);
 }
 
-internal sealed class DevolverActivoHandler(IAppDbContext db, TimeProvider reloj) : ICommandHandler<DevolverActivoCommand, Vacio>
+internal sealed class DevolverActivoHandler(IAppDbContext db, TimeProvider reloj, IAuditoria auditoria) : ICommandHandler<DevolverActivoCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(DevolverActivoCommand command, CancellationToken cancellationToken)
     {
@@ -158,6 +165,8 @@ internal sealed class DevolverActivoHandler(IAppDbContext db, TimeProvider reloj
         vigente.Devolver(command.Fecha, command.Conservacion, command.Observaciones, hoy);
         activo.CambiarSituacion(command.EstadoActivoId, command.Conservacion);
 
+        var quien = await db.Personal.AsNoTracking().Where(p => p.Id == vigente.PersonaId).Select(p => p.NombreCompleto).FirstOrDefaultAsync(cancellationToken);
+        auditoria.Registrar(ModuloAuditoria.Asignaciones, $"Registró la devolución de {activo.CodigoPatrimonial} ({quien})", activo.SedeId, activo.Id);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }

@@ -181,3 +181,9 @@ export type { QuitarLicencia$Params as QuitarLicencia$Params } from './fn/licenc
 export { quitarLicencia as quitarLicencia } from './fn/licencias/quitar-licencia';
 export type { ObtenerLicenciasActivo$Params as ObtenerLicenciasActivo$Params } from './fn/licencias/obtener-licencias-activo';
 export { obtenerLicenciasActivo as obtenerLicenciasActivo } from './fn/licencias/obtener-licencias-activo';
+export type { ListarAuditoria$Params as ListarAuditoria$Params } from './fn/auditoria/listar-auditoria';
+export { listarAuditoria as listarAuditoria } from './fn/auditoria/listar-auditoria';
+export type { ExportarAuditoria$Params as ExportarAuditoria$Params } from './fn/auditoria/exportar-auditoria';
+export { exportarAuditoria as exportarAuditoria } from './fn/auditoria/exportar-auditoria';
+export type { ObtenerHistorialActivo$Params as ObtenerHistorialActivo$Params } from './fn/auditoria/obtener-historial-activo';
+export { obtenerHistorialActivo as obtenerHistorialActivo } from './fn/auditoria/obtener-historial-activo';

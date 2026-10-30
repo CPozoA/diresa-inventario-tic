@@ -11,7 +11,7 @@ public enum ResultadoVerificacion
 
 /// <summary>Resultado de comprobar usuario y contraseña.</summary>
 /// <param name="Resultado">Si las credenciales son correctas, incorrectas o la cuenta está bloqueada.</param>
-/// <param name="UsuarioId">Usuario encontrado (solo si es correcta o está bloqueada).</param>
+/// <param name="UsuarioId">Usuario de la cuenta, si existe (también con la contraseña incorrecta, para la auditoría).</param>
 /// <param name="BloqueadaHasta">Fin del bloqueo, si está bloqueada.</param>
 public sealed record VerificacionCredenciales(ResultadoVerificacion Resultado, Guid? UsuarioId, DateTimeOffset? BloqueadaHasta);
 

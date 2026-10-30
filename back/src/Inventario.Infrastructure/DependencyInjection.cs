@@ -1,4 +1,5 @@
 using Inventario.Application.Activos.Exportar;
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Archivos;
 using Inventario.Application.Common.Correo;
 using Inventario.Application.Common.Persistencia;
@@ -63,6 +64,7 @@ public static class DependencyInjection
         // Excel (ClosedXML, D42).
         services.AddSingleton<IHojaEstablecimientos, HojaEstablecimientosExcel>();
         services.AddSingleton<IGeneradorExcelInventario, GeneradorExcelInventario>();
+        services.AddSingleton<IGeneradorExcelAuditoria, GeneradorExcelAuditoria>();
 
         services.Configure<OpcionesInicializacion>(configuration.GetSection(OpcionesInicializacion.Seccion));
         services.AddScoped<InicializadorDatos>();

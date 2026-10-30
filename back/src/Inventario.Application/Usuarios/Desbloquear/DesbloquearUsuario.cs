@@ -1,7 +1,9 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Auditoria;
 
 namespace Inventario.Application.Usuarios.Desbloquear;
 
@@ -9,7 +11,7 @@ namespace Inventario.Application.Usuarios.Desbloquear;
 /// <remarks>Requiere Usuarios.Gestionar.</remarks>
 public sealed record DesbloquearUsuarioCommand(Guid Id) : ICommand<Vacio>;
 
-internal sealed class DesbloquearUsuarioHandler(IAppDbContext db, ReglasDeGestion reglas, IServicioIdentidad identidad)
+internal sealed class DesbloquearUsuarioHandler(IAppDbContext db, ReglasDeGestion reglas, IServicioIdentidad identidad, IAuditoria auditoria)
     : ICommandHandler<DesbloquearUsuarioCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(DesbloquearUsuarioCommand command, CancellationToken cancellationToken)
@@ -27,6 +29,8 @@ internal sealed class DesbloquearUsuarioHandler(IAppDbContext db, ReglasDeGestio
         }
 
         await identidad.DesbloquearAsync(usuario.Id);
+        await auditoria.RegistrarYGuardarAsync(
+            ModuloAuditoria.Usuarios, $"Desbloqueó la cuenta de {usuario.Nombres} {usuario.Apellidos}", usuario.SedeId, cancellationToken: cancellationToken);
         return Vacio.Valor;
     }
 }

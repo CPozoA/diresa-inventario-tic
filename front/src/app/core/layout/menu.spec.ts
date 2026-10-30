@@ -10,6 +10,7 @@ describe('menuVisible', () => {
     expect(opciones).toContain('Sedes');
     expect(opciones).toContain('Establecimientos');
     expect(opciones).toContain('Catálogos generales');
+    expect(opciones).toContain('Auditoría');
   });
 
   it('un usuario de consulta no ve el grupo de administración', () => {

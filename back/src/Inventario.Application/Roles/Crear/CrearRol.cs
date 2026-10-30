@@ -1,7 +1,9 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Auditoria;
 using Inventario.Domain.Seguridad;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +18,7 @@ namespace Inventario.Application.Roles.Crear;
 public sealed record CrearRolCommand(Guid? SedeId, string Nombre, string? Descripcion, IReadOnlyList<string>? Permisos)
     : ICommand<IdCreado>;
 
-internal sealed class CrearRolHandler(IAppDbContext db, ReglasDeGestion reglas) : ICommandHandler<CrearRolCommand, IdCreado>
+internal sealed class CrearRolHandler(IAppDbContext db, ReglasDeGestion reglas, IAuditoria auditoria) : ICommandHandler<CrearRolCommand, IdCreado>
 {
     public async Task<Result<IdCreado>> Handle(CrearRolCommand command, CancellationToken cancellationToken)
     {
@@ -43,6 +45,7 @@ internal sealed class CrearRolHandler(IAppDbContext db, ReglasDeGestion reglas) 
         }
 
         db.Roles.Add(rol);
+        auditoria.Registrar(ModuloAuditoria.Roles, $"Creó el rol {rol.Nombre}", rol.SedeId);
         await db.SaveChangesAsync(cancellationToken);
 
         return new IdCreado(rol.Id);

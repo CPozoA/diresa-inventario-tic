@@ -11,7 +11,7 @@ namespace Inventario.Application.Catalogos;
 /// Describe un catálogo: su código en la URL (<c>/api/catalogos/{codigo}</c>), sus nombres para la interfaz,
 /// si es de sede o general, y cómo consultarlo. Todos los catálogos comparten los mismos casos de uso.
 /// </summary>
-internal abstract class DefinicionCatalogo(string codigo, string nombre, string nombreSingular, bool esDeSede)
+internal abstract class DefinicionCatalogo(string codigo, string nombre, string nombreSingular, bool esDeSede, bool oculto = false)
 {
     public string Codigo { get; } = codigo;
 
@@ -21,6 +21,12 @@ internal abstract class DefinicionCatalogo(string codigo, string nombre, string 
 
     /// <summary>Verdadero si cada sede tiene el suyo (áreas).</summary>
     public bool EsDeSede { get; } = esDeSede;
+
+    /// <summary>
+    /// Catálogo sin uso que se conserva en la base de datos pero no se ofrece: no se lista ni se consulta ni se modifica
+    /// por la API (por ejemplo, "Tipos de licencia" desde que las licencias son solo suscripciones, D54).
+    /// </summary>
+    public bool Oculto { get; } = oculto;
 
     /// <summary>Permiso para crear, renombrar, activar o desactivar elementos.</summary>
     public string PermisoGestion => EsDeSede ? Permisos.Catalogos.GestionarSede : Permisos.Catalogos.GestionarGlobales;
@@ -50,8 +56,9 @@ internal sealed class DefinicionCatalogo<T>(
     string nombreSingular,
     Func<IAppDbContext, DbSet<T>> tabla,
     Func<Guid?, string, T> crear,
-    Expression<Func<T, ElementoCatalogoDto>>? proyeccion = null)
-    : DefinicionCatalogo(codigo, nombre, nombreSingular, typeof(ElementoCatalogoDeSede).IsAssignableFrom(typeof(T)))
+    Expression<Func<T, ElementoCatalogoDto>>? proyeccion = null,
+    bool oculto = false)
+    : DefinicionCatalogo(codigo, nombre, nombreSingular, typeof(ElementoCatalogoDeSede).IsAssignableFrom(typeof(T)), oculto)
     where T : ElementoCatalogo
 {
     private readonly Expression<Func<T, ElementoCatalogoDto>> _proyeccion =
@@ -124,8 +131,9 @@ internal static class DefinicionesCatalogo
             p => new ElementoCatalogoDto(p.Id, p.Nombre, p.Activo, null, p.Generaciones, null)),
         new DefinicionCatalogo<Antivirus>(
             "antivirus", "Antivirus o EDR", "Antivirus o EDR", db => db.Antivirus, (_, n) => Antivirus.Crear(n)),
+        // Oculto desde el Paso 11: las licencias son solo suscripciones (D54). Se conserva por si se vuelve a usar.
         new DefinicionCatalogo<TipoLicencia>(
-            "tipos-licencia", "Tipos de licencia", "Tipo de licencia", db => db.TiposLicencia, (_, n) => TipoLicencia.Crear(n)),
+            "tipos-licencia", "Tipos de licencia", "Tipo de licencia", db => db.TiposLicencia, (_, n) => TipoLicencia.Crear(n), oculto: true),
     ];
 
     public static readonly ErrorAplicacion TipoNoExiste =
@@ -145,6 +153,10 @@ internal static class DefinicionesCatalogo
             $"Ya existe un elemento con ese nombre en el catálogo «{definicion.Nombre}».");
     }
 
+    /// <summary>Catálogos que se ofrecen (sin los ocultos).</summary>
+    public static IReadOnlyList<DefinicionCatalogo> Visibles { get; } = Todas.Where(d => !d.Oculto).ToList();
+
+    /// <summary>El catálogo con ese código, o nulo si no existe o está oculto.</summary>
     public static DefinicionCatalogo? Buscar(string? codigo) =>
-        Todas.FirstOrDefault(d => string.Equals(d.Codigo, codigo, StringComparison.OrdinalIgnoreCase));
+        Visibles.FirstOrDefault(d => string.Equals(d.Codigo, codigo, StringComparison.OrdinalIgnoreCase));
 }

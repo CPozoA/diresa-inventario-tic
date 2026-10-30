@@ -1,8 +1,10 @@
 using System.Text.RegularExpressions;
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Auditoria;
 using Inventario.Domain.Usuarios;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,7 +34,7 @@ public sealed record CrearUsuarioCommand(
     string? Cargo,
     IReadOnlyList<Guid>? RolIds) : ICommand<UsuarioCreadoDto>;
 
-internal sealed partial class CrearUsuarioHandler(IAppDbContext db, ReglasDeGestion reglas, IServicioIdentidad identidad)
+internal sealed partial class CrearUsuarioHandler(IAppDbContext db, ReglasDeGestion reglas, IServicioIdentidad identidad, IAuditoria auditoria)
     : ICommandHandler<CrearUsuarioCommand, UsuarioCreadoDto>
 {
     public async Task<Result<UsuarioCreadoDto>> Handle(CrearUsuarioCommand command, CancellationToken cancellationToken)
@@ -96,6 +98,9 @@ internal sealed partial class CrearUsuarioHandler(IAppDbContext db, ReglasDeGest
             db.Usuarios.Remove(usuario);
             return cuenta.Error!;
         }
+
+        await auditoria.RegistrarYGuardarAsync(
+            ModuloAuditoria.Usuarios, $"Creó el usuario {nombreUsuario} ({usuario.Nombres} {usuario.Apellidos})", usuario.SedeId, cancellationToken: cancellationToken);
 
         return new UsuarioCreadoDto(usuario.Id, contrasenaTemporal);
     }

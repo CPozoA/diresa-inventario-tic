@@ -19,6 +19,7 @@ const funcionalidades: Readonly<Record<string, LoadChildren>> = {
   asignaciones: () => import('./features/asignaciones/asignaciones.routes').then((m) => m.ASIGNACIONES_RUTAS),
   mantenimiento: () => import('./features/mantenimiento/mantenimiento.routes').then((m) => m.MANTENIMIENTO_RUTAS),
   licencias: () => import('./features/licencias/licencias.routes').then((m) => m.LICENCIAS_RUTAS),
+  auditoria: () => import('./features/auditoria/auditoria.routes').then((m) => m.AUDITORIA_RUTAS),
   catalogos: () => import('./features/catalogos/catalogos.routes').then((m) => m.CATALOGOS_GENERALES_RUTAS),
 };
 

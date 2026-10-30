@@ -1,0 +1,125 @@
+// Ancho desde el que se usa la tabla.
+$ancho-tabla: 784px;
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+}
+
+.buscador {
+  flex: 1 1 280px;
+  max-width: 460px;
+}
+
+.fecha {
+  flex: 0 1 170px;
+}
+
+.modulo {
+  flex: 1 1 180px;
+  max-width: 240px;
+}
+
+.tabla {
+  td {
+    vertical-align: top;
+  }
+
+  td.fecha,
+  td.ip {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  td.accion {
+    min-width: 260px;
+
+    a {
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  tr.alerta td {
+    background: #fdf3f2;
+  }
+}
+
+.ip {
+  font-size: 13px;
+}
+
+mat-paginator {
+  border-top: 1px solid var(--inv-borde);
+}
+
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  color: var(--inv-atenuado);
+  text-align: center;
+
+  p {
+    margin: 0;
+  }
+}
+
+.vista-tarjetas {
+  list-style: none;
+  margin: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tarjeta-accion {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+
+  &.alerta {
+    background: #fdf3f2;
+    border-color: #f2cdc9;
+  }
+
+  .cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  .atenuado {
+    font-size: 13px;
+  }
+}
+
+.vista-tabla {
+  display: none;
+}
+
+@media (min-width: $ancho-tabla) {
+  .vista-tabla {
+    display: block;
+  }
+
+  .vista-tarjetas {
+    display: none;
+  }
+}

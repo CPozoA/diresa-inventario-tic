@@ -3253,6 +3253,220 @@
           }
         }
       }
+    },
+    "/api/auditoria": {
+      "get": {
+        "tags": [
+          "Auditoría"
+        ],
+        "summary": "Acciones registradas, lo más reciente primero. ?desde=&hasta= (días, hora local), ?modulo=, ?buscar= en la acción, el usuario o la IP.",
+        "operationId": "ListarAuditoria",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "format": "date"
+            }
+          },
+          {
+            "name": "modulo",
+            "in": "query",
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/components/schemas/ModuloAuditoria"
+                }
+              ]
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "tamanoPagina",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaAuditoriaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auditoria/exportar": {
+      "get": {
+        "tags": [
+          "Auditoría"
+        ],
+        "summary": "El registro en Excel (.xlsx) con los mismos filtros. Hasta 50 000 acciones.",
+        "operationId": "ExportarAuditoria",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": [
+                "null",
+                "string"
+              ],
+              "format": "date"
+            }
+          },
+          {
+            "name": "modulo",
+            "in": "query",
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/components/schemas/ModuloAuditoria"
+                }
+              ]
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activos/{id}/historial": {
+      "get": {
+        "tags": [
+          "Auditoría"
+        ],
+        "summary": "Acciones sobre el activo (registro, ediciones, fotos, asignaciones, mantenimientos, licencias), lo más reciente primero.",
+        "operationId": "ObtenerHistorialActivo",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegistroAuditoriaDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7781,6 +7995,125 @@
               "type": "string",
               "format": "uuid"
             }
+          }
+        }
+      },
+      "ModuloAuditoria": {
+        "enum": [
+          "Activos",
+          "Asignaciones",
+          "Personal",
+          "Mantenimiento",
+          "Licencias",
+          "Catalogos",
+          "Establecimientos",
+          "Usuarios",
+          "Roles",
+          "Sedes",
+          "Cuenta"
+        ],
+        "type": "string"
+      },
+      "RegistroAuditoriaDto": {
+        "required": [
+          "id",
+          "fecha",
+          "usuarioId",
+          "usuario",
+          "modulo",
+          "accion",
+          "sedeNombre",
+          "activoId",
+          "ip"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usuarioId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "usuario": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "modulo": {
+            "$ref": "#/components/schemas/ModuloAuditoria"
+          },
+          "accion": {
+            "type": "string"
+          },
+          "sedeNombre": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "activoId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "ip": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PaginaAuditoriaDto": {
+        "required": [
+          "registros",
+          "total",
+          "pagina",
+          "tamanoPagina"
+        ],
+        "type": "object",
+        "properties": {
+          "registros": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RegistroAuditoriaDto"
+            }
+          },
+          "total": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pagina": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "tamanoPagina": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         }
       }

@@ -200,8 +200,9 @@ operativos y tipos de licencia). Las pruebas automáticas aplican la migración 
 | `POST /api/catalogos/{tipo}/{id}/activar\|desactivar` | Permiso del catálogo | No se eliminan: se desactivan |
 
 `tipo`: `areas` (por sede, `Catalogos.GestionarSede`) · `tipos-activo`, `marcas`, `estados-activo`,
-`sistemas-operativos`, `tipos-licencia` (generales, `Catalogos.GestionarGlobales`). El catálogo de ubicaciones se retiró
-en el Paso 6D (la ubicación física es texto en cada activo, D40).
+`sistemas-operativos`, `procesadores`, `antivirus` (generales, `Catalogos.GestionarGlobales`). El catálogo de ubicaciones se
+retiró en el Paso 6D (la ubicación física es texto en cada activo, D40). `tipos-licencia` está **oculto** desde el Paso 11
+(las licencias son solo suscripciones, D54): sus datos se conservan, pero la API no lo lista ni lo atiende (404).
 
 ## Paso 6D: establecimientos
 
@@ -510,4 +511,21 @@ No cambia el modelo (sin migración).
 
 Para probarlo en Scalar, abra la respuesta como archivo; o en el navegador, con la sesión iniciada:
 `https://localhost:7180/api/activos/exportar`.
+
+## Paso 13: registro de auditoría (D56)
+
+Este paso **cambia el modelo**: agrega la tabla `seguridad.Auditoria`. Desde `back`, con la API detenida:
+
+```powershell
+dotnet ef migrations add Auditoria --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+Las acciones anteriores a la migración no aparecen: el registro empieza desde ese momento.
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/auditoria?desde=&hasta=&modulo=&buscar=&pagina=&tamanoPagina=&sedeId=` | `Auditoria.Ver` | Acciones, lo más reciente primero. `modulo`: `Activos`, `Asignaciones`, `Personal`, `Mantenimiento`, `Licencias`, `Catalogos`, `Establecimientos`, `Usuarios`, `Roles`, `Sedes`, `Cuenta` |
+| `GET /api/auditoria/exportar?…` | `Auditoria.Ver` | Lo mismo en Excel (hasta 50 000) |
+| `GET /api/activos/{id}/historial` | `Auditoria.Ver` | Acciones sobre el activo |
 

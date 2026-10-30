@@ -49,6 +49,16 @@ public sealed class CatalogosTests(FabricaApi api)
     }
 
     [Fact]
+    public async Task TiposDeLicencia_EstaOculto()
+    {
+        using var superAdmin = await api.CrearClienteConSesionAsync(DatosPrueba.SuperAdmin);
+
+        var tipos = await superAdmin.GetFromJsonAsync<List<TipoCatalogoDto>>("/api/catalogos", Ct);
+        Assert.DoesNotContain(tipos!, t => t.Codigo == "tipos-licencia");
+        Assert.Equal(HttpStatusCode.NotFound, (await superAdmin.GetAsync("/api/catalogos/tipos-licencia", Ct)).StatusCode);
+    }
+
+    [Fact]
     public async Task Admin_CreaUnAreaQueSoloVeSuSede()
     {
         using var admin = await api.CrearClienteConSesionAsync(DatosPrueba.AdminHuanta);

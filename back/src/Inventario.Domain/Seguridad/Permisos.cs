@@ -58,6 +58,11 @@ public static class Permisos
         public const string Gestionar = "Roles.Gestionar";
     }
 
+    public static class Auditoria
+    {
+        public const string Ver = "Auditoria.Ver";
+    }
+
     public static class Sedes
     {
         public const string Gestionar = "Sedes.Gestionar";
@@ -94,6 +99,7 @@ public static class Permisos
         new(Usuarios.Gestionar, "Usuarios", "Crear, desactivar y restablecer usuarios de la sede", false),
         new(Roles.Ver, "Roles", "Ver roles de la sede", false),
         new(Roles.Gestionar, "Roles", "Crear y modificar roles de la sede", false),
+        new(Auditoria.Ver, "Auditoría", "Ver el registro de auditoría de la sede (quién hizo qué y cuándo)", false),
 
         new(Catalogos.GestionarGlobales, "Administración general", "Administrar catálogos comunes a todas las sedes", true),
         new(Sedes.Gestionar, "Administración general", "Crear y modificar sedes", true),

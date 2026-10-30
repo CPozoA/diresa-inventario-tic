@@ -1,7 +1,9 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Auditoria;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventario.Application.Roles.Editar;
@@ -14,7 +16,7 @@ namespace Inventario.Application.Roles.Editar;
 public sealed record EditarRolCommand(Guid Id, string Nombre, string? Descripcion, IReadOnlyList<string>? Permisos)
     : ICommand<Vacio>;
 
-internal sealed class EditarRolHandler(IAppDbContext db, ReglasDeGestion reglas) : ICommandHandler<EditarRolCommand, Vacio>
+internal sealed class EditarRolHandler(IAppDbContext db, ReglasDeGestion reglas, IAuditoria auditoria) : ICommandHandler<EditarRolCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(EditarRolCommand command, CancellationToken cancellationToken)
     {
@@ -54,6 +56,7 @@ internal sealed class EditarRolHandler(IAppDbContext db, ReglasDeGestion reglas)
             return ErroresRol.NombreDuplicado;
         }
 
+        auditoria.Registrar(ModuloAuditoria.Roles, $"Editó el rol {rol.Nombre} y sus permisos", rol.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }

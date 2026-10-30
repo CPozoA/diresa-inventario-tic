@@ -1,7 +1,9 @@
 using System.Globalization;
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
+using Inventario.Domain.Auditoria;
 using Inventario.Domain.Common;
 using Inventario.Domain.Establecimientos;
 using Inventario.Domain.Sedes;
@@ -32,7 +34,7 @@ public sealed record ResultadoImportacionDto(
 /// <remarks>Requiere Establecimientos.Gestionar (solo el superadministrador).</remarks>
 public sealed record ImportarEstablecimientosCommand(Stream? Archivo, long Tamano) : ICommand<ResultadoImportacionDto>;
 
-internal sealed class ImportarEstablecimientosHandler(IAppDbContext db, IHojaEstablecimientos hoja)
+internal sealed class ImportarEstablecimientosHandler(IAppDbContext db, IHojaEstablecimientos hoja, IAuditoria auditoria)
     : ICommandHandler<ImportarEstablecimientosCommand, ResultadoImportacionDto>
 {
     public const int TamanoMaximoMb = 5;
@@ -111,6 +113,10 @@ internal sealed class ImportarEstablecimientosHandler(IAppDbContext db, IHojaEst
             }
         }
 
+        auditoria.Registrar(
+            ModuloAuditoria.Establecimientos,
+            $"Importó establecimientos desde Excel: {creados} creados, {actualizados} actualizados y {sinCambios} sin cambios",
+            sedeId: null);
         await db.SaveChangesAsync(cancellationToken);
 
         return new ResultadoImportacionDto(true, lectura.Filas.Count, creados, actualizados, sinCambios, []);

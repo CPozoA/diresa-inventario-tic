@@ -1,7 +1,9 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Auditoria;
 using Inventario.Domain.Catalogos;
 
 namespace Inventario.Application.Catalogos;
@@ -16,7 +18,7 @@ public sealed record RenombrarElementoCatalogoCommand(string Tipo, Guid Id, stri
 /// <summary>Activa o desactiva un elemento. Los desactivados ya no se ofrecen al registrar, pero se conservan.</summary>
 public sealed record CambiarEstadoElementoCatalogoCommand(string Tipo, Guid Id, bool Activo) : ICommand<Vacio>;
 
-internal sealed class CrearElementoCatalogoHandler(IAppDbContext db, ReglasDeGestion reglas, IPermisosUsuarioActual permisos)
+internal sealed class CrearElementoCatalogoHandler(IAppDbContext db, ReglasDeGestion reglas, IPermisosUsuarioActual permisos, IAuditoria auditoria)
     : ICommandHandler<CrearElementoCatalogoCommand, IdCreado>
 {
     public async Task<Result<IdCreado>> Handle(CrearElementoCatalogoCommand command, CancellationToken cancellationToken)
@@ -52,13 +54,14 @@ internal sealed class CrearElementoCatalogoHandler(IAppDbContext db, ReglasDeGes
             return DefinicionesCatalogo.NombreDuplicado(definicion);
         }
 
+        auditoria.Registrar(ModuloAuditoria.Catalogos, $"Agregó «{elemento.Nombre}» a {definicion.Nombre}", sedeId);
         await db.SaveChangesAsync(cancellationToken);
 
         return new IdCreado(elemento.Id);
     }
 }
 
-internal sealed class RenombrarElementoCatalogoHandler(IAppDbContext db, IPermisosUsuarioActual permisos)
+internal sealed class RenombrarElementoCatalogoHandler(IAppDbContext db, IPermisosUsuarioActual permisos, IAuditoria auditoria)
     : ICommandHandler<RenombrarElementoCatalogoCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(RenombrarElementoCatalogoCommand command, CancellationToken cancellationToken)
@@ -70,6 +73,7 @@ internal sealed class RenombrarElementoCatalogoHandler(IAppDbContext db, IPermis
         }
 
         var (definicion, elemento) = buscado.Valor;
+        var anterior = elemento.Nombre;
         elemento.CambiarNombre(command.Nombre);
 
         var sedeId = (elemento as ElementoCatalogoDeSede)?.SedeId;
@@ -78,12 +82,13 @@ internal sealed class RenombrarElementoCatalogoHandler(IAppDbContext db, IPermis
             return DefinicionesCatalogo.NombreDuplicado(definicion);
         }
 
+        auditoria.Registrar(ModuloAuditoria.Catalogos, $"Renombró «{anterior}» a «{elemento.Nombre}» en {definicion.Nombre}", sedeId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }
 }
 
-internal sealed class CambiarEstadoElementoCatalogoHandler(IAppDbContext db, IPermisosUsuarioActual permisos)
+internal sealed class CambiarEstadoElementoCatalogoHandler(IAppDbContext db, IPermisosUsuarioActual permisos, IAuditoria auditoria)
     : ICommandHandler<CambiarEstadoElementoCatalogoCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(CambiarEstadoElementoCatalogoCommand command, CancellationToken cancellationToken)
@@ -94,7 +99,7 @@ internal sealed class CambiarEstadoElementoCatalogoHandler(IAppDbContext db, IPe
             return buscado.Error!;
         }
 
-        var elemento = buscado.Valor.Elemento;
+        var (definicionEstado, elemento) = buscado.Valor;
         if (command.Activo)
         {
             elemento.Activar();
@@ -104,6 +109,10 @@ internal sealed class CambiarEstadoElementoCatalogoHandler(IAppDbContext db, IPe
             elemento.Desactivar();
         }
 
+        auditoria.Registrar(
+            ModuloAuditoria.Catalogos,
+            $"{(command.Activo ? "Activó" : "Desactivó")} «{elemento.Nombre}» en {definicionEstado.Nombre}",
+            (elemento as ElementoCatalogoDeSede)?.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }

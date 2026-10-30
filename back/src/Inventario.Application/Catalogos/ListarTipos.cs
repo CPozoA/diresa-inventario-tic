@@ -12,7 +12,7 @@ namespace Inventario.Application.Catalogos;
 /// <param name="PuedeGestionar">Si quien consulta puede crear, renombrar o desactivar elementos.</param>
 public sealed record TipoCatalogoDto(string Codigo, string Nombre, string NombreSingular, bool EsDeSede, bool PuedeGestionar);
 
-/// <summary>Lista los catálogos del sistema.</summary>
+/// <summary>Lista los catálogos del sistema (sin los ocultos).</summary>
 public sealed record ListarTiposCatalogoQuery : IQuery<IReadOnlyList<TipoCatalogoDto>>;
 
 internal sealed class ListarTiposCatalogoHandler(IPermisosUsuarioActual permisos)
@@ -22,7 +22,7 @@ internal sealed class ListarTiposCatalogoHandler(IPermisosUsuarioActual permisos
     {
         var propios = await permisos.ObtenerAsync(cancellationToken);
 
-        var lista = DefinicionesCatalogo.Todas
+        var lista = DefinicionesCatalogo.Visibles
             .Select(d => new TipoCatalogoDto(d.Codigo, d.Nombre, d.NombreSingular, d.EsDeSede, propios.Contains(d.PermisoGestion)))
             .ToList();
 

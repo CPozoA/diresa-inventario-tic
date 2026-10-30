@@ -1,8 +1,10 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Archivos;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Domain.Activos;
+using Inventario.Domain.Auditoria;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventario.Application.Activos.Gestionar;
@@ -19,7 +21,7 @@ public sealed record EditarActivoCommand(Guid Id, FichaActivo Ficha) : ICommand<
 /// <remarks>Requiere Activos.Eliminar. Para un equipo que ya no se usa, lo habitual es cambiar su estado a "De baja".</remarks>
 public sealed record EliminarActivoCommand(Guid Id) : ICommand<Vacio>;
 
-internal sealed class CrearActivoHandler(IAppDbContext db, VerificadorFichaActivo verificador)
+internal sealed class CrearActivoHandler(IAppDbContext db, VerificadorFichaActivo verificador, IAuditoria auditoria)
     : ICommandHandler<CrearActivoCommand, IdCreado>
 {
     public async Task<Result<IdCreado>> Handle(CrearActivoCommand command, CancellationToken cancellationToken)
@@ -41,13 +43,14 @@ internal sealed class CrearActivoHandler(IAppDbContext db, VerificadorFichaActiv
             ficha.ModulosRam ?? []);
 
         db.Activos.Add(activo);
+        auditoria.Registrar(ModuloAuditoria.Activos, $"Registró el activo {activo.CodigoPatrimonial}", activo.SedeId, activo.Id);
         await db.SaveChangesAsync(cancellationToken);
 
         return new IdCreado(activo.Id);
     }
 }
 
-internal sealed class EditarActivoHandler(IAppDbContext db, VerificadorFichaActivo verificador)
+internal sealed class EditarActivoHandler(IAppDbContext db, VerificadorFichaActivo verificador, IAuditoria auditoria)
     : ICommandHandler<EditarActivoCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(EditarActivoCommand command, CancellationToken cancellationToken)
@@ -78,12 +81,13 @@ internal sealed class EditarActivoHandler(IAppDbContext db, VerificadorFichaActi
             ficha.Discos ?? [],
             ficha.ModulosRam ?? []);
 
+        auditoria.Registrar(ModuloAuditoria.Activos, $"Editó el activo {activo.CodigoPatrimonial}", activo.SedeId, activo.Id);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }
 }
 
-internal sealed class EliminarActivoHandler(IAppDbContext db, IAlmacenArchivos almacen) : ICommandHandler<EliminarActivoCommand, Vacio>
+internal sealed class EliminarActivoHandler(IAppDbContext db, IAlmacenArchivos almacen, IAuditoria auditoria) : ICommandHandler<EliminarActivoCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(EliminarActivoCommand command, CancellationToken cancellationToken)
     {
@@ -101,6 +105,7 @@ internal sealed class EliminarActivoHandler(IAppDbContext db, IAlmacenArchivos a
         var fotos = await db.FotosActivo.Where(f => f.ActivoId == activo.Id).ToListAsync(cancellationToken);
 
         db.Activos.Remove(activo);
+        auditoria.Registrar(ModuloAuditoria.Activos, $"Eliminó el activo {activo.CodigoPatrimonial} ({activo.Modelo})", activo.SedeId, activo.Id);
         await db.SaveChangesAsync(cancellationToken);
 
         foreach (var foto in fotos)

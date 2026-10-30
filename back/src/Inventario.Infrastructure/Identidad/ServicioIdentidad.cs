@@ -35,7 +35,7 @@ internal sealed class ServicioIdentidad(
 
         return resultado.Succeeded
             ? new VerificacionCredenciales(ResultadoVerificacion.Correcta, cuenta.Id, null)
-            : new VerificacionCredenciales(ResultadoVerificacion.Incorrecta, null, null);
+            : new VerificacionCredenciales(ResultadoVerificacion.Incorrecta, cuenta.Id, null);
     }
 
     public async Task IniciarSesionAsync(Guid usuarioId)

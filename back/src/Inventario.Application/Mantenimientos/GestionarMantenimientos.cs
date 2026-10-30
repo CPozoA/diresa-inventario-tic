@@ -1,8 +1,10 @@
 using Inventario.Application.Activos;
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Domain.Activos;
+using Inventario.Domain.Auditoria;
 using Inventario.Domain.Catalogos;
 using Inventario.Domain.Mantenimientos;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +34,7 @@ public sealed record RegistrarMantenimientoCommand(
 /// <remarks>Requiere Mantenimiento.Gestionar.</remarks>
 public sealed record CerrarMantenimientoCommand(Guid Id, CierreMantenimiento Cierre) : ICommand<Vacio>;
 
-internal sealed class RegistrarMantenimientoHandler(IAppDbContext db, TimeProvider reloj, AplicadorCierre aplicador)
+internal sealed class RegistrarMantenimientoHandler(IAppDbContext db, TimeProvider reloj, AplicadorCierre aplicador, IAuditoria auditoria)
     : ICommandHandler<RegistrarMantenimientoCommand, IdCreado>
 {
     private const string EstadoPreferido = "En mantenimiento";
@@ -94,6 +96,14 @@ internal sealed class RegistrarMantenimientoHandler(IAppDbContext db, TimeProvid
         db.Mantenimientos.Add(mantenimiento);
 
         // Si dos personas lo registran a la vez, el índice único del mantenimiento abierto lo impide.
+        var tipoTexto = command.Tipo == TipoMantenimiento.Preventivo ? "preventivo" : "correctivo";
+        auditoria.Registrar(
+            ModuloAuditoria.Mantenimiento,
+            command.Cierre is null
+                ? $"Registró un mantenimiento {tipoTexto} de {activo.CodigoPatrimonial}"
+                : $"Registró un mantenimiento {tipoTexto} ya terminado de {activo.CodigoPatrimonial}",
+            activo.SedeId,
+            activo.Id);
         await db.SaveChangesAsync(cancellationToken);
         return new IdCreado(mantenimiento.Id);
     }
@@ -108,7 +118,7 @@ internal sealed class RegistrarMantenimientoHandler(IAppDbContext db, TimeProvid
             .FirstOrDefaultAsync(cancellationToken);
 }
 
-internal sealed class CerrarMantenimientoHandler(IAppDbContext db, TimeProvider reloj, AplicadorCierre aplicador)
+internal sealed class CerrarMantenimientoHandler(IAppDbContext db, TimeProvider reloj, AplicadorCierre aplicador, IAuditoria auditoria)
     : ICommandHandler<CerrarMantenimientoCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(CerrarMantenimientoCommand command, CancellationToken cancellationToken)
@@ -135,6 +145,13 @@ internal sealed class CerrarMantenimientoHandler(IAppDbContext db, TimeProvider 
             return aplicado.Error!;
         }
 
+        auditoria.Registrar(
+            ModuloAuditoria.Mantenimiento,
+            command.Cierre.Resultado == ResultadoMantenimiento.SinReparacion
+                ? $"Cerró el mantenimiento de {activo.CodigoPatrimonial} (sin reparación)"
+                : $"Cerró el mantenimiento de {activo.CodigoPatrimonial}",
+            activo.SedeId,
+            activo.Id);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }

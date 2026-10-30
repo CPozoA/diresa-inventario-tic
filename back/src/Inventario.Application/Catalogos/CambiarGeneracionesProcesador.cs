@@ -1,6 +1,8 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
+using Inventario.Domain.Auditoria;
 using Inventario.Domain.Catalogos;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +15,7 @@ namespace Inventario.Application.Catalogos;
 /// <remarks>Requiere Catalogos.GestionarGlobales (solo el superadministrador).</remarks>
 public sealed record CambiarGeneracionesProcesadorCommand(Guid Id, GeneracionesProcesador Generaciones) : ICommand<Vacio>;
 
-internal sealed class CambiarGeneracionesProcesadorHandler(IAppDbContext db)
+internal sealed class CambiarGeneracionesProcesadorHandler(IAppDbContext db, IAuditoria auditoria)
     : ICommandHandler<CambiarGeneracionesProcesadorCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(CambiarGeneracionesProcesadorCommand command, CancellationToken cancellationToken)
@@ -25,6 +27,7 @@ internal sealed class CambiarGeneracionesProcesadorHandler(IAppDbContext db)
         }
 
         procesador.CambiarGeneraciones(command.Generaciones);
+        auditoria.Registrar(ModuloAuditoria.Catalogos, $"Cambió las generaciones del procesador {procesador.Nombre}", sedeId: null);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }

@@ -1,8 +1,10 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Archivos;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Domain.Activos;
+using Inventario.Domain.Auditoria;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventario.Application.Activos.Fotos;
@@ -22,7 +24,7 @@ public sealed record ImagenSubida(byte[] Contenido);
 public sealed record SubirFotoActivoCommand(Guid ActivoId, ImagenSubida? Foto, ImagenSubida? Miniatura, string? Descripcion)
     : ICommand<FotoActivoDto>;
 
-internal sealed class SubirFotoActivoHandler(IAppDbContext db, IAlmacenArchivos almacen)
+internal sealed class SubirFotoActivoHandler(IAppDbContext db, IAlmacenArchivos almacen, IAuditoria auditoria)
     : ICommandHandler<SubirFotoActivoCommand, FotoActivoDto>
 {
     public async Task<Result<FotoActivoDto>> Handle(SubirFotoActivoCommand command, CancellationToken cancellationToken)
@@ -30,7 +32,7 @@ internal sealed class SubirFotoActivoHandler(IAppDbContext db, IAlmacenArchivos 
         // El filtro de sede oculta los activos de otras redes.
         var activo = await db.Activos.AsNoTracking()
             .Where(a => a.Id == command.ActivoId)
-            .Select(a => new { a.Id, a.SedeId })
+            .Select(a => new { a.Id, a.SedeId, a.CodigoPatrimonial })
             .FirstOrDefaultAsync(cancellationToken);
         if (activo is null)
         {
@@ -81,6 +83,7 @@ internal sealed class SubirFotoActivoHandler(IAppDbContext db, IAlmacenArchivos 
         try
         {
             db.FotosActivo.Add(nueva);
+            auditoria.Registrar(ModuloAuditoria.Activos, $"Agregó una foto al activo {activo.CodigoPatrimonial}", activo.SedeId, activo.Id);
             await db.SaveChangesAsync(cancellationToken);
         }
         catch
@@ -126,7 +129,7 @@ internal sealed class SubirFotoActivoHandler(IAppDbContext db, IAlmacenArchivos 
 /// <remarks>Requiere Activos.Editar.</remarks>
 public sealed record DescribirFotoActivoCommand(Guid ActivoId, Guid FotoId, string? Descripcion) : ICommand<Vacio>;
 
-internal sealed class DescribirFotoActivoHandler(IAppDbContext db) : ICommandHandler<DescribirFotoActivoCommand, Vacio>
+internal sealed class DescribirFotoActivoHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<DescribirFotoActivoCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(DescribirFotoActivoCommand command, CancellationToken cancellationToken)
     {
@@ -138,6 +141,8 @@ internal sealed class DescribirFotoActivoHandler(IAppDbContext db) : ICommandHan
         }
 
         foto.CambiarDescripcion(command.Descripcion);
+        auditoria.Registrar(
+            ModuloAuditoria.Activos, $"Cambió la descripción de una foto de {await db.CodigoActivoAsync(foto.ActivoId, cancellationToken)}", foto.SedeId, foto.ActivoId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }
@@ -147,7 +152,7 @@ internal sealed class DescribirFotoActivoHandler(IAppDbContext db) : ICommandHan
 /// <remarks>Requiere Activos.Editar.</remarks>
 public sealed record MarcarFotoPrincipalCommand(Guid ActivoId, Guid FotoId) : ICommand<Vacio>;
 
-internal sealed class MarcarFotoPrincipalHandler(IAppDbContext db) : ICommandHandler<MarcarFotoPrincipalCommand, Vacio>
+internal sealed class MarcarFotoPrincipalHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<MarcarFotoPrincipalCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(MarcarFotoPrincipalCommand command, CancellationToken cancellationToken)
     {
@@ -162,6 +167,9 @@ internal sealed class MarcarFotoPrincipalHandler(IAppDbContext db) : ICommandHan
             foto.MarcarPrincipal(foto.Id == command.FotoId);
         }
 
+        var marcada = fotos.First(f => f.Id == command.FotoId);
+        auditoria.Registrar(
+            ModuloAuditoria.Activos, $"Cambió la foto principal de {await db.CodigoActivoAsync(marcada.ActivoId, cancellationToken)}", marcada.SedeId, marcada.ActivoId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }
@@ -171,7 +179,7 @@ internal sealed class MarcarFotoPrincipalHandler(IAppDbContext db) : ICommandHan
 /// <remarks>Requiere Activos.Editar.</remarks>
 public sealed record EliminarFotoActivoCommand(Guid ActivoId, Guid FotoId) : ICommand<Vacio>;
 
-internal sealed class EliminarFotoActivoHandler(IAppDbContext db, IAlmacenArchivos almacen)
+internal sealed class EliminarFotoActivoHandler(IAppDbContext db, IAlmacenArchivos almacen, IAuditoria auditoria)
     : ICommandHandler<EliminarFotoActivoCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(EliminarFotoActivoCommand command, CancellationToken cancellationToken)
@@ -189,6 +197,8 @@ internal sealed class EliminarFotoActivoHandler(IAppDbContext db, IAlmacenArchiv
             siguiente.MarcarPrincipal(true);
         }
 
+        auditoria.Registrar(
+            ModuloAuditoria.Activos, $"Eliminó una foto de {await db.CodigoActivoAsync(foto.ActivoId, cancellationToken)}", foto.SedeId, foto.ActivoId);
         await db.SaveChangesAsync(cancellationToken);
 
         // Los archivos se borran después: si fallara, quedaría un archivo sin uso, nunca una foto sin archivo.

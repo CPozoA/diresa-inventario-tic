@@ -21,6 +21,7 @@ import { rutaInternaSegura } from '../../../core/rutas';
 import { AvisoComponent } from '../../../shared/ui/aviso.component';
 import { confirmar } from '../../../shared/ui/confirmacion.dialog';
 import { AsignacionActivoComponent } from '../../asignaciones/components/asignacion-activo.component';
+import { HistorialActivoComponent } from '../../auditoria/components/historial-activo.component';
 import { LicenciasActivoComponent } from '../../licencias/components/licencias-activo.component';
 import { MantenimientoActivoComponent } from '../../mantenimiento/components/mantenimiento-activo.component';
 import { GaleriaFotosComponent } from '../components/galeria-fotos.component';
@@ -66,6 +67,7 @@ const LISTA = '/inventario';
     AsignacionActivoComponent,
     MantenimientoActivoComponent,
     LicenciasActivoComponent,
+    HistorialActivoComponent,
   ],
   templateUrl: './ficha-activo.page.html',
   styleUrl: './ficha-activo.page.scss',
@@ -107,6 +109,7 @@ export class FichaActivoPage {
   protected readonly puedeGestionarMantenimiento = this.sesion.tienePermiso(Permisos.Mantenimiento.Gestionar);
   protected readonly puedeVerLicencias = this.sesion.tienePermiso(Permisos.Licencias.Ver);
   protected readonly puedeGestionarLicencias = this.sesion.tienePermiso(Permisos.Licencias.Gestionar);
+  protected readonly puedeVerAuditoria = this.sesion.tienePermiso(Permisos.Auditoria.Ver);
 
   protected readonly recurso = resource({
     params: () => ({ id: this.id() }),

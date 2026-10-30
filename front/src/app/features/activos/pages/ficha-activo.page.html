@@ -207,6 +207,11 @@
         <app-licencias-activo class="licencias" [ficha]="f" [puedeGestionar]="puedeGestionarLicencias" />
       }
 
+      <!-- Historial de cambios (auditoría, D56). -->
+      @if (puedeVerAuditoria) {
+        <app-historial-activo class="historial" [ficha]="f" />
+      }
+
       <div class="columna lateral">
         @if (ciclo(); as c) {
           <section class="tarjeta">

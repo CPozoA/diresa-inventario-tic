@@ -10,6 +10,7 @@ export const Permisos = {
   Catalogos: { GestionarSede: 'Catalogos.GestionarSede', GestionarGlobales: 'Catalogos.GestionarGlobales' },
   Usuarios: { Ver: 'Usuarios.Ver', Gestionar: 'Usuarios.Gestionar' },
   Roles: { Ver: 'Roles.Ver', Gestionar: 'Roles.Gestionar' },
+  Auditoria: { Ver: 'Auditoria.Ver' },
   Sedes: { Gestionar: 'Sedes.Gestionar' },
   Establecimientos: { Gestionar: 'Establecimientos.Gestionar' },
   Administradores: { Gestionar: 'Administradores.Gestionar' },

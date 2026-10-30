@@ -1,6 +1,8 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
+using Inventario.Domain.Auditoria;
 using Inventario.Domain.Establecimientos;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,7 +29,7 @@ public sealed record EditarEstablecimientoCommand(Guid Id, DatosEstablecimiento 
 /// <remarks>Requiere Establecimientos.Gestionar (solo el superadministrador).</remarks>
 public sealed record CambiarEstadoEstablecimientoCommand(Guid Id, bool Activo) : ICommand<Vacio>;
 
-internal sealed class CrearEstablecimientoHandler(IAppDbContext db) : ICommandHandler<CrearEstablecimientoCommand, IdCreado>
+internal sealed class CrearEstablecimientoHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<CrearEstablecimientoCommand, IdCreado>
 {
     public async Task<Result<IdCreado>> Handle(CrearEstablecimientoCommand command, CancellationToken cancellationToken)
     {
@@ -56,13 +58,14 @@ internal sealed class CrearEstablecimientoHandler(IAppDbContext db) : ICommandHa
         }
 
         db.Establecimientos.Add(establecimiento);
+        auditoria.Registrar(ModuloAuditoria.Establecimientos, $"Registró el establecimiento {establecimiento.Nombre}", establecimiento.SedeId);
         await db.SaveChangesAsync(cancellationToken);
 
         return new IdCreado(establecimiento.Id);
     }
 }
 
-internal sealed class EditarEstablecimientoHandler(IAppDbContext db) : ICommandHandler<EditarEstablecimientoCommand, Vacio>
+internal sealed class EditarEstablecimientoHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<EditarEstablecimientoCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(EditarEstablecimientoCommand command, CancellationToken cancellationToken)
     {
@@ -80,12 +83,13 @@ internal sealed class EditarEstablecimientoHandler(IAppDbContext db) : ICommandH
             return duplicado;
         }
 
+        auditoria.Registrar(ModuloAuditoria.Establecimientos, $"Editó el establecimiento {establecimiento.Nombre}", establecimiento.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }
 }
 
-internal sealed class CambiarEstadoEstablecimientoHandler(IAppDbContext db)
+internal sealed class CambiarEstadoEstablecimientoHandler(IAppDbContext db, IAuditoria auditoria)
     : ICommandHandler<CambiarEstadoEstablecimientoCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(CambiarEstadoEstablecimientoCommand command, CancellationToken cancellationToken)
@@ -105,6 +109,10 @@ internal sealed class CambiarEstadoEstablecimientoHandler(IAppDbContext db)
             establecimiento.Desactivar();
         }
 
+        auditoria.Registrar(
+            ModuloAuditoria.Establecimientos,
+            $"{(command.Activo ? "Activó" : "Desactivó")} el establecimiento {establecimiento.Nombre}",
+            establecimiento.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }

@@ -1,9 +1,11 @@
 using System.Net;
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Correo;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Auditoria;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventario.Application.Cuenta;
@@ -57,7 +59,7 @@ internal sealed class SolicitarRestablecimientoHandler(
     }
 }
 
-internal sealed class RestablecerContrasenaHandler(IServicioIdentidad identidad)
+internal sealed class RestablecerContrasenaHandler(IServicioIdentidad identidad, IAppDbContext db, IAuditoria auditoria)
     : ICommandHandler<RestablecerContrasenaCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(RestablecerContrasenaCommand command, CancellationToken cancellationToken)
@@ -68,6 +70,17 @@ internal sealed class RestablecerContrasenaHandler(IServicioIdentidad identidad)
         }
 
         var resultado = await identidad.RestablecerContrasenaAsync(command.UsuarioId, command.Token, command.ContrasenaNueva);
+        if (resultado.EsExito)
+        {
+            // Excepción revisada al filtro de sede: la petición es anónima; solo se lee la red del usuario.
+            var sedeId = await db.Usuarios.IgnoreQueryFilters().AsNoTracking()
+                .Where(u => u.Id == command.UsuarioId)
+                .Select(u => u.SedeId)
+                .FirstOrDefaultAsync(cancellationToken);
+            await auditoria.RegistrarYGuardarAsync(
+                ModuloAuditoria.Cuenta, "Restableció su contraseña con el enlace del correo", sedeId, usuarioId: command.UsuarioId, cancellationToken: cancellationToken);
+        }
+
         return resultado.EsExito
             ? Result.Exito(Vacio.Valor)
             : Result.Fallo<Vacio>(resultado.Error!);

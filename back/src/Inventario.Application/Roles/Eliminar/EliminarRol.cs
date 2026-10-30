@@ -1,7 +1,9 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Auditoria;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventario.Application.Roles.Eliminar;
@@ -10,7 +12,7 @@ namespace Inventario.Application.Roles.Eliminar;
 /// <remarks>Requiere Roles.Gestionar.</remarks>
 public sealed record EliminarRolCommand(Guid Id) : ICommand<Vacio>;
 
-internal sealed class EliminarRolHandler(IAppDbContext db, ReglasDeGestion reglas) : ICommandHandler<EliminarRolCommand, Vacio>
+internal sealed class EliminarRolHandler(IAppDbContext db, ReglasDeGestion reglas, IAuditoria auditoria) : ICommandHandler<EliminarRolCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(EliminarRolCommand command, CancellationToken cancellationToken)
     {
@@ -45,6 +47,7 @@ internal sealed class EliminarRolHandler(IAppDbContext db, ReglasDeGestion regla
         }
 
         db.Roles.Remove(rol);
+        auditoria.Registrar(ModuloAuditoria.Roles, $"Eliminó el rol {rol.Nombre}", rol.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }

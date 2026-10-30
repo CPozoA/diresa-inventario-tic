@@ -1,7 +1,9 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Auditoria;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventario.Application.Sedes.CambiarEstado;
@@ -13,7 +15,7 @@ namespace Inventario.Application.Sedes.CambiarEstado;
 /// <remarks>Requiere Sedes.Gestionar (solo el superadministrador).</remarks>
 public sealed record CambiarEstadoSedeCommand(Guid Id, bool Activa) : ICommand<Vacio>;
 
-internal sealed class CambiarEstadoSedeHandler(IAppDbContext db, IServicioIdentidad identidad)
+internal sealed class CambiarEstadoSedeHandler(IAppDbContext db, IServicioIdentidad identidad, IAuditoria auditoria)
     : ICommandHandler<CambiarEstadoSedeCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(CambiarEstadoSedeCommand command, CancellationToken cancellationToken)
@@ -27,11 +29,13 @@ internal sealed class CambiarEstadoSedeHandler(IAppDbContext db, IServicioIdenti
         if (command.Activa)
         {
             sede.Activar();
+            auditoria.Registrar(ModuloAuditoria.Sedes, $"Activó la sede {sede.Nombre}", sede.Id);
             await db.SaveChangesAsync(cancellationToken);
             return Vacio.Valor;
         }
 
         sede.Desactivar();
+        auditoria.Registrar(ModuloAuditoria.Sedes, $"Desactivó la sede {sede.Nombre} y cerró las sesiones de sus usuarios", sede.Id);
         await db.SaveChangesAsync(cancellationToken);
 
         var usuarios = await db.Usuarios

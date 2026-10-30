@@ -114,7 +114,8 @@
     'mantenimiento'
     'licencias'
     'principal'
-    'lateral';
+    'lateral'
+    'historial';
   gap: 16px;
   align-items: start;
 }
@@ -146,6 +147,11 @@
   min-width: 0;
 }
 
+.historial {
+  grid-area: historial;
+  min-width: 0;
+}
+
 @media (min-width: 1100px) {
   .columnas {
     grid-template-columns: minmax(0, 1fr) 340px;
@@ -154,8 +160,9 @@
       'principal asignacion'
       'principal mantenimiento'
       'principal licencias'
-      'principal lateral';
-    grid-template-rows: auto auto auto auto 1fr;
+      'principal lateral'
+      'principal historial';
+    grid-template-rows: auto auto auto auto auto 1fr;
   }
 }
 

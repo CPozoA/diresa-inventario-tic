@@ -1,6 +1,8 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
+using Inventario.Domain.Auditoria;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventario.Application.Sedes.Editar;
@@ -9,7 +11,7 @@ namespace Inventario.Application.Sedes.Editar;
 /// <remarks>Requiere Sedes.Gestionar (solo el superadministrador).</remarks>
 public sealed record EditarSedeCommand(Guid Id, string Nombre) : ICommand<Vacio>;
 
-internal sealed class EditarSedeHandler(IAppDbContext db) : ICommandHandler<EditarSedeCommand, Vacio>
+internal sealed class EditarSedeHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<EditarSedeCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(EditarSedeCommand command, CancellationToken cancellationToken)
     {
@@ -19,7 +21,9 @@ internal sealed class EditarSedeHandler(IAppDbContext db) : ICommandHandler<Edit
             return ErroresSede.NoEncontrada;
         }
 
+        var anterior = sede.Nombre;
         sede.CambiarNombre(command.Nombre);
+        auditoria.Registrar(ModuloAuditoria.Sedes, $"Cambió el nombre de la sede {anterior} a {sede.Nombre}", sede.Id);
         await db.SaveChangesAsync(cancellationToken);
 
         return Vacio.Valor;

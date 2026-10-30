@@ -1,7 +1,9 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Auditoria;
 
 namespace Inventario.Application.Usuarios.RestablecerContrasena;
 
@@ -15,7 +17,7 @@ public sealed record ContrasenaTemporalDto(string ContrasenaTemporal);
 /// <remarks>Requiere Usuarios.Gestionar.</remarks>
 public sealed record RestablecerContrasenaUsuarioCommand(Guid Id) : ICommand<ContrasenaTemporalDto>;
 
-internal sealed class RestablecerContrasenaUsuarioHandler(IAppDbContext db, ReglasDeGestion reglas, IServicioIdentidad identidad)
+internal sealed class RestablecerContrasenaUsuarioHandler(IAppDbContext db, ReglasDeGestion reglas, IServicioIdentidad identidad, IAuditoria auditoria)
     : ICommandHandler<RestablecerContrasenaUsuarioCommand, ContrasenaTemporalDto>
 {
     public async Task<Result<ContrasenaTemporalDto>> Handle(
@@ -37,6 +39,12 @@ internal sealed class RestablecerContrasenaUsuarioHandler(IAppDbContext db, Regl
         var contrasenaTemporal = GeneradorContrasenaTemporal.Generar();
 
         var resultado = await identidad.EstablecerContrasenaTemporalAsync(usuario.Id, contrasenaTemporal);
+        if (resultado.EsExito)
+        {
+            await auditoria.RegistrarYGuardarAsync(
+                ModuloAuditoria.Usuarios, $"Restableció la contraseña de {usuario.Nombres} {usuario.Apellidos}", usuario.SedeId, cancellationToken: cancellationToken);
+        }
+
         return resultado.EsExito ? new ContrasenaTemporalDto(contrasenaTemporal) : resultado.Error!;
     }
 }

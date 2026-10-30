@@ -1,7 +1,10 @@
+using System.Globalization;
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
+using Inventario.Domain.Auditoria;
 using Inventario.Domain.Catalogos;
 using Inventario.Domain.Licencias;
 using Microsoft.EntityFrameworkCore;
@@ -38,7 +41,7 @@ public sealed record AsignarLicenciaCommand(Guid Id, IReadOnlyList<Guid> ActivoI
 /// <remarks>Requiere Licencias.Gestionar.</remarks>
 public sealed record QuitarLicenciaCommand(Guid Id, Guid ActivoId) : ICommand<Vacio>;
 
-internal sealed class RegistrarLicenciaHandler(IAppDbContext db, ReglasDeGestion reglas) : ICommandHandler<RegistrarLicenciaCommand, IdCreado>
+internal sealed class RegistrarLicenciaHandler(IAppDbContext db, ReglasDeGestion reglas, IAuditoria auditoria) : ICommandHandler<RegistrarLicenciaCommand, IdCreado>
 {
     public async Task<Result<IdCreado>> Handle(RegistrarLicenciaCommand command, CancellationToken cancellationToken)
     {
@@ -50,12 +53,13 @@ internal sealed class RegistrarLicenciaHandler(IAppDbContext db, ReglasDeGestion
 
         var licencia = Licencia.Registrar(sede.Valor, command.Datos);
         db.Licencias.Add(licencia);
+        auditoria.Registrar(ModuloAuditoria.Licencias, $"Registró la licencia {licencia.Producto} ({licencia.Puestos} puestos)", licencia.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return new IdCreado(licencia.Id);
     }
 }
 
-internal sealed class ActualizarLicenciaHandler(IAppDbContext db) : ICommandHandler<ActualizarLicenciaCommand, Vacio>
+internal sealed class ActualizarLicenciaHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<ActualizarLicenciaCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(ActualizarLicenciaCommand command, CancellationToken cancellationToken)
     {
@@ -65,13 +69,20 @@ internal sealed class ActualizarLicenciaHandler(IAppDbContext db) : ICommandHand
             return ErroresLicencia.NoEncontrada;
         }
 
+        var finAnterior = licencia.FechaFin;
         licencia.Actualizar(command.Datos);
+        auditoria.Registrar(
+            ModuloAuditoria.Licencias,
+            licencia.FechaFin > finAnterior
+                ? $"Renovó la licencia {licencia.Producto} hasta el {licencia.FechaFin.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)}"
+                : $"Editó la licencia {licencia.Producto}",
+            licencia.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }
 }
 
-internal sealed class EliminarLicenciaHandler(IAppDbContext db) : ICommandHandler<EliminarLicenciaCommand, Vacio>
+internal sealed class EliminarLicenciaHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<EliminarLicenciaCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(EliminarLicenciaCommand command, CancellationToken cancellationToken)
     {
@@ -82,12 +93,13 @@ internal sealed class EliminarLicenciaHandler(IAppDbContext db) : ICommandHandle
         }
 
         db.Licencias.Remove(licencia);
+        auditoria.Registrar(ModuloAuditoria.Licencias, $"Eliminó la licencia {licencia.Producto}", licencia.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }
 }
 
-internal sealed class ArchivarLicenciaHandler(IAppDbContext db) : ICommandHandler<ArchivarLicenciaCommand, Vacio>
+internal sealed class ArchivarLicenciaHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<ArchivarLicenciaCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(ArchivarLicenciaCommand command, CancellationToken cancellationToken)
     {
@@ -99,7 +111,12 @@ internal sealed class ArchivarLicenciaHandler(IAppDbContext db) : ICommandHandle
 
         if (!licencia.Archivada)
         {
+            var equipos = licencia.Equipos.Count;
             licencia.Archivar();
+            auditoria.Registrar(
+                ModuloAuditoria.Licencias,
+                equipos > 0 ? $"Archivó la licencia {licencia.Producto} y la quitó de {equipos} equipos" : $"Archivó la licencia {licencia.Producto}",
+                licencia.SedeId);
             await db.SaveChangesAsync(cancellationToken);
         }
 
@@ -107,7 +124,7 @@ internal sealed class ArchivarLicenciaHandler(IAppDbContext db) : ICommandHandle
     }
 }
 
-internal sealed class ReactivarLicenciaHandler(IAppDbContext db) : ICommandHandler<ReactivarLicenciaCommand, Vacio>
+internal sealed class ReactivarLicenciaHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<ReactivarLicenciaCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(ReactivarLicenciaCommand command, CancellationToken cancellationToken)
     {
@@ -120,6 +137,7 @@ internal sealed class ReactivarLicenciaHandler(IAppDbContext db) : ICommandHandl
         if (licencia.Archivada)
         {
             licencia.Reactivar();
+            auditoria.Registrar(ModuloAuditoria.Licencias, $"Reactivó la licencia {licencia.Producto}", licencia.SedeId);
             await db.SaveChangesAsync(cancellationToken);
         }
 
@@ -127,7 +145,7 @@ internal sealed class ReactivarLicenciaHandler(IAppDbContext db) : ICommandHandl
     }
 }
 
-internal sealed class AsignarLicenciaHandler(IAppDbContext db, TimeProvider reloj) : ICommandHandler<AsignarLicenciaCommand, Vacio>
+internal sealed class AsignarLicenciaHandler(IAppDbContext db, TimeProvider reloj, IAuditoria auditoria) : ICommandHandler<AsignarLicenciaCommand, Vacio>
 {
     public const int MaximoPorVez = 500;
 
@@ -161,7 +179,7 @@ internal sealed class AsignarLicenciaHandler(IAppDbContext db, TimeProvider relo
             from a in db.Activos.AsNoTracking()
             join e in db.EstadosActivo on a.EstadoActivoId equals e.Id
             where ids.Contains(a.Id)
-            select new { a.Id, a.SedeId, Grupo = e.GrupoAsignado ?? GrupoEstado.EnUso })
+            select new { a.Id, a.SedeId, a.CodigoPatrimonial, Grupo = e.GrupoAsignado ?? GrupoEstado.EnUso })
             .ToListAsync(cancellationToken);
 
         if (activos.Count != ids.Count || activos.Exists(a => a.SedeId != licencia.SedeId))
@@ -190,12 +208,17 @@ internal sealed class AsignarLicenciaHandler(IAppDbContext db, TimeProvider relo
         }
 
         // La clave (licencia, activo) impide repetir el equipo aunque dos personas lo asignen a la vez.
+        foreach (var a in activos)
+        {
+            auditoria.Registrar(ModuloAuditoria.Licencias, $"Asignó la licencia {licencia.Producto} a {a.CodigoPatrimonial}", licencia.SedeId, a.Id);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }
 }
 
-internal sealed class QuitarLicenciaHandler(IAppDbContext db) : ICommandHandler<QuitarLicenciaCommand, Vacio>
+internal sealed class QuitarLicenciaHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<QuitarLicenciaCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(QuitarLicenciaCommand command, CancellationToken cancellationToken)
     {
@@ -211,6 +234,11 @@ internal sealed class QuitarLicenciaHandler(IAppDbContext db) : ICommandHandler<
         }
 
         licencia.Quitar(command.ActivoId);
+        auditoria.Registrar(
+            ModuloAuditoria.Licencias,
+            $"Quitó la licencia {licencia.Producto} de {await db.CodigoActivoAsync(command.ActivoId, cancellationToken)}",
+            licencia.SedeId,
+            command.ActivoId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }

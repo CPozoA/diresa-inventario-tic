@@ -3,6 +3,7 @@ using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Seguridad;
 using Inventario.Domain.Activos;
 using Inventario.Domain.Asignaciones;
+using Inventario.Domain.Auditoria;
 using Inventario.Domain.Catalogos;
 using Inventario.Domain.Common;
 using Inventario.Domain.Establecimientos;
@@ -51,6 +52,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IUsuari
     public DbSet<Mantenimiento> Mantenimientos => Set<Mantenimiento>();
 
     public DbSet<Licencia> Licencias => Set<Licencia>();
+
+    public DbSet<RegistroAuditoria> Auditoria => Set<RegistroAuditoria>();
 
     public DbSet<Area> Areas => Set<Area>();
 

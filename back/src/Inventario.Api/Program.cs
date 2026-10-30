@@ -24,6 +24,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUsuarioActual, UsuarioActualHttp>();
+builder.Services.AddScoped<IContextoPeticion, ContextoPeticionHttp>();
 
 builder.Services.AddSeguridadHttp(builder.Configuration);
 builder.Services.AddProteccionCsrf();
@@ -79,6 +80,7 @@ api.MapPersonalEndpoints();
 api.MapAsignacionesEndpoints();
 api.MapMantenimientosEndpoints();
 api.MapLicenciasEndpoints();
+api.MapAuditoriaEndpoints();
 api.MapResumenEndpoints();
 
 await app.Services.InicializarBaseDatosAsync();

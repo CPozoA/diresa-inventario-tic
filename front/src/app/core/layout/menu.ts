@@ -37,6 +37,7 @@ export const MENU: readonly GrupoMenu[] = [
       { texto: 'Sedes', ruta: 'sedes', permiso: Permisos.Sedes.Gestionar },
       { texto: 'Establecimientos', ruta: 'establecimientos', permiso: Permisos.Establecimientos.Gestionar },
       { texto: 'Catálogos generales', ruta: 'catalogos', permiso: Permisos.Catalogos.GestionarGlobales },
+      { texto: 'Auditoría', ruta: 'auditoria', permiso: Permisos.Auditoria.Ver },
     ],
   },
 ];

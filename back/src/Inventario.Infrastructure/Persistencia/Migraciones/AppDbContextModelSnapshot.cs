@@ -421,6 +421,50 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.ToTable("Asignaciones", "inventario");
                 });
 
+            modelBuilder.Entity("Inventario.Domain.Auditoria.RegistroAuditoria", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid?>("ActivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("Fecha")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Ip")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<string>("Modulo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid?>("SedeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("UsuarioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Fecha");
+
+                    b.HasIndex("ActivoId", "Fecha");
+
+                    b.HasIndex("SedeId", "Fecha");
+
+                    b.HasIndex("UsuarioId", "Fecha");
+
+                    b.ToTable("Auditoria", "seguridad");
+                });
+
             modelBuilder.Entity("Inventario.Domain.Catalogos.Antivirus", b =>
                 {
                     b.Property<Guid>("Id")

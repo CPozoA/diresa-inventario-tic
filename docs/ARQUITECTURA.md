@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.32 · 30/10/2026 · Cambios: exportación del inventario a Excel (Paso 12, D55, §5.15).
+> Versión 0.34 · 30/10/2026 · Cambios: registro de auditoría (Paso 13, D56, §5.16); catálogo «Tipos de licencia» oculto.
 
 ---
 
@@ -93,6 +93,7 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D53 | Mantenimiento | Cada mantenimiento es **preventivo** o **correctivo** (este exige el problema reportado) y lo hace el **personal de TI** (se elige al técnico: un usuario activo de la red con permiso `Mantenimiento.Gestionar` o administrador de sede) o un **proveedor** (empresa, N° de orden de servicio y costo). Abierto, el activo pasa a un estado del grupo "en mantenimiento"; al **cerrarlo** se registran el trabajo realizado y el resultado (quedó operativo o sin reparación) y se elige el estado y la conservación en que queda (la interfaz propone "Operativo" o "Inoperativo"). Un activo tiene a lo sumo uno abierto; no se registran en activos de baja. Se puede registrar ya terminado. El **próximo preventivo** es una fecha del activo que se fija al cerrar (la interfaz propone 6 meses en un preventivo); vencida, el activo "requiere atención" (motivo `MantenimientoVencido`), salvo que ya tenga un mantenimiento en curso. Permisos: `Mantenimiento.Ver` y `Mantenimiento.Gestionar` | El estado del equipo refleja la realidad sin pasos manuales, y los preventivos dejan de depender de la memoria. Una fecha por activo es simple y se ajusta a cada equipo; una frecuencia por tipo se puede agregar después. |
 | D54 | Licencias | Solo **suscripciones con vencimiento**: producto, proveedor, **número de puestos**, fecha de inicio y de vencimiento (último día incluido), documento de compra, costo y observaciones. **No se guarda la clave del producto.** Cada puesto se asigna a un **equipo** del inventario de la misma red (no a personas; no a equipos de baja; no si la licencia venció o está archivada). Se puede bajar los puestos por debajo de los equipos: queda "con equipos de más". Renovar = editar con las fechas del periodo siguiente (la interfaz lo propone: desde el día siguiente, por un año). Una licencia que no se renovó se **archiva**: sale de los avisos y libera sus equipos (se puede reactivar). Eliminar es para registros por error. Avisos: **vencidas**, **por vencer** (30 días) y **con equipos de más**, en la página y en "Requieren atención" del resumen. Permisos: `Licencias.Ver` y `Licencias.Gestionar` | Lo que se renueva cada año es lo que hay que vigilar; las perpetuas y OEM no generan avisos. La clave en la base sería un secreto más que proteger. Archivar conserva el registro sin ensuciar los avisos. |
 | D55 | Exportar a Excel | Solo el **inventario**, con los **mismos filtros** de la lista (búsqueda, establecimiento, tipo, estado, garantía, renovación, atención, fichas por completar) y todas sus páginas. Archivo completo: hoja **Activos** (una fila por activo con todos sus datos, el responsable asignado y el anterior), **Discos** y **Memoria RAM** (una fila por componente, con el código patrimonial para cruzarlas) e **Información** (red, fecha y filtros). El superadministrador con todas las redes recibe un solo archivo con la columna **Red**. Lo arma la API con ClosedXML (D42); hasta **20 000 activos** por archivo. Permiso: `Activos.Ver` | Es lo que se pide para informes y auditorías; con los filtros de la lista, el usuario exporta exactamente lo que ve. Una sola hoja por tipo de dato se filtra y cruza fácilmente en Excel. |
+| D56 | Auditoría | Cada caso de uso que cambia datos registra **la acción en palabras** ("Editó el activo PAT-0001", "Asignó la licencia… a PAT-0002"), sin valores anteriores ni nuevos, con fecha y hora, usuario, red del registro afectado, módulo, activo (para su historial) e IP. Se registran inventario (activos, fotos, asignaciones, personal, mantenimientos, licencias), seguridad (usuarios, roles, sedes, inicios de sesión correctos y fallidos, bloqueos, contraseñas) y catálogos y establecimientos (incluida la importación). La línea se guarda **en la misma operación** que el cambio. Se conserva **siempre** y no se modifica ni se borra desde el sistema. Lo ve quien tiene `Auditoria.Ver` (el administrador de sede, de su red; el superadministrador, todo): página Auditoría con filtros y Excel, e "Historial de cambios" en la ficha del activo | Responde "¿quién cambió esto y cuándo?" sin la complejidad de guardar cada valor. Registrar dentro del caso de uso da textos comprensibles y nunca deja cambios sin registro. |
 
 ### Decisiones pendientes de confirmar
 
@@ -244,7 +245,7 @@ Es la pieza de seguridad más importante del sistema.
 
 | Globales (superadmin, permiso `Catalogos.GestionarGlobales`) | Por sede (permiso `Catalogos.GestionarSede`) |
 |---|---|
-| Tipos de activo (con su ficha, D43), marcas, estados del activo (con su grupo, D48), sistemas operativos, procesadores (con sus generaciones, D44), antivirus, tipos de licencia | Áreas o dependencias |
+| Tipos de activo (con su ficha, D43), marcas, estados del activo (con su grupo, D48), sistemas operativos, procesadores (con sus generaciones, D44), antivirus; «tipos de licencia» queda **oculto** (sin uso desde D54: se conserva en la base, pero no se ofrece) | Áreas o dependencias |
 
 - **Implementados en el Paso 6B.** El catálogo de ubicaciones físicas se retira en el Paso 6D (D40). Los tipos de mantenimiento se agregarán con su módulo.
 - Cada catálogo es una tabla en el esquema `catalogos` con nombre y estado (activo o desactivado). Los de sede llevan `SedeId` (`IPerteneceASede`), así que usan el mismo filtro y la misma protección de §5.6.
@@ -391,6 +392,14 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 - **Capas:** Application arma los datos ya en texto, números y fechas (`InventarioParaExcel`, con los textos de `ListasActivo`); Infrastructure solo escribe (`GeneradorExcelInventario`, ClosedXML): encabezados fijos y con filtro, anchos fijos, fechas `dd/mm/aaaa`, montos `#,##0.00`, códigos, series, IP y MAC como texto.
 - **Pantalla:** botón "Exportar a Excel" en el inventario (deshabilitado sin activos o con más de 20 000); el navegador guarda el archivo con el nombre que envía la API.
 
+### 5.16 Auditoría (D56)
+
+- **Entidad:** `RegistroAuditoria` (tabla `seguridad.Auditoria`): `Fecha` (UTC), `UsuarioId`, `SedeId`, `Modulo`, `Accion` (hasta 500 caracteres), `ActivoId`, `Ip`. Sin claves foráneas: sobrevive a lo que describe (un activo eliminado) y no frena ningún borrado. Índices por fecha, red, activo y usuario.
+- **Escritura:** `IAuditoria.Registrar(...)` agrega la línea antes del `SaveChangesAsync` del caso de uso; `RegistrarYGuardarAsync` para lo que guarda Identity (crear cuentas, contraseñas, desbloqueos, inicios de sesión). La IP la da `IContextoPeticion` (capa Api).
+- **Lectura:** `GET /api/auditoria?desde=&hasta=&modulo=&buscar=&sedeId=` (paginado, lo más reciente primero), `GET /api/auditoria/exportar` (Excel, hasta 50 000) y `GET /api/activos/{id}/historial`. Un usuario de sede ve solo lo de su red; el superadministrador, todo.
+- **Permiso:** `Auditoria.Ver`. Es un permiso de sede: lo tiene el Administrador de sede (y el superadministrador); los roles iniciales Editor y Consulta no lo tienen.
+- **Pantallas:** `/auditoria` (Administración) con búsqueda, fechas, módulo, Excel; los intentos fallidos y bloqueos se resaltan; cada acción sobre un activo enlaza a su ficha. En la ficha del activo, "Historial de cambios".
+
 ---
 
 ## 6. Seguridad
@@ -453,7 +462,7 @@ Dónde está cada regla: las que solo dependen del usuario y del rol (2, 4, 7) e
 - Cabeceras de seguridad: HSTS, `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy`.
 - Límite de peticiones en inicio de sesión y recuperación de contraseña.
 - Cadenas de conexión y credenciales SMTP **fuera del repositorio** (variables de entorno o `appsettings.Production.json` no versionado).
-- Registro de auditoría de cambios (fase de endurecimiento).
+- Registro de auditoría de cambios (D56, §5.16).
 
 ---
 
@@ -555,7 +564,6 @@ Consideraciones del hosting compartido:
 |---|---|
 | Cifrar las claves de protección de datos | Hoy se guardan en `seguridad.ClavesProteccionDatos` sin una capa extra de cifrado (el registro avisa "No XML encryptor configured"). En producción: `ProtectKeysWithCertificate(...)` con un certificado instalado en el servidor. |
 | Cabeceras de seguridad | HSTS, `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy` (§6.4). |
-| Registro de auditoría de cambios | Historial completo de quién cambió qué (§6.4). |
 | Correo SMTP real | Datos del servidor de SmarterASP.NET como variables de entorno (D21). |
 
 ---
@@ -598,4 +606,6 @@ Consideraciones del hosting compartido:
 
 | **12** | Exportación del inventario a Excel (§5.15, D55): hojas Activos, Discos, Memoria RAM e Información con los filtros de la lista; botón en el inventario | `dotnet test`, `npm test` y prueba manual |
 
-Fases posteriores: registro de auditoría y endurecimiento.
+| **13** | Registro de auditoría (§5.16, D56): acciones de inventario, seguridad y catálogos con usuario, red e IP; página Auditoría con filtros y Excel; historial en la ficha del activo; migración | `dotnet test`, `npm test` y prueba manual |
+
+Fase siguiente: endurecimiento y publicación (§10.1).

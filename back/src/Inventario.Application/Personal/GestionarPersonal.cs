@@ -1,7 +1,9 @@
+using Inventario.Application.Auditoria;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Reniec;
 using Inventario.Application.Common.Resultados;
+using Inventario.Domain.Auditoria;
 using Inventario.Domain.Personal;
 using Microsoft.EntityFrameworkCore;
 
@@ -55,7 +57,7 @@ public sealed record CesarPersonaCommand(Guid Id) : ICommand<Vacio>;
 /// <remarks>Requiere Activos.Editar.</remarks>
 public sealed record ReactivarPersonaCommand(Guid Id) : ICommand<Vacio>;
 
-internal sealed class RegistrarPersonaHandler(IAppDbContext db, IConsultaDni reniec, TimeProvider reloj)
+internal sealed class RegistrarPersonaHandler(IAppDbContext db, IConsultaDni reniec, TimeProvider reloj, IAuditoria auditoria)
     : ICommandHandler<RegistrarPersonaCommand, IdCreado>
 {
     public async Task<Result<IdCreado>> Handle(RegistrarPersonaCommand command, CancellationToken cancellationToken)
@@ -97,12 +99,13 @@ internal sealed class RegistrarPersonaHandler(IAppDbContext db, IConsultaDni ren
         }
 
         db.Personal.Add(persona);
+        auditoria.Registrar(ModuloAuditoria.Personal, $"Registró a {persona.NombreCompleto}", persona.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return new IdCreado(persona.Id);
     }
 }
 
-internal sealed class EditarPersonaHandler(IAppDbContext db) : ICommandHandler<EditarPersonaCommand, Vacio>
+internal sealed class EditarPersonaHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<EditarPersonaCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(EditarPersonaCommand command, CancellationToken cancellationToken)
     {
@@ -126,12 +129,13 @@ internal sealed class EditarPersonaHandler(IAppDbContext db) : ICommandHandler<E
             persona.CorregirNombres(new NombresPersona(command.ApellidoPaterno ?? string.Empty, command.ApellidoMaterno, command.Nombres ?? string.Empty));
         }
 
+        auditoria.Registrar(ModuloAuditoria.Personal, $"Editó los datos de {persona.NombreCompleto}", persona.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }
 }
 
-internal sealed class VerificarPersonaHandler(IAppDbContext db, IConsultaDni reniec, TimeProvider reloj)
+internal sealed class VerificarPersonaHandler(IAppDbContext db, IConsultaDni reniec, TimeProvider reloj, IAuditoria auditoria)
     : ICommandHandler<VerificarPersonaCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(VerificarPersonaCommand command, CancellationToken cancellationToken)
@@ -147,6 +151,7 @@ internal sealed class VerificarPersonaHandler(IAppDbContext db, IConsultaDni ren
         {
             case { Estado: EstadoConsultaDni.Encontrado, Nombres: NombresPersona deReniec }:
                 persona.Verificar(deReniec, reloj.GetUtcNow());
+                auditoria.Registrar(ModuloAuditoria.Personal, $"Verificó con RENIEC a {persona.NombreCompleto}", persona.SedeId);
                 await db.SaveChangesAsync(cancellationToken);
                 return Vacio.Valor;
             case { Estado: EstadoConsultaDni.NoEncontrado }:
@@ -157,7 +162,7 @@ internal sealed class VerificarPersonaHandler(IAppDbContext db, IConsultaDni ren
     }
 }
 
-internal sealed class CesarPersonaHandler(IAppDbContext db) : ICommandHandler<CesarPersonaCommand, Vacio>
+internal sealed class CesarPersonaHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<CesarPersonaCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(CesarPersonaCommand command, CancellationToken cancellationToken)
     {
@@ -174,12 +179,13 @@ internal sealed class CesarPersonaHandler(IAppDbContext db) : ICommandHandler<Ce
         }
 
         persona.Cesar();
+        auditoria.Registrar(ModuloAuditoria.Personal, $"Marcó como cesada a {persona.NombreCompleto}", persona.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }
 }
 
-internal sealed class ReactivarPersonaHandler(IAppDbContext db) : ICommandHandler<ReactivarPersonaCommand, Vacio>
+internal sealed class ReactivarPersonaHandler(IAppDbContext db, IAuditoria auditoria) : ICommandHandler<ReactivarPersonaCommand, Vacio>
 {
     public async Task<Result<Vacio>> Handle(ReactivarPersonaCommand command, CancellationToken cancellationToken)
     {
@@ -190,6 +196,7 @@ internal sealed class ReactivarPersonaHandler(IAppDbContext db) : ICommandHandle
         }
 
         persona.Reactivar();
+        auditoria.Registrar(ModuloAuditoria.Personal, $"Reactivó a {persona.NombreCompleto}", persona.SedeId);
         await db.SaveChangesAsync(cancellationToken);
         return Vacio.Valor;
     }

@@ -1,0 +1,145 @@
+<div class="pagina">
+  <header class="pagina-encabezado">
+    <div class="pagina-titulo">
+      <h1>Auditoría</h1>
+      <span class="atenuado">Quién hizo qué y cuándo en {{ ambito() }}</span>
+    </div>
+    <button mat-stroked-button type="button" [disabled]="exportando() || total() === 0" (click)="exportar()">
+      <mat-icon>{{ exportando() ? 'hourglass_top' : 'download' }}</mat-icon>
+      {{ exportando() ? 'Preparando…' : 'Exportar a Excel' }}
+    </button>
+  </header>
+
+  <div class="filtros">
+    <mat-form-field subscriptSizing="dynamic" floatLabel="always" class="buscador">
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <mat-label>Buscar</mat-label>
+      <input
+        matInput
+        autocomplete="off"
+        placeholder="Activo, producto, persona, usuario o IP"
+        [formControl]="busqueda"
+        (keydown.escape)="limpiarBusqueda()"
+      />
+      @if (busqueda.value) {
+        <button matSuffix mat-icon-button type="button" aria-label="Limpiar la búsqueda" (click)="limpiarBusqueda()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+    <mat-form-field subscriptSizing="dynamic" class="fecha" floatLabel="always">
+      <mat-label>Desde</mat-label>
+      <input matInput type="date" [value]="filtros().desde" [max]="filtros().hasta || null" (change)="cambiarFecha('desde', $any($event.target).value)" />
+    </mat-form-field>
+    <mat-form-field subscriptSizing="dynamic" class="fecha" floatLabel="always">
+      <mat-label>Hasta</mat-label>
+      <input matInput type="date" [value]="filtros().hasta" [min]="filtros().desde || null" (change)="cambiarFecha('hasta', $any($event.target).value)" />
+    </mat-form-field>
+    <mat-form-field subscriptSizing="dynamic" class="modulo" floatLabel="always">
+      <mat-label>Módulo</mat-label>
+      <mat-select [value]="filtros().modulo" placeholder="Todos" (selectionChange)="filtrarModulo($event.value)">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (m of modulos; track m) {
+          <mat-option [value]="m">{{ textoModulo(m) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (conFiltros()) {
+      <button mat-button type="button" (click)="quitarFiltros()"><mat-icon>filter_alt_off</mat-icon> Quitar filtros</button>
+    }
+  </div>
+
+  @if (error(); as e) {
+    <app-aviso>{{ e }}</app-aviso>
+  }
+
+  <section class="tarjeta-tabla">
+    @if (lista.isLoading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (registros().length > 0) {
+      <div class="tabla-contenedor vista-tabla">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Fecha y hora</th>
+              <th scope="col">Usuario</th>
+              <th scope="col">Módulo</th>
+              <th scope="col">Acción</th>
+              @if (todasLasSedes()) {
+                <th scope="col">Red</th>
+              }
+              <th scope="col">IP</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of registros(); track r.id) {
+              <tr [class.alerta]="esAlerta(r.accion)">
+                <td class="fecha">{{ fechaHora(r.fecha) }}</td>
+                <td>{{ r.usuario ?? '—' }}</td>
+                <td><span class="pastilla" [class.neutra]="!esAlerta(r.accion)" [class.mal]="esAlerta(r.accion)">{{ textoModulo(r.modulo) }}</span></td>
+                <td class="accion">
+                  @if (r.activoId) {
+                    <a [routerLink]="['/inventario', r.activoId]">{{ r.accion }}</a>
+                  } @else {
+                    {{ r.accion }}
+                  }
+                </td>
+                @if (todasLasSedes()) {
+                  <td>{{ r.sedeNombre ?? 'General' }}</td>
+                }
+                <td class="mono ip">{{ r.ip ?? '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="vista-tarjetas" aria-label="Acciones registradas">
+        @for (r of registros(); track r.id) {
+          <li class="tarjeta-accion" [class.alerta]="esAlerta(r.accion)">
+            <span class="cabecera">
+              <span class="atenuado fecha">{{ fechaHora(r.fecha) }}</span>
+              <span class="pastilla" [class.neutra]="!esAlerta(r.accion)" [class.mal]="esAlerta(r.accion)">{{ textoModulo(r.modulo) }}</span>
+            </span>
+            @if (r.activoId) {
+              <a [routerLink]="['/inventario', r.activoId]">{{ r.accion }}</a>
+            } @else {
+              <span>{{ r.accion }}</span>
+            }
+            <span class="atenuado">
+              {{ r.usuario ?? 'Usuario desconocido' }}
+              @if (todasLasSedes() && r.sedeNombre) {
+                · {{ r.sedeNombre }}
+              }
+              @if (r.ip) {
+                · <span class="mono">{{ r.ip }}</span>
+              }
+            </span>
+          </li>
+        }
+      </ul>
+
+      @if (total() > tamanoPagina) {
+        <mat-paginator
+          [length]="total()"
+          [pageIndex]="filtros().pagina - 1"
+          [pageSize]="tamanoPagina"
+          [hidePageSize]="true"
+          (page)="cambiarPagina($event)"
+          aria-label="Páginas del registro"
+        />
+      }
+    } @else if (!lista.isLoading() && !error()) {
+      <div class="vacio">
+        @if (conFiltros()) {
+          <p>Ninguna acción coincide con los filtros.</p>
+          <button mat-stroked-button type="button" (click)="quitarFiltros()">Quitar filtros</button>
+        } @else {
+          <p>Todavía no hay acciones registradas.</p>
+        }
+      </div>
+    }
+  </section>
+</div>
