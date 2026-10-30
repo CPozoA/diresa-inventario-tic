@@ -71,114 +71,13 @@ internal sealed class ListarActivosHandler(IAppDbContext db, TimeProvider reloj)
     public async Task<Result<PaginaActivosDto>> Handle(ListarActivosQuery query, CancellationToken cancellationToken)
     {
         var hoy = DateOnly.FromDateTime(reloj.GetLocalNow().DateTime);
-        var enUnAnio = hoy.AddYears(ListasActivo.AniosAvisoRenovacion);
         var pagina = Math.Max(1, query.Pagina ?? 1);
         var tamano = Math.Clamp(query.TamanoPagina ?? TamanoPorOmision, 1, TamanoMaximo);
 
-        // El filtro global de sede ya limita a un usuario de sede a la suya.
-        var activos = db.Activos.AsNoTracking();
-
-        if (query.SedeId is Guid sedeId)
-        {
-            activos = activos.Where(a => a.SedeId == sedeId);
-        }
-
-        if (query.EstablecimientoId is Guid establecimientoId)
-        {
-            activos = activos.Where(a => a.EstablecimientoId == establecimientoId);
-        }
-
-        if (query.TipoActivoId is Guid tipoId)
-        {
-            activos = activos.Where(a => a.TipoActivoId == tipoId);
-        }
-
-        if (query.AreaId is Guid areaId)
-        {
-            activos = activos.Where(a => a.AreaId == areaId);
-        }
-
-        if (query.EstadoActivoId is Guid estadoId)
-        {
-            activos = activos.Where(a => a.EstadoActivoId == estadoId);
-        }
-
-        activos = query.Garantia switch
-        {
-            EstadoGarantia.SinDato => activos.Where(a => a.FinGarantia == null),
-            EstadoGarantia.Vigente => activos.Where(a => a.FinGarantia >= hoy),
-            EstadoGarantia.Vencida => activos.Where(a => a.FinGarantia < hoy),
-            _ => activos,
-        };
-
-        activos = query.Renovacion switch
-        {
-            SituacionRenovacion.SinDato => activos.Where(a => a.FechaRenovacion == null),
-            SituacionRenovacion.Renovar => activos.Where(a => a.FechaRenovacion <= hoy),
-            SituacionRenovacion.ProximoARenovar => activos.Where(a => a.FechaRenovacion > hoy && a.FechaRenovacion <= enUnAnio),
-            SituacionRenovacion.Vigente => activos.Where(a => a.FechaRenovacion > enUnAnio),
-            _ => activos,
-        };
-
-        if (query.Atencion is MotivoAtencion motivo)
-        {
-            activos = activos.ConMotivo(db, motivo, hoy);
-        }
-
-        if (query.Falta is DatoFaltante falta)
-        {
-            activos = activos.ConFalta(db, falta);
-        }
-
-        var filas =
-            from a in activos
-            join t in db.TiposActivo on a.TipoActivoId equals t.Id
-            join m in db.Marcas on a.MarcaId equals m.Id
-            join ar in db.Areas on a.AreaId equals ar.Id
-            join es in db.EstadosActivo on a.EstadoActivoId equals es.Id
-            join e in db.Establecimientos on a.EstablecimientoId equals e.Id
-            join s in db.Sedes on a.SedeId equals s.Id
-            // La asignación vigente (a lo sumo una, D51) y su persona.
-            join v in db.Asignaciones.Where(x => x.FechaDevolucion == null) on a.Id equals v.ActivoId into vigentes
-            from v in vigentes.DefaultIfEmpty()
-            join p in db.Personal on v!.PersonaId equals p.Id into personas
-            from p in personas.DefaultIfEmpty()
-            select new
-            {
-                a.Id,
-                a.CodigoPatrimonial,
-                TipoActivo = t.Nombre,
-                Marca = m.Nombre,
-                a.Modelo,
-                a.NumeroSerie,
-                a.NombreEquipo,
-                a.DireccionIp,
-                Establecimiento = e.Nombre,
-                Area = ar.Nombre,
-                ResponsableAnterior = a.Responsable,
-                Persona = p != null ? p.NombreCompleto : null,
-                PersonaDni = p != null ? p.Dni : null,
-                Estado = es.Nombre,
-                a.FinGarantia,
-                a.FechaRenovacion,
-                a.SedeId,
-                SedeNombre = s.Nombre,
-            };
-
-        var buscar = query.Buscar?.Trim();
-        if (!string.IsNullOrEmpty(buscar))
-        {
-            filas = filas.Where(f =>
-                f.CodigoPatrimonial.Contains(buscar)
-                || (f.NumeroSerie != null && f.NumeroSerie.Contains(buscar))
-                || f.Modelo.Contains(buscar)
-                || (f.Persona != null && f.Persona.Contains(buscar))
-                || (f.PersonaDni != null && f.PersonaDni.StartsWith(buscar))
-                || (f.ResponsableAnterior != null && f.ResponsableAnterior.Contains(buscar))
-                || f.Marca.Contains(buscar)
-                || (f.DireccionIp != null && f.DireccionIp.Contains(buscar))
-                || (f.NombreEquipo != null && f.NombreEquipo.Contains(buscar)));
-        }
+        var filtros = new FiltrosInventario(
+            query.SedeId, query.EstablecimientoId, query.TipoActivoId, query.AreaId, query.EstadoActivoId, query.Garantia,
+            query.Renovacion, query.Atencion, query.Falta, query.Buscar);
+        var filas = ConsultaInventario.Filas(db, filtros, hoy);
 
         var total = await filas.CountAsync(cancellationToken);
 

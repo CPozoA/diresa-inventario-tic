@@ -11,12 +11,12 @@ import { IFormFile } from '../../models/i-form-file';
 import { ResultadoImportacionDto } from '../../models/resultado-importacion-dto';
 
 export interface ImportarEstablecimientos$Params {
-      body: {
+      body?: {
 'archivo'?: IFormFile;
 }
 }
 
-export function importarEstablecimientos(http: HttpClient, rootUrl: string, params: ImportarEstablecimientos$Params, context?: HttpContext): Observable<StrictHttpResponse<ResultadoImportacionDto>> {
+export function importarEstablecimientos(http: HttpClient, rootUrl: string, params?: ImportarEstablecimientos$Params, context?: HttpContext): Observable<StrictHttpResponse<ResultadoImportacionDto>> {
   const rb = new RequestBuilder(rootUrl, importarEstablecimientos.PATH, 'post');
   if (params) {
     rb.body(params.body, 'multipart/form-data');

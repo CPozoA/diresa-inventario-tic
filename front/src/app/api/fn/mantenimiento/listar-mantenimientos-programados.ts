@@ -10,8 +10,8 @@ import { RequestBuilder } from '../../request-builder';
 import { ProgramadoDto } from '../../models/programado-dto';
 
 export interface ListarMantenimientosProgramados$Params {
-  sedeId?: string;
-  establecimientoId?: string;
+  sedeId?: (string | null);
+  establecimientoId?: (string | null);
   buscar?: string;
   dias?: (number | string);
 }

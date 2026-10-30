@@ -499,3 +499,15 @@ Para producción no se aplican migraciones al arrancar: se genera un script revi
 - **Solo raíces de agregado en `IAppDbContext`**: los permisos de un rol se cambian a través del rol y los roles de un
   usuario a través del usuario.
 - **Identificadores GUID v7**: únicos y ordenados por fecha, eficientes como clave en SQL Server.
+
+## Paso 12: exportar el inventario a Excel (D55)
+
+No cambia el modelo (sin migración).
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/activos/exportar?buscar=&establecimientoId=&tipoActivoId=&areaId=&estadoActivoId=&garantia=&renovacion=&atencion=&falta=&sedeId=` | `Activos.Ver` | El inventario en `.xlsx` con los filtros de la lista: hojas Activos, Discos, Memoria RAM e Información. Hasta 20 000 activos (`Exportacion.DemasiadosActivos`, 422) |
+
+Para probarlo en Scalar, abra la respuesta como archivo; o en el navegador, con la sesión iniciada:
+`https://localhost:7180/api/activos/exportar`.
+

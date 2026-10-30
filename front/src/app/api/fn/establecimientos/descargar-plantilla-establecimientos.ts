@@ -11,17 +11,17 @@ import { RequestBuilder } from '../../request-builder';
 export interface DescargarPlantillaEstablecimientos$Params {
 }
 
-export function descargarPlantillaEstablecimientos(http: HttpClient, rootUrl: string, params?: DescargarPlantillaEstablecimientos$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {
+export function descargarPlantillaEstablecimientos(http: HttpClient, rootUrl: string, params?: DescargarPlantillaEstablecimientos$Params, context?: HttpContext): Observable<StrictHttpResponse<Blob>> {
   const rb = new RequestBuilder(rootUrl, descargarPlantillaEstablecimientos.PATH, 'get');
   if (params) {
   }
 
   return http.request(
-    rb.build({ responseType: 'text', accept: '*/*', context })
+    rb.build({ responseType: 'blob', accept: 'application/octet-stream', context })
   ).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return (r as HttpResponse<any>).clone({ body: undefined }) as StrictHttpResponse<void>;
+      return r as StrictHttpResponse<Blob>;
     })
   );
 }

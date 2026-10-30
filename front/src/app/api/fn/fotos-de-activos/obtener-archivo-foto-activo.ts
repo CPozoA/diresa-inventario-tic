@@ -11,7 +11,7 @@ import { RequestBuilder } from '../../request-builder';
 export interface ObtenerArchivoFotoActivo$Params {
   id: string;
   fotoId: string;
-  miniatura?: boolean;
+  miniatura?: (boolean | null);
 }
 
 export function obtenerArchivoFotoActivo(http: HttpClient, rootUrl: string, params: ObtenerArchivoFotoActivo$Params, context?: HttpContext): Observable<StrictHttpResponse<void>> {

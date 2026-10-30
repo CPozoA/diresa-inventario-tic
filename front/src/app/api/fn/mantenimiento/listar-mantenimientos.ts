@@ -12,11 +12,11 @@ import { TipoMantenimiento } from '../../models/tipo-mantenimiento';
 import { VistaMantenimientos } from '../../models/vista-mantenimientos';
 
 export interface ListarMantenimientos$Params {
-  vista?: VistaMantenimientos;
-  sedeId?: string;
+  vista?: (null | VistaMantenimientos);
+  sedeId?: (string | null);
   buscar?: string;
-  tipo?: TipoMantenimiento;
-  establecimientoId?: string;
+  tipo?: (null | TipoMantenimiento);
+  establecimientoId?: (string | null);
   pagina?: (number | string);
   tamanoPagina?: (number | string);
 }

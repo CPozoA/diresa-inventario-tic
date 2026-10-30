@@ -12,13 +12,10 @@ import { IFormFile } from '../../models/i-form-file';
 
 export interface SubirFotoActivo$Params {
   id: string;
-      body: {
+      body?: {
 'archivo'?: IFormFile;
-} & {
 'miniatura'?: IFormFile;
-} & {
 'descripcion'?: string;
-} & {
 }
 }
 

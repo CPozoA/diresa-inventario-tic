@@ -14,7 +14,7 @@ export interface ListarEstablecimientos$Params {
   buscar?: string;
   incluirInactivos?: boolean;
   maximo?: (number | string);
-  sinActivos?: boolean;
+  sinActivos?: (boolean | null);
 }
 
 export function listarEstablecimientos(http: HttpClient, rootUrl: string, params?: ListarEstablecimientos$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<EstablecimientoDto>>> {

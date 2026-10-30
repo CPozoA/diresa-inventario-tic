@@ -1367,6 +1367,105 @@
         }
       }
     },
+    "/api/activos/exportar": {
+      "get": {
+        "tags": [
+          "Activos"
+        ],
+        "summary": "El inventario en Excel (.xlsx) con los mismos filtros de la lista: hojas Activos, Discos, Memoria RAM e Información. Hasta 20 000 activos.",
+        "operationId": "ExportarInventario",
+        "parameters": [
+          {
+            "name": "sedeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "establecimientoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "tipoActivoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "areaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "estadoActivoId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "garantia",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/EstadoGarantia"
+            }
+          },
+          {
+            "name": "renovacion",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/SituacionRenovacion"
+            }
+          },
+          {
+            "name": "atencion",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/MotivoAtencion"
+            }
+          },
+          {
+            "name": "falta",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DatoFaltante"
+            }
+          },
+          {
+            "name": "buscar",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/activos/listas": {
       "get": {
         "tags": [

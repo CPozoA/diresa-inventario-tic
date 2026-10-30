@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ClosedXML.Excel;
 using Inventario.Api.IntegrationTests.Infraestructura;
 using Inventario.Application.Activos.Consultar;
 using Inventario.Application.Catalogos;
@@ -504,5 +505,41 @@ public sealed class ActivosTests(FabricaApi api)
         Assert.Contains(listas!.TiposDisco, o => o.Valor == "Nvme" && o.Texto == "NVMe");
         Assert.Contains(512, listas.CapacidadesDiscoGb);
         Assert.Contains(listas.VelocidadesRam, v => v.Tipo == "Ddr4" && v.VelocidadesMhz.Contains(3200));
+    }
+
+    [Fact]
+    public async Task Exportar_DaUnExcelConActivosDiscosYRam_ConLosFiltrosDeLaLista()
+    {
+        var r = await PrepararAsync();
+        using var editor = await api.CrearClienteConSesionAsync(DatosPrueba.EditorHuanta);
+        using var superAdmin = await api.CrearClienteConSesionAsync(DatosPrueba.SuperAdmin);
+        var codigo = CodigoUnico();
+        await CrearAsync(editor, Ficha(r, codigo));
+
+        var respuesta = await editor.GetAsync($"/api/activos/exportar?buscar={codigo}", Ct);
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", respuesta.Content.Headers.ContentType?.MediaType);
+        var nombre = (respuesta.Content.Headers.ContentDisposition?.FileNameStar ?? respuesta.Content.Headers.ContentDisposition?.FileName ?? string.Empty).Trim('"');
+        Assert.StartsWith("Inventario-", nombre, StringComparison.Ordinal);
+        Assert.EndsWith(".xlsx", nombre, StringComparison.Ordinal);
+
+        using (var libro = new XLWorkbook(await respuesta.Content.ReadAsStreamAsync(Ct)))
+        {
+            var activos = libro.Worksheet("Activos");
+            Assert.Equal("Código patrimonial", activos.Cell(1, 1).GetString());
+            Assert.Equal(codigo, activos.Cell(2, 1).GetString());
+            Assert.True(activos.Cell(3, 1).IsEmpty());
+
+            // Una fila por disco y por módulo, más el encabezado.
+            Assert.Equal(3, libro.Worksheet("Discos").RowsUsed().Count());
+            Assert.Equal(3, libro.Worksheet("Memoria RAM").RowsUsed().Count());
+            Assert.Equal("Información", libro.Worksheet("Información").Name);
+        }
+
+        // El superadministrador con todas las redes recibe la columna "Red".
+        var deSuper = await superAdmin.GetAsync($"/api/activos/exportar?buscar={codigo}", Ct);
+        using var libroSuper = new XLWorkbook(await deSuper.Content.ReadAsStreamAsync(Ct));
+        Assert.Equal("Red", libroSuper.Worksheet("Activos").Cell(1, 1).GetString());
+        Assert.Equal(codigo, libroSuper.Worksheet("Activos").Cell(2, 2).GetString());
     }
 }

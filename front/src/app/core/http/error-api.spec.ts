@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { aErrorApi } from './error-api';
+import { aErrorApi, aErrorApiDeDescarga } from './error-api';
 
 describe('aErrorApi', () => {
   it('usa el mensaje y el código de un ProblemDetails de la API', () => {
@@ -41,5 +41,16 @@ describe('aErrorApi', () => {
 
     expect(resultado.codigo).toBeNull();
     expect(resultado.mensaje).toBe('No tiene permiso para realizar esta acción.');
+  });
+});
+
+describe('aErrorApiDeDescarga', () => {
+  it('lee el ProblemDetails que llega como Blob al pedir un archivo', async () => {
+    const cuerpo = new Blob([JSON.stringify({ title: 'Son 25 000 activos.', codigo: 'Exportacion.DemasiadosActivos' })], {
+      type: 'application/problem+json',
+    });
+    const error = new HttpErrorResponse({ status: 422, error: cuerpo });
+
+    expect(await aErrorApiDeDescarga(error)).toEqual({ estado: 422, codigo: 'Exportacion.DemasiadosActivos', mensaje: 'Son 25 000 activos.' });
   });
 });

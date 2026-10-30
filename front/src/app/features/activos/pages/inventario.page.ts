@@ -14,6 +14,7 @@ import { map } from 'rxjs';
 
 import { Api } from '../../../api/api';
 import { ApiConfiguration } from '../../../api/api-configuration';
+import { exportarInventario } from '../../../api/fn/activos/exportar-inventario';
 import { listarElementosCatalogo } from '../../../api/fn/catalogos/listar-elementos-catalogo';
 import { listarEstablecimientos } from '../../../api/fn/establecimientos/listar-establecimientos';
 import { ActivoResumenDto } from '../../../api/models/activo-resumen-dto';
@@ -22,7 +23,10 @@ import { SituacionRenovacion } from '../../../api/models/situacion-renovacion';
 import { Permisos } from '../../../core/auth/permisos';
 import { SesionStore } from '../../../core/auth/sesion.store';
 import { SiTienePermisoDirective } from '../../../core/auth/si-tiene-permiso.directive';
+import { guardarArchivo, nombreDesdeEncabezado } from '../../../core/http/descarga';
+import { aErrorApiDeDescarga } from '../../../core/http/error-api';
 import { SedeSeleccionadaStore } from '../../../core/layout/sede-seleccionada.store';
+import { NotificacionesService } from '../../../core/notificaciones.service';
 import { AvisoComponent } from '../../../shared/ui/aviso.component';
 import { SelectorCatalogoComponent } from '../../catalogos/components/selector-catalogo.component';
 import { PaginadorEnEspanol } from '../../../shared/ui/paginador';
@@ -36,7 +40,7 @@ import {
   sinFiltros,
 } from '../data/filtros-inventario';
 import { urlFoto } from '../data/fotos';
-import { InventarioStore } from '../data/inventario.store';
+import { InventarioStore, consultaDesdeFiltros } from '../data/inventario.store';
 import {
   cantidad,
   textoAtencion,
@@ -87,6 +91,7 @@ export class InventarioPage {
   private readonly router = inject(Router);
   private readonly sesion = inject(SesionStore);
   private readonly sedeSeleccionada = inject(SedeSeleccionadaStore);
+  private readonly notificaciones = inject(NotificacionesService);
 
   protected readonly permisos = Permisos;
   protected readonly tamanosPagina = TAMANOS_PAGINA;
@@ -157,6 +162,10 @@ export class InventarioPage {
     const activos = cantidad(total, 'activo', 'activos');
     return this.ambito() ? `${activos} · ${this.ambito()}` : activos;
   });
+
+  /** Hasta cuántos activos se exportan a la vez (como en la API, D55). */
+  protected readonly maximoExportar = 20_000;
+  protected readonly exportando = signal(false);
 
   constructor() {
     let sedeAnterior: string | null | undefined;
@@ -240,6 +249,25 @@ export class InventarioPage {
   /** Estado de la dirección actual, para que la ficha pueda volver a esta misma lista. */
   protected volverAqui(): { volver: string } {
     return { volver: this.router.url };
+  }
+
+  /** Descarga el inventario en Excel con los filtros aplicados (todas las páginas, D55). */
+  protected async exportar(): Promise<void> {
+    if (this.exportando()) {
+      return;
+    }
+    this.exportando.set(true);
+    try {
+      const { pagina: _pagina, tamanoPagina: _tamano, ...consulta } = consultaDesdeFiltros(this.filtros(), this.sedeId());
+      const respuesta = await this.api.invoke$Response(exportarInventario, consulta);
+      const nombre = nombreDesdeEncabezado(respuesta.headers.get('Content-Disposition'), 'Inventario.xlsx');
+      guardarArchivo(respuesta.body, nombre);
+      this.notificaciones.exito(`Se descargó ${nombre}.`);
+    } catch (error: unknown) {
+      this.notificaciones.aviso((await aErrorApiDeDescarga(error)).mensaje);
+    } finally {
+      this.exportando.set(false);
+    }
   }
 
   private aplicar(filtros: FiltrosInventario): void {

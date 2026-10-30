@@ -10,7 +10,7 @@ import { RequestBuilder } from '../../request-builder';
 import { CifrasMantenimientoDto } from '../../models/cifras-mantenimiento-dto';
 
 export interface ObtenerCifrasMantenimiento$Params {
-  sedeId?: string;
+  sedeId?: (string | null);
   dias?: (number | string);
 }
 

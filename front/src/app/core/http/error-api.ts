@@ -49,6 +49,23 @@ export function aErrorApi(error: unknown): ErrorApi {
   return { estado: error.status, codigo, mensaje: codigo !== null && titulo !== null ? titulo : MENSAJE_INESPERADO };
 }
 
+/**
+ * Como {@link aErrorApi}, para las descargas: si la respuesta se pidió como archivo (Blob), el error también llega como
+ * Blob y hay que leerlo antes de interpretarlo.
+ */
+export async function aErrorApiDeDescarga(error: unknown): Promise<ErrorApi> {
+  if (error instanceof HttpErrorResponse && error.error instanceof Blob) {
+    let texto: string | null = null;
+    try {
+      texto = await error.error.text();
+    } catch {
+      texto = null;
+    }
+    return aErrorApi(new HttpErrorResponse({ error: texto, status: error.status, statusText: error.statusText, url: error.url ?? undefined }));
+  }
+  return aErrorApi(error);
+}
+
 function leerCuerpo(cuerpo: unknown): Record<string, unknown> | null {
   if (typeof cuerpo === 'string') {
     try {

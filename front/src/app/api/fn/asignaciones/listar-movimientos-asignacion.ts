@@ -10,7 +10,7 @@ import { RequestBuilder } from '../../request-builder';
 import { MovimientoDto } from '../../models/movimiento-dto';
 
 export interface ListarMovimientosAsignacion$Params {
-  sedeId?: string;
+  sedeId?: (string | null);
   maximo?: (number | string);
 }
 

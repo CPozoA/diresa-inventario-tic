@@ -10,10 +10,10 @@ import { RequestBuilder } from '../../request-builder';
 import { PersonaResumenDto } from '../../models/persona-resumen-dto';
 
 export interface ListarPersonal$Params {
-  sedeId?: string;
+  sedeId?: (string | null);
   buscar?: string;
-  establecimientoId?: string;
-  incluirCesados?: boolean;
+  establecimientoId?: (string | null);
+  incluirCesados?: (boolean | null);
   maximo?: (number | string);
 }
 

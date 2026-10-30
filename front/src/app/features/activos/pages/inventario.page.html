@@ -4,6 +4,17 @@
       <h1>Inventario</h1>
       <span class="atenuado" aria-live="polite">{{ subtitulo() }}</span>
     </div>
+    <button
+      mat-stroked-button
+      type="button"
+      class="exportar"
+      [disabled]="exportando() || store.total() === 0 || store.total() > maximoExportar"
+      [title]="store.total() > maximoExportar ? 'Se exportan hasta 20 000 activos a la vez: filtre por red o establecimiento.' : 'Descarga en Excel los activos de la lista, con los filtros aplicados.'"
+      (click)="exportar()"
+    >
+      <mat-icon>{{ exportando() ? 'hourglass_top' : 'download' }}</mat-icon>
+      {{ exportando() ? 'Preparando…' : 'Exportar a Excel' }}
+    </button>
   </header>
 
   <div class="filtros">

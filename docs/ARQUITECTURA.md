@@ -2,7 +2,7 @@
 
 > Documento vivo. Registra **qué** decidimos y **por qué**. Cualquier cambio de arquitectura se anota aquí antes de programarlo.
 >
-> Versión 0.31 · 29/10/2026 · Cambios: licencias de software (Paso 11, D54, §5.14).
+> Versión 0.32 · 30/10/2026 · Cambios: exportación del inventario a Excel (Paso 12, D55, §5.15).
 
 ---
 
@@ -92,6 +92,7 @@ El superadministrador no pertenece a ninguna sede. Se pueden agregar sedes nueva
 | D52 | Responsable anterior | El campo de texto "responsable" de la ficha **no se convierte** en asignaciones: primero se registra al personal. Se conserva y se muestra como **"Responsable anterior (sin registrar)"** mientras el activo no tenga asignación. En la lista, `responsable` es quien lo tiene asignado o, si nadie, ese texto (`responsableAsignado` distingue los dos casos). "Sin responsable" (resumen y filtro `falta=Responsable`) cuenta los activos **sin asignación vigente**, sin contar los que están en almacén | Los textos tienen variantes y errores, y convertirlos crearía personas sin DNI. El dato no se pierde mientras se registra al personal. |
 | D53 | Mantenimiento | Cada mantenimiento es **preventivo** o **correctivo** (este exige el problema reportado) y lo hace el **personal de TI** (se elige al técnico: un usuario activo de la red con permiso `Mantenimiento.Gestionar` o administrador de sede) o un **proveedor** (empresa, N° de orden de servicio y costo). Abierto, el activo pasa a un estado del grupo "en mantenimiento"; al **cerrarlo** se registran el trabajo realizado y el resultado (quedó operativo o sin reparación) y se elige el estado y la conservación en que queda (la interfaz propone "Operativo" o "Inoperativo"). Un activo tiene a lo sumo uno abierto; no se registran en activos de baja. Se puede registrar ya terminado. El **próximo preventivo** es una fecha del activo que se fija al cerrar (la interfaz propone 6 meses en un preventivo); vencida, el activo "requiere atención" (motivo `MantenimientoVencido`), salvo que ya tenga un mantenimiento en curso. Permisos: `Mantenimiento.Ver` y `Mantenimiento.Gestionar` | El estado del equipo refleja la realidad sin pasos manuales, y los preventivos dejan de depender de la memoria. Una fecha por activo es simple y se ajusta a cada equipo; una frecuencia por tipo se puede agregar después. |
 | D54 | Licencias | Solo **suscripciones con vencimiento**: producto, proveedor, **número de puestos**, fecha de inicio y de vencimiento (último día incluido), documento de compra, costo y observaciones. **No se guarda la clave del producto.** Cada puesto se asigna a un **equipo** del inventario de la misma red (no a personas; no a equipos de baja; no si la licencia venció o está archivada). Se puede bajar los puestos por debajo de los equipos: queda "con equipos de más". Renovar = editar con las fechas del periodo siguiente (la interfaz lo propone: desde el día siguiente, por un año). Una licencia que no se renovó se **archiva**: sale de los avisos y libera sus equipos (se puede reactivar). Eliminar es para registros por error. Avisos: **vencidas**, **por vencer** (30 días) y **con equipos de más**, en la página y en "Requieren atención" del resumen. Permisos: `Licencias.Ver` y `Licencias.Gestionar` | Lo que se renueva cada año es lo que hay que vigilar; las perpetuas y OEM no generan avisos. La clave en la base sería un secreto más que proteger. Archivar conserva el registro sin ensuciar los avisos. |
+| D55 | Exportar a Excel | Solo el **inventario**, con los **mismos filtros** de la lista (búsqueda, establecimiento, tipo, estado, garantía, renovación, atención, fichas por completar) y todas sus páginas. Archivo completo: hoja **Activos** (una fila por activo con todos sus datos, el responsable asignado y el anterior), **Discos** y **Memoria RAM** (una fila por componente, con el código patrimonial para cruzarlas) e **Información** (red, fecha y filtros). El superadministrador con todas las redes recibe un solo archivo con la columna **Red**. Lo arma la API con ClosedXML (D42); hasta **20 000 activos** por archivo. Permiso: `Activos.Ver` | Es lo que se pide para informes y auditorías; con los filtros de la lista, el usuario exporta exactamente lo que ve. Una sola hoja por tipo de dato se filtra y cruza fácilmente en Excel. |
 
 ### Decisiones pendientes de confirmar
 
@@ -383,6 +384,13 @@ Campos acordados para el Paso 7A, tomados de la plantilla `Fichas_Tecnicas_Inven
 - **Errores:** `Licencias.*` (`NoEncontrada` y `EquipoNoEncontrado` 404, `YaAsignada` 409, `SinPuestos`, `Vencida`, `Archivada` y `EquipoDeBaja` 422, `SinEquipos` 400).
 - **Pantallas (Paso 11):** `/licencias` con cuatro cifras que filtran (vigentes con puestos libres, por vencer, vencidas, equipos de más), búsqueda y lista (puestos con barra, vigencia); `/licencias/{id}` con datos, puestos ocupados, avisos (vencida, equipos de más, equipos de baja), equipos (Asignar y Quitar), Renovar, Editar, Archivar y Eliminar. Diálogo de licencia (registrar, editar, renovar; el superadministrador con todas las redes elige la red) y de asignar equipos (búsqueda con varios a la vez, hasta los puestos libres). En la ficha del activo, sección Licencias (agregar una vigente con puestos libres, quitar). En el resumen, los avisos encabezan "Requieren atención". El catálogo "Tipos de licencia" queda sin uso por ahora.
 
+### 5.15 Exportación a Excel (D55)
+
+- **Endpoint:** `GET /api/activos/exportar` con los mismos parámetros de `GET /api/activos` (sin paginación). Devuelve `Inventario-{red}-{aaaa-mm-dd}.xlsx`. Más de 20 000 activos: `Exportacion.DemasiadosActivos` (422).
+- **Una sola consulta de filtros:** `ConsultaInventario.Filas` la usan la lista y la exportación, para que coincidan siempre.
+- **Capas:** Application arma los datos ya en texto, números y fechas (`InventarioParaExcel`, con los textos de `ListasActivo`); Infrastructure solo escribe (`GeneradorExcelInventario`, ClosedXML): encabezados fijos y con filtro, anchos fijos, fechas `dd/mm/aaaa`, montos `#,##0.00`, códigos, series, IP y MAC como texto.
+- **Pantalla:** botón "Exportar a Excel" en el inventario (deshabilitado sin activos o con más de 20 000); el navegador guarda el archivo con el nombre que envía la API.
+
 ---
 
 ## 6. Seguridad
@@ -588,4 +596,6 @@ Consideraciones del hosting compartido:
 | **11-1** | Licencias en la API (§5.14, D54): suscripciones con puestos, equipos asignados, vigencia, archivar, cifras y licencias del activo; migración | `dotnet test` y prueba en Scalar |
 | **11-2** | Licencias en Angular: lista con cifras, ficha con equipos, diálogos de licencia (registrar, editar, renovar) y de asignar equipos, sección en la ficha del activo y avisos en el resumen | `npm test` y prueba manual |
 
-Fases posteriores: exportación a Excel, registro de auditoría y endurecimiento.
+| **12** | Exportación del inventario a Excel (§5.15, D55): hojas Activos, Discos, Memoria RAM e Información con los filtros de la lista; botón en el inventario | `dotnet test`, `npm test` y prueba manual |
+
+Fases posteriores: registro de auditoría y endurecimiento.

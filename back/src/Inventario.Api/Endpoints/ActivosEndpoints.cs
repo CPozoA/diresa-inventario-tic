@@ -2,6 +2,7 @@ using Inventario.Api.Common;
 using Inventario.Api.Seguridad;
 using Inventario.Application.Activos;
 using Inventario.Application.Activos.Consultar;
+using Inventario.Application.Activos.Exportar;
 using Inventario.Application.Activos.Gestionar;
 using Inventario.Application.Common.Mensajeria;
 using Inventario.Application.Common.Resultados;
@@ -17,6 +18,8 @@ namespace Inventario.Api.Endpoints;
 /// </summary>
 internal static class ActivosEndpoints
 {
+    private const string TipoExcel = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
     public static IEndpointRouteBuilder MapActivosEndpoints(this IEndpointRouteBuilder app)
     {
         var grupo = app.MapGroup("/activos").WithTags("Activos");
@@ -25,6 +28,12 @@ internal static class ActivosEndpoints
             .RequirePermiso(Permisos.Activos.Ver)
             .WithName("ListarActivos")
             .WithSummary("Inventario paginado, con filtros. ?buscar= código patrimonial, serie, modelo, marca, IP, nombre de equipo, o nombre o DNI de quien lo tiene asignado. ?atencion= y ?falta= como en el resumen (sin los de baja).");
+
+        grupo.MapGet("/exportar", ExportarAsync)
+            .RequirePermiso(Permisos.Activos.Ver)
+            .WithName("ExportarInventario")
+            .WithSummary("El inventario en Excel (.xlsx) con los mismos filtros de la lista: hojas Activos, Discos, Memoria RAM e Información. Hasta 20 000 activos.")
+            .Produces(StatusCodes.Status200OK, contentType: TipoExcel);
 
         grupo.MapGet("/listas", ListasAsync)
             .RequirePermiso(Permisos.Activos.Ver)
@@ -83,6 +92,28 @@ internal static class ActivosEndpoints
         var consulta = new ListarActivosQuery(
             sedeId, establecimientoId, tipoActivoId, areaId, estadoActivoId, garantia, renovacion, atencion, falta, buscar, pagina, tamanoPagina);
         return (await handler.Handle(consulta, cancellationToken)).ToHttpResult();
+    }
+
+    private static async Task<Results<FileContentHttpResult, ProblemHttpResult>> ExportarAsync(
+        Guid? sedeId,
+        Guid? establecimientoId,
+        Guid? tipoActivoId,
+        Guid? areaId,
+        Guid? estadoActivoId,
+        EstadoGarantia? garantia,
+        SituacionRenovacion? renovacion,
+        MotivoAtencion? atencion,
+        DatoFaltante? falta,
+        string? buscar,
+        IQueryHandler<ExportarInventarioQuery, ArchivoDescargable> handler,
+        CancellationToken cancellationToken)
+    {
+        var filtros = new FiltrosInventario(
+            sedeId, establecimientoId, tipoActivoId, areaId, estadoActivoId, garantia, renovacion, atencion, falta, buscar);
+        var resultado = await handler.Handle(new ExportarInventarioQuery(filtros), cancellationToken);
+        return resultado.EsExito
+            ? TypedResults.File(resultado.Valor!.Contenido, TipoExcel, resultado.Valor.NombreArchivo)
+            : resultado.Error!.ToProblem();
     }
 
     private static async Task<Results<Ok<ListasActivoDto>, ProblemHttpResult>> ListasAsync(

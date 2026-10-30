@@ -10,7 +10,7 @@ import { RequestBuilder } from '../../request-builder';
 import { ResumenDto } from '../../models/resumen-dto';
 
 export interface ObtenerResumen$Params {
-  sedeId?: string;
+  sedeId?: (string | null);
 }
 
 export function obtenerResumen(http: HttpClient, rootUrl: string, params?: ObtenerResumen$Params, context?: HttpContext): Observable<StrictHttpResponse<ResumenDto>> {

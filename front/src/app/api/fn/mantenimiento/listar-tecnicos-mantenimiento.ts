@@ -10,7 +10,7 @@ import { RequestBuilder } from '../../request-builder';
 import { TecnicoDto } from '../../models/tecnico-dto';
 
 export interface ListarTecnicosMantenimiento$Params {
-  sedeId?: string;
+  sedeId?: (string | null);
 }
 
 export function listarTecnicosMantenimiento(http: HttpClient, rootUrl: string, params?: ListarTecnicosMantenimiento$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<TecnicoDto>>> {
