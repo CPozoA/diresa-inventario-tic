@@ -4,12 +4,17 @@ using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
 using Inventario.Domain.Auditoria;
+using Inventario.Domain.Personal;
 
 namespace Inventario.Application.Usuarios.Editar;
 
 /// <summary>Cambia los datos personales y el correo de un usuario. El nombre de usuario no cambia.</summary>
+/// <param name="Dni">
+/// Obligatorio si el usuario ya tiene DNI (se puede corregir, no quitar). Los usuarios creados antes de que se pidiera
+/// pueden dejarlo vacío hasta completarlo.
+/// </param>
 /// <remarks>Requiere Usuarios.Gestionar.</remarks>
-public sealed record EditarUsuarioCommand(Guid Id, string Nombres, string Apellidos, string? Cargo, string Correo)
+public sealed record EditarUsuarioCommand(Guid Id, string Nombres, string Apellidos, string? Cargo, string Correo, string? Dni = null)
     : ICommand<Vacio>;
 
 internal sealed class EditarUsuarioHandler(IAppDbContext db, ReglasDeGestion reglas, IServicioIdentidad identidad, IAuditoria auditoria)
@@ -35,7 +40,27 @@ internal sealed class EditarUsuarioHandler(IAppDbContext db, ReglasDeGestion reg
             return ErroresUsuario.CorreoObligatorio;
         }
 
+        var dni = command.Dni?.Trim();
+        if (string.IsNullOrEmpty(dni))
+        {
+            if (usuario.Dni is not null)
+            {
+                return ErroresUsuario.DniObligatorio;
+            }
+
+            dni = null;
+        }
+        else if (!Persona.EsDniValido(dni))
+        {
+            return ErroresUsuario.DniInvalido;
+        }
+        else if (dni != usuario.Dni && await db.BuscarPorDniAsync(dni, usuario.Id, cancellationToken) is not null)
+        {
+            return ErroresUsuario.DniDuplicado;
+        }
+
         usuario.ActualizarDatos(command.Nombres, command.Apellidos, command.Cargo);
+        usuario.CambiarDni(dni);
 
         auditoria.Registrar(ModuloAuditoria.Usuarios, $"Editó los datos del usuario {usuario.Nombres} {usuario.Apellidos}", usuario.SedeId);
 

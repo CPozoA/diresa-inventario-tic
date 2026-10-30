@@ -5,6 +5,7 @@ using Inventario.Application.Common.Resultados;
 using Inventario.Application.Usuarios;
 using Inventario.Application.Usuarios.AsignarRoles;
 using Inventario.Application.Usuarios.CambiarEstado;
+using Inventario.Application.Usuarios.ConsultarDni;
 using Inventario.Application.Usuarios.Crear;
 using Inventario.Application.Usuarios.Desbloquear;
 using Inventario.Application.Usuarios.Editar;
@@ -33,6 +34,11 @@ internal static class UsuariosEndpoints
             .WithName("ObtenerUsuario")
             .WithSummary("Un usuario de la sede.");
 
+        grupo.MapPost("/consulta-dni", ConsultarDniAsync)
+            .RequirePermiso(Permisos.Usuarios.Gestionar)
+            .WithName("ConsultarDniUsuario")
+            .WithSummary("Antes de crear o completar un usuario: si el DNI ya es de otro usuario, quién; si no, los nombres que da RENIEC (o que no lo encontró o no respondió). No guarda nada.");
+
         grupo.MapPost("/", CrearAsync)
             .RequirePermiso(Permisos.Usuarios.Gestionar)
             .WithName("CrearUsuario")
@@ -41,7 +47,7 @@ internal static class UsuariosEndpoints
         grupo.MapPut("/{id:guid}", EditarAsync)
             .RequirePermiso(Permisos.Usuarios.Gestionar)
             .WithName("EditarUsuario")
-            .WithSummary("Cambia nombres, apellidos, cargo y correo.");
+            .WithSummary("Cambia DNI, nombres, apellidos, cargo y correo. El DNI se puede corregir o completar, no quitar.");
 
         grupo.MapPut("/{id:guid}/roles", AsignarRolesAsync)
             .RequirePermiso(Permisos.Usuarios.Gestionar)
@@ -84,6 +90,12 @@ internal static class UsuariosEndpoints
         CancellationToken cancellationToken) =>
         (await handler.Handle(new ObtenerUsuarioQuery(id), cancellationToken)).ToHttpResult();
 
+    private static async Task<Results<Ok<ConsultaDniUsuarioDto>, ProblemHttpResult>> ConsultarDniAsync(
+        ConsultarDniUsuarioRequest peticion,
+        IQueryHandler<ConsultarDniUsuarioQuery, ConsultaDniUsuarioDto> handler,
+        CancellationToken cancellationToken) =>
+        (await handler.Handle(new ConsultarDniUsuarioQuery(peticion.Dni, peticion.ExcluirUsuarioId), cancellationToken)).ToHttpResult();
+
     private static async Task<Results<Created<UsuarioCreadoDto>, ProblemHttpResult>> CrearAsync(
         CrearUsuarioCommand comando,
         ICommandHandler<CrearUsuarioCommand, UsuarioCreadoDto> handler,
@@ -96,7 +108,7 @@ internal static class UsuariosEndpoints
         ICommandHandler<EditarUsuarioCommand, Vacio> handler,
         CancellationToken cancellationToken) =>
         (await handler.Handle(
-            new EditarUsuarioCommand(id, cuerpo.Nombres, cuerpo.Apellidos, cuerpo.Cargo, cuerpo.Correo),
+            new EditarUsuarioCommand(id, cuerpo.Nombres, cuerpo.Apellidos, cuerpo.Cargo, cuerpo.Correo, cuerpo.Dni),
             cancellationToken)).ToNoContentResult();
 
     private static async Task<Results<NoContent, ProblemHttpResult>> AsignarRolesAsync(
@@ -131,6 +143,9 @@ internal static class UsuariosEndpoints
         (await handler.Handle(new DesbloquearUsuarioCommand(id), cancellationToken)).ToNoContentResult();
 }
 
-internal sealed record EditarUsuarioRequest(string Nombres, string Apellidos, string? Cargo, string Correo);
+internal sealed record EditarUsuarioRequest(string Nombres, string Apellidos, string? Cargo, string Correo, string? Dni);
+
+/// <summary>El DNI va en el cuerpo para que no quede en direcciones ni registros de acceso.</summary>
+internal sealed record ConsultarDniUsuarioRequest(string? Dni, Guid? ExcluirUsuarioId);
 
 internal sealed record AsignarRolesRequest(IReadOnlyList<Guid>? RolIds);

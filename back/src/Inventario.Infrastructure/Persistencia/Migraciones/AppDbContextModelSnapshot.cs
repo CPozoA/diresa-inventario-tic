@@ -1169,6 +1169,12 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.Property<Guid?>("CreadoPor")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Dni")
+                        .HasMaxLength(8)
+                        .IsUnicode(false)
+                        .HasColumnType("char(8)")
+                        .IsFixedLength();
+
                     b.Property<DateTimeOffset?>("ModificadoEn")
                         .HasColumnType("datetimeoffset");
 
@@ -1184,6 +1190,10 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Dni")
+                        .IsUnique()
+                        .HasFilter("[Dni] IS NOT NULL");
 
                     b.HasIndex("SedeId");
 

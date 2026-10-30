@@ -5,6 +5,7 @@ using Inventario.Application.Common.Persistencia;
 using Inventario.Application.Common.Resultados;
 using Inventario.Application.Common.Seguridad;
 using Inventario.Domain.Auditoria;
+using Inventario.Domain.Personal;
 using Inventario.Domain.Usuarios;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +21,7 @@ public sealed record UsuarioCreadoDto(Guid Id, string ContrasenaTemporal);
 /// <param name="SedeId">Obligatorio para el superadministrador; los demás crean en su sede.</param>
 /// <param name="NombreUsuario">Con el que ingresa. Único en todo el sistema.</param>
 /// <param name="Correo">Único en todo el sistema. Se usa para recuperar la contraseña.</param>
+/// <param name="Dni">8 dígitos, obligatorio y único entre los usuarios. Los nombres se buscan antes con consulta-dni.</param>
 /// <param name="Nombres">Nombres.</param>
 /// <param name="Apellidos">Apellidos.</param>
 /// <param name="Cargo">Opcional.</param>
@@ -29,6 +31,7 @@ public sealed record CrearUsuarioCommand(
     Guid? SedeId,
     string NombreUsuario,
     string Correo,
+    string? Dni,
     string Nombres,
     string Apellidos,
     string? Cargo,
@@ -55,6 +58,22 @@ internal sealed partial class CrearUsuarioHandler(IAppDbContext db, ReglasDeGest
         if (string.IsNullOrEmpty(correo))
         {
             return ErroresUsuario.CorreoObligatorio;
+        }
+
+        var dni = command.Dni?.Trim();
+        if (string.IsNullOrEmpty(dni))
+        {
+            return ErroresUsuario.DniObligatorio;
+        }
+
+        if (!Persona.EsDniValido(dni))
+        {
+            return ErroresUsuario.DniInvalido;
+        }
+
+        if (await db.BuscarPorDniAsync(dni, excluirUsuarioId: null, cancellationToken) is not null)
+        {
+            return ErroresUsuario.DniDuplicado;
         }
 
         if (await identidad.ExisteNombreUsuarioAsync(nombreUsuario))
@@ -85,7 +104,7 @@ internal sealed partial class CrearUsuarioHandler(IAppDbContext db, ReglasDeGest
         }
 
         // El dominio valida nombres y longitudes, que haya al menos un rol y que los roles sean de la misma sede.
-        var usuario = Usuario.CrearDeSede(sede.Valor, command.Nombres, command.Apellidos, command.Cargo);
+        var usuario = Usuario.CrearDeSede(sede.Valor, command.Nombres, command.Apellidos, command.Cargo, dni);
         usuario.AsignarRoles(roles);
         db.Usuarios.Add(usuario);
 

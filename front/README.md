@@ -79,7 +79,7 @@ src/app/
 | `/olvide-contrasena` | Cualquiera | Pide el enlace por correo. Responde igual exista o no la cuenta. |
 | `/restablecer-contrasena?usuario=…&token=…` | Cualquiera | Página del enlace del correo. |
 | `/cambiar-contrasena` | Con sesión | Obligatoria con contraseña temporal; voluntaria desde el menú de la cuenta. |
-| `/usuarios` | `Usuarios.Ver` (acciones con `Usuarios.Gestionar`) | Lista con búsqueda y filtro por estado. La contraseña temporal se muestra una sola vez. Los usuarios que no puede gestionar aparecen con un candado (mismas reglas que la API). |
+| `/usuarios` | `Usuarios.Ver` (acciones con `Usuarios.Gestionar`) | Lista con búsqueda (también por DNI) y filtro por estado; bajo el nombre, el DNI o «Sin DNI». «Nuevo usuario» pide primero el DNI y lo busca (D57): si ya es de otro usuario se avisa; si RENIEC lo encuentra llena nombres y apellidos como nombre propio (se pueden corregir); si no, se escriben. «Editar datos» permite completar el DNI de los usuarios anteriores o corregirlo. La contraseña temporal se muestra una sola vez. Los usuarios que no puede gestionar aparecen con un candado (mismas reglas que la API). |
 | `/roles` | `Roles.Ver` (cambios con `Roles.Gestionar`) | Roles de la sede; el superadmin elige la sede arriba. Los permisos que no puede otorgar aparecen deshabilitados. |
 | `/sedes` | `Sedes.Gestionar` | Solo el superadmin. |
 | `/areas` | `Catalogos.GestionarSede` | Áreas de la sede (buscar o agregar en un solo campo); el superadmin elige la sede arriba. |

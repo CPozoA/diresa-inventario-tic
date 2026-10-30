@@ -5,5 +5,6 @@ export interface EditarUsuarioRequest {
   apellidos: string;
   cargo: (string | null);
   correo: string;
+  dni: (string | null);
   nombres: string;
 }

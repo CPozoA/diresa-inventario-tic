@@ -542,6 +542,37 @@
         }
       }
     },
+    "/api/usuarios/consulta-dni": {
+      "post": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Antes de crear o completar un usuario: si el DNI ya es de otro usuario, quién; si no, los nombres que da RENIEC (o que no lo encontró o no respondió). No guarda nada.",
+        "operationId": "ConsultarDniUsuario",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsultarDniUsuarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsultaDniUsuarioDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/usuarios/{id}": {
       "get": {
         "tags": [
@@ -577,7 +608,7 @@
         "tags": [
           "Usuarios"
         ],
-        "summary": "Cambia nombres, apellidos, cargo y correo.",
+        "summary": "Cambia DNI, nombres, apellidos, cargo y correo. El DNI se puede corregir o completar, no quitar.",
         "operationId": "EditarUsuario",
         "parameters": [
           {
@@ -3571,6 +3602,7 @@
           "sedeId",
           "nombreUsuario",
           "correo",
+          "dni",
           "nombres",
           "apellidos",
           "cargo",
@@ -3590,6 +3622,12 @@
           },
           "correo": {
             "type": "string"
+          },
+          "dni": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "nombres": {
             "type": "string"
@@ -3659,7 +3697,8 @@
           "nombres",
           "apellidos",
           "cargo",
-          "correo"
+          "correo",
+          "dni"
         ],
         "type": "object",
         "properties": {
@@ -3677,6 +3716,12 @@
           },
           "correo": {
             "type": "string"
+          },
+          "dni": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -3974,6 +4019,7 @@
           "sedeId",
           "nombreUsuario",
           "correo",
+          "dni",
           "nombres",
           "apellidos",
           "cargo",
@@ -3996,6 +4042,12 @@
             "type": "string"
           },
           "correo": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dni": {
             "type": [
               "null",
               "string"
@@ -8114,6 +8166,93 @@
               "string"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "ConsultarDniUsuarioRequest": {
+        "required": [
+          "dni",
+          "excluirUsuarioId"
+        ],
+        "type": "object",
+        "properties": {
+          "dni": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "excluirUsuarioId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "UsuarioConDniDto": {
+        "required": [
+          "nombreCompleto",
+          "sede"
+        ],
+        "type": "object",
+        "properties": {
+          "nombreCompleto": {
+            "type": "string"
+          },
+          "sede": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ConsultaDniUsuarioDto": {
+        "required": [
+          "dni",
+          "reniec",
+          "nombres",
+          "apellidos",
+          "registrado"
+        ],
+        "type": "object",
+        "properties": {
+          "dni": {
+            "type": "string"
+          },
+          "reniec": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EstadoConsultaDni"
+              }
+            ]
+          },
+          "nombres": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "apellidos": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "registrado": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UsuarioConDniDto"
+              }
+            ]
           }
         }
       }

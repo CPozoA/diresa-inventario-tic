@@ -22,6 +22,12 @@
   .atenuado {
     font-size: 12px;
   }
+
+  // Usuarios creados antes de que se pidiera el DNI: se completa al editarlos.
+  .sin-dni {
+    color: var(--inv-alerta);
+    font-weight: 500;
+  }
 }
 
 .chips {

@@ -41,6 +41,8 @@ export type { ListarUsuarios$Params as ListarUsuarios$Params } from './fn/usuari
 export { listarUsuarios as listarUsuarios } from './fn/usuarios/listar-usuarios';
 export type { CrearUsuario$Params as CrearUsuario$Params } from './fn/usuarios/crear-usuario';
 export { crearUsuario as crearUsuario } from './fn/usuarios/crear-usuario';
+export type { ConsultarDniUsuario$Params as ConsultarDniUsuario$Params } from './fn/usuarios/consultar-dni-usuario';
+export { consultarDniUsuario as consultarDniUsuario } from './fn/usuarios/consultar-dni-usuario';
 export type { ObtenerUsuario$Params as ObtenerUsuario$Params } from './fn/usuarios/obtener-usuario';
 export { obtenerUsuario as obtenerUsuario } from './fn/usuarios/obtener-usuario';
 export type { EditarUsuario$Params as EditarUsuario$Params } from './fn/usuarios/editar-usuario';

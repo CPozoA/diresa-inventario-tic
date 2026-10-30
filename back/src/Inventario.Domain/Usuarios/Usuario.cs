@@ -1,4 +1,5 @@
 using Inventario.Domain.Common;
+using Inventario.Domain.Personal;
 using Inventario.Domain.Seguridad;
 
 namespace Inventario.Domain.Usuarios;
@@ -21,9 +22,10 @@ public sealed class Usuario : EntidadAuditable
     {
     }
 
-    private Usuario(Guid? sedeId, string nombres, string apellidos, string? cargo)
+    private Usuario(Guid? sedeId, string? dni, string nombres, string apellidos, string? cargo)
     {
         SedeId = sedeId;
+        Dni = dni;
         Nombres = nombres;
         Apellidos = apellidos;
         Cargo = cargo;
@@ -32,6 +34,12 @@ public sealed class Usuario : EntidadAuditable
 
     /// <summary>Sede a la que pertenece. Solo el superadministrador no tiene sede.</summary>
     public Guid? SedeId { get; private set; }
+
+    /// <summary>
+    /// 8 dígitos. Único entre los usuarios. Nulo solo en el superadministrador y en los usuarios creados antes de que
+    /// se pidiera (se completa al editarlos); una vez registrado no se puede quitar.
+    /// </summary>
+    public string? Dni { get; private set; }
 
     public string Nombres { get; private set; } = string.Empty;
 
@@ -48,19 +56,21 @@ public sealed class Usuario : EntidadAuditable
 
     public bool EsSuperAdmin => SedeId is null;
 
-    public static Usuario CrearDeSede(Guid sedeId, string nombres, string apellidos, string? cargo)
+    /// <param name="dni">Application lo exige al crear; el dominio lo acepta nulo por los usuarios anteriores.</param>
+    public static Usuario CrearDeSede(Guid sedeId, string nombres, string apellidos, string? cargo, string? dni = null)
     {
         if (sedeId == Guid.Empty)
         {
             throw new DominioException("Un usuario de sede debe indicar su sede.");
         }
 
-        return new Usuario(sedeId, ValidarNombres(nombres), ValidarApellidos(apellidos), ValidarCargo(cargo));
+        var dniValidado = dni is null ? null : Persona.NormalizarDni(dni);
+        return new Usuario(sedeId, dniValidado, ValidarNombres(nombres), ValidarApellidos(apellidos), ValidarCargo(cargo));
     }
 
     public static Usuario CrearSuperAdmin(string nombres, string apellidos)
     {
-        var usuario = new Usuario(sedeId: null, ValidarNombres(nombres), ValidarApellidos(apellidos), cargo: null);
+        var usuario = new Usuario(sedeId: null, dni: null, ValidarNombres(nombres), ValidarApellidos(apellidos), cargo: null);
         usuario._roles.Add(new UsuarioRol(usuario.Id, RolesDelSistema.SuperAdminId));
         return usuario;
     }
@@ -70,6 +80,22 @@ public sealed class Usuario : EntidadAuditable
         Nombres = ValidarNombres(nombres);
         Apellidos = ValidarApellidos(apellidos);
         Cargo = ValidarCargo(cargo);
+    }
+
+    /// <summary>Registra o corrige el DNI (8 dígitos). Quitarlo no se permite: nulo solo deja el que no tenía.</summary>
+    public void CambiarDni(string? dni)
+    {
+        if (string.IsNullOrWhiteSpace(dni))
+        {
+            if (Dni is not null)
+            {
+                throw new DominioException("El DNI no se puede quitar.");
+            }
+
+            return;
+        }
+
+        Dni = Persona.NormalizarDni(dni);
     }
 
     /// <summary>

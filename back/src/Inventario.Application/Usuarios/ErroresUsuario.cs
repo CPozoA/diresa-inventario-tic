@@ -22,6 +22,15 @@ public static class ErroresUsuario
     public static readonly ErrorAplicacion CorreoDuplicado =
         ErrorAplicacion.Conflicto("Usuarios.CorreoDuplicado", "Ya existe una cuenta con ese correo.");
 
+    public static readonly ErrorAplicacion DniInvalido =
+        ErrorAplicacion.Validacion("Usuarios.DniInvalido", "El DNI debe tener 8 dígitos.");
+
+    public static readonly ErrorAplicacion DniObligatorio =
+        ErrorAplicacion.Validacion("Usuarios.DniObligatorio", "Escriba el DNI del usuario.");
+
+    public static readonly ErrorAplicacion DniDuplicado =
+        ErrorAplicacion.Conflicto("Usuarios.DniDuplicado", "Ya hay un usuario con ese DNI.");
+
     public static readonly ErrorAplicacion RolNoEncontrado =
         ErrorAplicacion.Validacion("Usuarios.RolNoEncontrado", "Uno de los roles indicados no existe.");
 }

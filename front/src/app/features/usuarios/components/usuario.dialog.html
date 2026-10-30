@@ -5,6 +5,56 @@
       <app-aviso>{{ e.mensaje }}</app-aviso>
     }
 
+    <div class="fila-dni">
+      <mat-form-field class="campo-dni" subscriptSizing="dynamic">
+        <mat-label>{{ dniObligatorio ? 'DNI' : 'DNI (complételo)' }}</mat-label>
+        <input
+          matInput
+          formControlName="dni"
+          class="mono"
+          inputmode="numeric"
+          autocomplete="off"
+          [required]="dniObligatorio"
+          (keydown.enter)="buscarDni($event)"
+        />
+        @if (formulario.controls.dni.hasError('required')) {
+          <mat-error>Escriba el DNI.</mat-error>
+        } @else if (formulario.controls.dni.hasError('pattern')) {
+          <mat-error>El DNI tiene 8 dígitos.</mat-error>
+        }
+      </mat-form-field>
+      <button mat-stroked-button type="button" class="boton-dni" [disabled]="estadoDni() === 'consultando'" (click)="buscarDni()">
+        <mat-icon>search</mat-icon> Buscar DNI
+      </button>
+    </div>
+
+    @switch (estadoDni()) {
+      @case ('pendiente') {
+        @if (creando) {
+          <p class="atenuado nota">Escriba el DNI y búsquelo: los nombres y apellidos se completan con RENIEC.</p>
+        } @else if (!dniObligatorio) {
+          <p class="atenuado nota">Este usuario se creó sin DNI. Escríbalo y búsquelo para completarlo.</p>
+        }
+      }
+      @case ('consultando') {
+        <mat-progress-bar mode="indeterminate" aria-label="Consultando RENIEC" />
+      }
+      @case ('registrado') {
+        @if (consulta()?.registrado; as r) {
+          <app-aviso tono="alerta">
+            El DNI ya es del usuario <strong>{{ r.nombreCompleto }}</strong>{{ r.sede ? ' (' + r.sede + ')' : '' }}. Cada persona tiene un
+            solo usuario.
+          </app-aviso>
+        }
+      }
+      @case ('encontrado') {
+        <p class="reniec"><mat-icon aria-hidden="true">verified</mat-icon> {{ mensajeDni() }}</p>
+      }
+      @default {
+        <app-aviso tono="alerta">{{ mensajeDni() }}</app-aviso>
+      }
+    }
+
     <div class="rejilla">
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>Nombres</mat-label>
@@ -76,8 +126,13 @@
   </mat-dialog-content>
   <mat-dialog-actions align="end">
     <button mat-button type="button" mat-dialog-close>Cancelar</button>
-    <button mat-flat-button type="submit" [disabled]="guardando()">
-      {{ guardando() ? 'Guardando…' : creando ? 'Crear usuario' : 'Guardar' }}
-    </button>
+    @if (debeBuscar()) {
+      <!-- Sin enviar el formulario: así no se marcan en rojo los campos que aún no se llenan. -->
+      <button mat-flat-button type="button" [disabled]="estadoDni() === 'consultando'" (click)="buscarDni()">Buscar DNI</button>
+    } @else {
+      <button mat-flat-button type="submit" [disabled]="guardando() || estadoDni() === 'consultando' || estadoDni() === 'registrado'">
+        {{ guardando() ? 'Guardando…' : creando ? 'Crear usuario' : 'Guardar' }}
+      </button>
+    }
   </mat-dialog-actions>
 </form>

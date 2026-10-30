@@ -8,7 +8,7 @@ namespace Inventario.Application.Usuarios.Listar;
 
 /// <summary>Usuarios de una sede, ordenados por apellidos. Nunca incluye al superadministrador.</summary>
 /// <param name="SedeId">Para el superadministrador es opcional (sin sede: todos los usuarios de todas las sedes).</param>
-/// <param name="Buscar">Texto opcional: busca en nombres, apellidos y cargo.</param>
+/// <param name="Buscar">Texto opcional: busca en nombres, apellidos y cargo; si son solo dígitos, el DNI desde el inicio.</param>
 /// <remarks>Requiere Usuarios.Ver.</remarks>
 public sealed record ListarUsuariosQuery(Guid? SedeId, string? Buscar) : IQuery<IReadOnlyList<UsuarioDto>>;
 
@@ -40,8 +40,10 @@ internal sealed class ListarUsuariosHandler(
         if (!string.IsNullOrWhiteSpace(query.Buscar))
         {
             var texto = query.Buscar.Trim();
-            consulta = consulta.Where(u =>
-                u.Nombres.Contains(texto) || u.Apellidos.Contains(texto) || (u.Cargo != null && u.Cargo.Contains(texto)));
+            consulta = texto.All(char.IsAsciiDigit)
+                ? consulta.Where(u => u.Dni != null && u.Dni.StartsWith(texto))
+                : consulta.Where(u =>
+                    u.Nombres.Contains(texto) || u.Apellidos.Contains(texto) || (u.Cargo != null && u.Cargo.Contains(texto)));
         }
 
         var usuarios = await consulta

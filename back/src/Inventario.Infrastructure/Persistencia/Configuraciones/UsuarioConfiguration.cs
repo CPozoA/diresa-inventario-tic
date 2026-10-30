@@ -1,3 +1,4 @@
+using Inventario.Domain.Personal;
 using Inventario.Domain.Sedes;
 using Inventario.Domain.Usuarios;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,10 @@ internal sealed class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
 
         builder.HasKey(u => u.Id);
         builder.Property(u => u.Id).ValueGeneratedNever();
+
+        // Un DNI no se repite entre usuarios; los que aún no lo tienen (nulo) no cuentan.
+        builder.Property(u => u.Dni).HasMaxLength(Persona.LongitudDni).IsUnicode(false).IsFixedLength();
+        builder.HasIndex(u => u.Dni).IsUnique().HasFilter("[Dni] IS NOT NULL");
 
         builder.Property(u => u.Nombres).HasMaxLength(Usuario.LongitudMaximaNombres).IsRequired();
         builder.Property(u => u.Apellidos).HasMaxLength(Usuario.LongitudMaximaApellidos).IsRequired();

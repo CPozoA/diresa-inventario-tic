@@ -30,7 +30,8 @@ public static class AyudasHttp
         Guid rolId,
         Guid? sedeId = null,
         string? nombreUsuario = null,
-        string nombres = "Persona")
+        string nombres = "Persona",
+        string? dni = null)
     {
         ArgumentNullException.ThrowIfNull(cliente);
 
@@ -42,6 +43,7 @@ public static class AyudasHttp
                 sedeId,
                 nombreUsuario = nombre,
                 correo = $"{nombre}@pruebas.local",
+                dni = dni ?? ConsultaDniFalsa.DniEncontrado(),
                 nombres,
                 apellidos = "De Pruebas",
                 cargo = "Técnico",

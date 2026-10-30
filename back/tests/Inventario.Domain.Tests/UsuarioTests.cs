@@ -89,4 +89,38 @@ public sealed class UsuarioTests
         usuario.Activar();
         Assert.True(usuario.Activo);
     }
+
+    [Fact]
+    public void CrearDeSede_ConDni_LoGuardaSinEspacios()
+    {
+        var usuario = Usuario.CrearDeSede(SedeA, "María", "Quispe", null, " 41234567 ");
+
+        Assert.Equal("41234567", usuario.Dni);
+    }
+
+    [Theory]
+    [InlineData("1234567")]
+    [InlineData("123456789")]
+    [InlineData("4123456A")]
+    public void CrearDeSede_ConDniQueNoTiene8Digitos_Rechaza(string dni) =>
+        Assert.Throws<DominioException>(() => Usuario.CrearDeSede(SedeA, "María", "Quispe", null, dni));
+
+    [Fact]
+    public void CambiarDni_CompletaElDeUnUsuarioAnteriorYLuegoNoSePuedeQuitar()
+    {
+        var usuario = Usuario.CrearDeSede(SedeA, "María", "Quispe", null);
+        Assert.Null(usuario.Dni);
+
+        usuario.CambiarDni(null);
+        Assert.Null(usuario.Dni);
+
+        usuario.CambiarDni("41234567");
+        Assert.Equal("41234567", usuario.Dni);
+
+        usuario.CambiarDni("41234568");
+        Assert.Equal("41234568", usuario.Dni);
+
+        Assert.Throws<DominioException>(() => usuario.CambiarDni(" "));
+        Assert.Equal("41234568", usuario.Dni);
+    }
 }

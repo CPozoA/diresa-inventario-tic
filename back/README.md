@@ -529,3 +529,23 @@ Las acciones anteriores a la migración no aparecen: el registro empieza desde e
 | `GET /api/auditoria/exportar?…` | `Auditoria.Ver` | Lo mismo en Excel (hasta 50 000) |
 | `GET /api/activos/{id}/historial` | `Auditoria.Ver` | Acciones sobre el activo |
 
+
+## DNI de los usuarios (D57)
+
+Este cambio **cambia el modelo**: agrega la columna `Dni` a `seguridad.Usuarios` con un índice único que ignora los
+vacíos. Desde `back`, con la API detenida:
+
+```powershell
+dotnet ef migrations add DniUsuarios --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+Los usuarios que ya existen quedan sin DNI y lo completan al editarlos. Usa el mismo servicio de RENIEC del personal
+(`ConsultaDni:Clave`, sin cambios de configuración).
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `POST /api/usuarios/consulta-dni` con `{ "dni": "41234567", "excluirUsuarioId": null }` | `Usuarios.Gestionar` | Si el DNI ya es de otro usuario (de cualquier red), quién (`registrado`) sin consultar RENIEC; si no, `reniec` (`Encontrado`, `NoEncontrado`, `NoDisponible`) con `nombres` y `apellidos`. No guarda nada |
+| `POST /api/usuarios` | `Usuarios.Gestionar` | Ahora exige `dni` (`Usuarios.DniObligatorio` o `Usuarios.DniInvalido`, 400; `Usuarios.DniDuplicado`, 409) |
+| `PUT /api/usuarios/{id}` | `Usuarios.Gestionar` | Acepta `dni`: completa o corrige; no se puede quitar si ya tenía (`Usuarios.DniObligatorio`) |
+| `GET /api/usuarios?buscar=4123` | `Usuarios.Ver` | Si `buscar` son solo dígitos, busca por el inicio del DNI |

@@ -1,9 +1,14 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Inventario.Api.IntegrationTests.Infraestructura;
+using Inventario.Application.Common.Reniec;
 using Inventario.Application.Cuenta;
 using Inventario.Application.Roles.Listar;
 using Inventario.Application.Usuarios;
+using Inventario.Application.Usuarios.ConsultarDni;
+using Inventario.Application.Usuarios.Crear;
 using Inventario.Application.Usuarios.RestablecerContrasena;
 using Inventario.Domain.Seguridad;
 
@@ -17,6 +22,8 @@ namespace Inventario.Api.IntegrationTests;
 [Collection(ColeccionApi.Nombre)]
 public sealed class GestionUsuariosTests(FabricaApi api)
 {
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -253,5 +260,148 @@ public sealed class GestionUsuariosTests(FabricaApi api)
 
         Assert.Equal(HttpStatusCode.NoContent, desbloquear.StatusCode);
         Assert.Equal(HttpStatusCode.OK, ingreso.StatusCode);
+    }
+
+    // ---------- DNI del usuario ----------
+
+    [Fact]
+    public async Task ConsultaDni_DaLosNombresDeReniec_YSeGuardaElDni()
+    {
+        using var admin = await api.CrearClienteConSesionAsync(DatosPrueba.AdminHuanta);
+        var dni = ConsultaDniFalsa.DniEncontrado();
+
+        var consulta = await ConsultarDniAsync(admin, dni);
+
+        var reniec = ConsultaDniFalsa.NombresDe(dni);
+        Assert.Equal(EstadoConsultaDni.Encontrado, consulta.Reniec);
+        Assert.Equal(reniec.Nombres, consulta.Nombres);
+        Assert.Equal($"{reniec.ApellidoPaterno} {reniec.ApellidoMaterno}", consulta.Apellidos);
+        Assert.Null(consulta.Registrado);
+
+        var respuesta = await admin.PedirCrearUsuarioAsync(api.RolTecnicoHuantaId, dni: $" {dni} ");
+        var creado = await respuesta.Content.ReadFromJsonAsync<UsuarioCreadoDto>(Ct);
+        var detalle = await admin.GetFromJsonAsync<UsuarioDto>($"/api/usuarios/{creado!.Id}", Ct);
+        Assert.Equal(dni, detalle?.Dni);
+
+        // Se busca por el inicio del DNI.
+        var porDni = await admin.GetFromJsonAsync<List<UsuarioDto>>($"/api/usuarios?buscar={dni[..5]}", Ct);
+        Assert.Contains(porDni!, u => u.Id == creado.Id);
+    }
+
+    [Fact]
+    public async Task ConsultaDni_SinDatosDeReniec_LoIndica()
+    {
+        using var admin = await api.CrearClienteConSesionAsync(DatosPrueba.AdminHuanta);
+
+        var noEncontrado = await ConsultarDniAsync(admin, ConsultaDniFalsa.DniNoEncontrado());
+        var noDisponible = await ConsultarDniAsync(admin, ConsultaDniFalsa.DniNoDisponible());
+
+        Assert.Equal(EstadoConsultaDni.NoEncontrado, noEncontrado.Reniec);
+        Assert.Equal(EstadoConsultaDni.NoDisponible, noDisponible.Reniec);
+        Assert.Null(noEncontrado.Nombres);
+
+        var invalido = await admin.PostAsJsonAsync("/api/usuarios/consulta-dni", new { dni = "1234" }, Ct);
+        Assert.Equal(HttpStatusCode.BadRequest, invalido.StatusCode);
+        Assert.Equal("Usuarios.DniInvalido", await invalido.LeerCodigoAsync());
+    }
+
+    [Fact]
+    public async Task DniDeOtroUsuario_AunqueSeaDeOtraRed_SeAvisaYNoSePuedeRepetir()
+    {
+        using var superAdmin = await api.CrearClienteConSesionAsync(DatosPrueba.SuperAdmin);
+        using var admin = await api.CrearClienteConSesionAsync(DatosPrueba.AdminHuanta);
+        var dni = ConsultaDniFalsa.DniEncontrado();
+        var dePuquio = await superAdmin.PedirCrearUsuarioAsync(api.RolTecnicoPuquioId, sedeId: api.SedePuquioId, nombres: "Rosa", dni: dni);
+        Assert.Equal(HttpStatusCode.Created, dePuquio.StatusCode);
+
+        var consulta = await ConsultarDniAsync(admin, dni);
+        Assert.Null(consulta.Reniec);
+        Assert.NotNull(consulta.Registrado);
+        Assert.StartsWith("Rosa", consulta.Registrado.NombreCompleto, StringComparison.Ordinal);
+
+        var repetido = await admin.PedirCrearUsuarioAsync(api.RolTecnicoHuantaId, dni: dni);
+        Assert.Equal(HttpStatusCode.Conflict, repetido.StatusCode);
+        Assert.Equal("Usuarios.DniDuplicado", await repetido.LeerCodigoAsync());
+    }
+
+    [Fact]
+    public async Task CrearUsuario_SinDniOConDniInvalido_Responde400()
+    {
+        using var admin = await api.CrearClienteConSesionAsync(DatosPrueba.AdminHuanta);
+
+        var sinDni = await admin.PedirCrearUsuarioAsync(api.RolTecnicoHuantaId, dni: " ");
+        var invalido = await admin.PedirCrearUsuarioAsync(api.RolTecnicoHuantaId, dni: "1234567A");
+
+        Assert.Equal(HttpStatusCode.BadRequest, sinDni.StatusCode);
+        Assert.Equal("Usuarios.DniObligatorio", await sinDni.LeerCodigoAsync());
+        Assert.Equal(HttpStatusCode.BadRequest, invalido.StatusCode);
+        Assert.Equal("Usuarios.DniInvalido", await invalido.LeerCodigoAsync());
+    }
+
+    [Fact]
+    public async Task EditarUsuario_CorrigeElDni_PeroNoLoQuita()
+    {
+        using var admin = await api.CrearClienteConSesionAsync(DatosPrueba.AdminHuanta);
+        var nuevo = await admin.CrearUsuarioAsync(api.RolTecnicoHuantaId);
+        var otroDni = ConsultaDniFalsa.DniEncontrado();
+
+        // Su propio DNI no cuenta como repetido al consultarlo desde su edición.
+        var antes = await admin.GetFromJsonAsync<UsuarioDto>($"/api/usuarios/{nuevo.Id}", Ct);
+        var propio = await admin.PostAsJsonAsync("/api/usuarios/consulta-dni", new { dni = antes!.Dni, excluirUsuarioId = nuevo.Id }, Ct);
+        Assert.Null((await propio.Content.ReadFromJsonAsync<ConsultaDniUsuarioDto>(Json, Ct))!.Registrado);
+
+        var corregir = await admin.PutAsJsonAsync(
+            $"/api/usuarios/{nuevo.Id}",
+            new { nombres = "Persona", apellidos = "De Pruebas", cargo = (string?)null, correo = antes.Correo, dni = otroDni },
+            Ct);
+        var quitar = await admin.PutAsJsonAsync(
+            $"/api/usuarios/{nuevo.Id}",
+            new { nombres = "Persona", apellidos = "De Pruebas", cargo = (string?)null, correo = antes.Correo, dni = (string?)null },
+            Ct);
+
+        Assert.Equal(HttpStatusCode.NoContent, corregir.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, quitar.StatusCode);
+        Assert.Equal("Usuarios.DniObligatorio", await quitar.LeerCodigoAsync());
+        Assert.Equal(otroDni, (await admin.GetFromJsonAsync<UsuarioDto>($"/api/usuarios/{nuevo.Id}", Ct))?.Dni);
+    }
+
+    [Fact]
+    public async Task UsuarioAnteriorSinDni_SePuedeEditarSinEl_OCompletarlo()
+    {
+        using var admin = await api.CrearClienteConSesionAsync(DatosPrueba.AdminHuanta);
+        var gestorId = await api.ObtenerUsuarioIdAsync(DatosPrueba.GestorHuanta);
+        var gestor = await admin.GetFromJsonAsync<UsuarioDto>($"/api/usuarios/{gestorId}", Ct);
+        Assert.Null(gestor!.Dni);
+
+        var sinDni = await admin.PutAsJsonAsync(
+            $"/api/usuarios/{gestorId}",
+            new { gestor.Nombres, gestor.Apellidos, gestor.Cargo, gestor.Correo },
+            Ct);
+        Assert.Equal(HttpStatusCode.NoContent, sinDni.StatusCode);
+
+        var dni = ConsultaDniFalsa.DniEncontrado();
+        var completar = await admin.PutAsJsonAsync(
+            $"/api/usuarios/{gestorId}",
+            new { gestor.Nombres, gestor.Apellidos, gestor.Cargo, gestor.Correo, dni },
+            Ct);
+        Assert.Equal(HttpStatusCode.NoContent, completar.StatusCode);
+        Assert.Equal(dni, (await admin.GetFromJsonAsync<UsuarioDto>($"/api/usuarios/{gestorId}", Ct))?.Dni);
+    }
+
+    [Fact]
+    public async Task ConsultaDni_SinPermisoDeGestionarUsuarios_Responde403()
+    {
+        using var editor = await api.CrearClienteConSesionAsync(DatosPrueba.EditorHuanta);
+
+        var respuesta = await editor.PostAsJsonAsync("/api/usuarios/consulta-dni", new { dni = ConsultaDniFalsa.DniEncontrado() }, Ct);
+
+        Assert.Equal(HttpStatusCode.Forbidden, respuesta.StatusCode);
+    }
+
+    private static async Task<ConsultaDniUsuarioDto> ConsultarDniAsync(HttpClient cliente, string dni)
+    {
+        var respuesta = await cliente.PostAsJsonAsync("/api/usuarios/consulta-dni", new { dni }, Ct);
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        return (await respuesta.Content.ReadFromJsonAsync<ConsultaDniUsuarioDto>(Json, Ct))!;
     }
 }

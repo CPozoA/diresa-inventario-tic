@@ -99,7 +99,7 @@ export class UsuariosPage {
       .filter(
         (f) =>
           texto === '' ||
-          [f.nombreCompleto, f.usuario.nombreUsuario, f.usuario.correo ?? '', f.usuario.cargo ?? '', f.sede].some((c) =>
+          [f.nombreCompleto, f.usuario.dni ?? '', f.usuario.nombreUsuario, f.usuario.correo ?? '', f.usuario.cargo ?? '', f.sede].some((c) =>
             normalizar(c).includes(texto),
           ),
       );

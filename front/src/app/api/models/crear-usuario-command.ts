@@ -5,6 +5,7 @@ export interface CrearUsuarioCommand {
   apellidos: string;
   cargo: (string | null);
   correo: string;
+  dni: (string | null);
   nombreUsuario: string;
   nombres: string;
   rolIds: (Array<string> | null);

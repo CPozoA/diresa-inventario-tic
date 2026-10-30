@@ -9,6 +9,7 @@ export interface UsuarioDto {
   cargo: (string | null);
   correo: (string | null);
   debeCambiarContrasena: boolean;
+  dni: (string | null);
   id: string;
   nombreUsuario: string;
   nombres: string;

@@ -12,7 +12,7 @@
   <div class="filtros">
     <mat-form-field subscriptSizing="dynamic" class="buscador">
       <mat-icon matPrefix>search</mat-icon>
-      <mat-label>Buscar por nombre, usuario, correo o cargo</mat-label>
+      <mat-label>Buscar por nombre, DNI, usuario, correo o cargo</mat-label>
       <input matInput [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" />
     </mat-form-field>
     <mat-button-toggle-group
@@ -57,7 +57,16 @@
               <td>
                 <div class="dos-lineas">
                   <span class="principal">{{ fila.nombreCompleto }}</span>
-                  <span class="atenuado">{{ fila.usuario.cargo }}</span>
+                  <span class="atenuado">
+                    @if (fila.usuario.dni) {
+                      <span class="mono">DNI {{ fila.usuario.dni }}</span>
+                    } @else {
+                      <span class="sin-dni">Sin DNI</span>
+                    }
+                    @if (fila.usuario.cargo) {
+                      · {{ fila.usuario.cargo }}
+                    }
+                  </span>
                 </div>
               </td>
               <td>

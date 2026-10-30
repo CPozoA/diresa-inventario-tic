@@ -8,11 +8,13 @@ namespace Inventario.Application.Usuarios;
 public sealed record RolAsignadoDto(Guid Id, string Nombre);
 
 /// <summary>Usuario tal como lo ve la pantalla de usuarios: datos de negocio más el estado de su cuenta.</summary>
+/// <param name="Dni">Nulo en los usuarios creados antes de que se pidiera.</param>
 public sealed record UsuarioDto(
     Guid Id,
     Guid SedeId,
     string NombreUsuario,
     string? Correo,
+    string? Dni,
     string Nombres,
     string Apellidos,
     string? Cargo,
@@ -28,6 +30,7 @@ internal static class MapeoUsuario
         usuario.SedeId ?? Guid.Empty,
         cuenta?.NombreUsuario ?? string.Empty,
         cuenta?.Correo,
+        usuario.Dni,
         usuario.Nombres,
         usuario.Apellidos,
         usuario.Cargo,

@@ -14,6 +14,46 @@ mat-form-field {
   width: 100%;
 }
 
+.fila-dni {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.campo-dni {
+  flex: 0 1 220px;
+
+  input {
+    letter-spacing: 0.04em;
+  }
+}
+
+.boton-dni {
+  flex-shrink: 0;
+  height: 56px;
+}
+
+.reniec {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid #cde6d7;
+  border-radius: 8px;
+  background: #f2faf5;
+  color: var(--inv-ok);
+  font-size: 13px;
+  font-weight: 500;
+
+  mat-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}
+
 .nota {
   margin: 0;
   font-size: 13px;
