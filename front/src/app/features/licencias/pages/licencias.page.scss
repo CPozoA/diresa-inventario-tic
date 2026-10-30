@@ -1,0 +1,268 @@
+@use 'sass:list';
+
+// Ancho desde el que se usa la tabla (el mismo del inventario).
+$ancho-tabla: 784px;
+
+$colores: (
+  azul: (#2447c8, #e3e9fa, #2447c8),
+  ambar: (#e8b64a, #fbefd3, #7a4f00),
+  rojo: (#c2362b, #f9dedb, #9b1c14),
+  naranja: (#d9772b, #fce7d6, #8a3f0a),
+);
+
+// ---------- Cifras ----------
+
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.cifra {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  min-width: 0;
+  background: var(--inv-superficie);
+  border: 1px solid var(--inv-borde);
+  border-top-width: 4px;
+  border-radius: 10px;
+  color: var(--inv-tinta);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: box-shadow 120ms;
+
+  &:hover {
+    box-shadow: 0 4px 14px rgba(23, 32, 38, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--inv-primario);
+    outline-offset: 2px;
+  }
+
+  &.actual {
+    box-shadow: 0 0 0 2px var(--inv-primario) inset;
+  }
+
+  .icono {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+  }
+
+  @each $nombre, $c in $colores {
+    &.#{$nombre} {
+      border-top-color: list.nth($c, 1);
+
+      .icono {
+        background: list.nth($c, 2);
+        color: list.nth($c, 3);
+      }
+
+      .cifra-valor {
+        color: list.nth($c, 3);
+      }
+    }
+  }
+}
+
+.cifra-textos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cifra-titulo {
+  color: #3a464e;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.cifra-valor {
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cifra-detalle {
+  color: var(--inv-atenuado);
+  font-size: 12px;
+}
+
+// ---------- Filtros ----------
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+}
+
+.buscador {
+  flex: 1 1 280px;
+  max-width: 520px;
+}
+
+.filtro {
+  flex: 1 1 200px;
+  max-width: 280px;
+}
+
+// ---------- Tabla ----------
+
+.dos-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .atenuado {
+    font-size: 12px;
+  }
+}
+
+.producto {
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.celda-puestos {
+  min-width: 150px;
+}
+
+.barra {
+  display: block;
+  width: 120px;
+  max-width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #e8ebe9;
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--inv-primario);
+  }
+
+  &.excedida span {
+    background: var(--inv-mal);
+  }
+}
+
+.texto-mal {
+  color: var(--inv-mal);
+  font-weight: 500;
+}
+
+.fecha {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  color: var(--inv-atenuado);
+  text-align: center;
+
+  p {
+    margin: 0;
+    max-width: 480px;
+    line-height: 1.5;
+  }
+}
+
+// ---------- Tarjetas (pantallas angostas) ----------
+
+.vista-tarjetas {
+  list-style: none;
+  margin: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-licencia {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+  color: var(--inv-tinta);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--inv-primario);
+  }
+
+  .cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .producto {
+    color: var(--inv-primario);
+  }
+
+  .atenuado {
+    font-size: 13px;
+  }
+
+  .barra {
+    width: 100%;
+  }
+}
+
+.vista-tabla {
+  display: none;
+}
+
+@media (min-width: $ancho-tabla) {
+  .vista-tabla {
+    display: block;
+  }
+
+  .vista-tarjetas {
+    display: none;
+  }
+}
+
+@media (max-width: 599px) {
+  .cifras {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .cifra {
+    padding: 10px;
+
+    .icono {
+      display: none;
+    }
+  }
+
+  .cifra-valor {
+    font-size: 22px;
+  }
+}

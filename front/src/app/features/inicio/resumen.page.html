@@ -195,6 +195,9 @@
                   <a class="ver-todos" routerLink="/inventario" [queryParams]="{ atencion: 'Cualquiera' }">Ver los {{ miles(totalAtencion()) }}</a>
                 }
               </div>
+              @if (verLicencias) {
+                <app-alertas-licencias [sedeId]="sedeLicencias()" />
+              }
               <ul class="lista">
                 @for (a of atencion(); track a.id) {
                   <li>

@@ -1,0 +1,123 @@
+<h2 mat-dialog-title>{{ titulo }}</h2>
+<mat-dialog-content class="contenido">
+  @if (ficha) {
+    <span class="atenuado subtitulo">
+      {{ ficha.producto }}
+      @if (renovar) {
+        · vence el {{ formatoFecha(ficha.fechaFin) }}
+      }
+    </span>
+  }
+  @if (error(); as e) {
+    <app-aviso>{{ e.mensaje }}</app-aviso>
+  }
+  @if (renovar) {
+    <app-aviso tono="info">
+      Se propone el periodo siguiente. Los {{ ficha?.equipos?.length }} equipos asignados se mantienen. Escriba el nuevo documento de compra y el costo.
+    </app-aviso>
+  }
+
+  <form [formGroup]="formulario" class="formulario" novalidate id="formulario-licencia" (ngSubmit)="guardar()">
+    @if (eligeRed) {
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Red de salud</mat-label>
+        <mat-select formControlName="sedeId" required>
+          @for (s of sedes(); track s.id) {
+            <mat-option [value]="s.id">{{ s.nombre }}</mat-option>
+          }
+        </mat-select>
+        <mat-error>Elija la red.</mat-error>
+      </mat-form-field>
+    }
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Producto</mat-label>
+      <input
+        matInput
+        formControlName="producto"
+        maxlength="150"
+        required
+        autocomplete="off"
+        placeholder="Microsoft 365 Empresa Estándar, ESET Endpoint Security…"
+        [matAutocomplete]="listaProductos"
+      />
+      <mat-autocomplete #listaProductos="matAutocomplete">
+        @for (p of sugerencias(); track p) {
+          <mat-option [value]="p">{{ p }}</mat-option>
+        }
+      </mat-autocomplete>
+      <mat-error>Escriba el producto.</mat-error>
+    </mat-form-field>
+
+    <div class="rejilla">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Proveedor</mat-label>
+        <input matInput formControlName="proveedor" maxlength="150" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic" class="campo-puestos">
+        <mat-label>Puestos</mat-label>
+        <input matInput type="number" min="1" step="1" formControlName="puestos" required class="numero" />
+        <mat-hint>Equipos que puede cubrir.</mat-hint>
+        <mat-error>Al menos 1, sin decimales.</mat-error>
+      </mat-form-field>
+    </div>
+
+    @if (deMas() > 0) {
+      <app-aviso tono="alerta">
+        Tiene {{ ficha?.equipos?.length }} equipos asignados: quedará con {{ deMas() }} {{ deMas() === 1 ? 'equipo' : 'equipos' }} de más
+        hasta que los quite.
+      </app-aviso>
+    }
+
+    <div class="grupo">
+      <div class="rejilla">
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Desde</mat-label>
+          <input matInput type="date" formControlName="fechaInicio" required />
+          <mat-error>Elija la fecha de inicio.</mat-error>
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Vence el</mat-label>
+          <input matInput type="date" formControlName="fechaFin" required />
+          <mat-hint>Último día en que rige.</mat-hint>
+          <mat-error>Elija la fecha de vencimiento.</mat-error>
+        </mat-form-field>
+      </div>
+      <div class="atajos" role="group" aria-label="Duración">
+        <span class="atenuado">Duración:</span>
+        @for (a of atajos; track a.meses) {
+          <button type="button" class="atajo" (click)="programar(a.meses)">{{ a.texto }}</button>
+        }
+      </div>
+      @if (formulario.hasError('finAnterior') && (formulario.controls.fechaFin.touched || formulario.controls.fechaInicio.touched)) {
+        <span class="error" role="alert">El vencimiento debe ser posterior al inicio.</span>
+      }
+    </div>
+
+    <div class="rejilla">
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Documento de compra</mat-label>
+        <input matInput formControlName="documentoCompra" maxlength="50" autocomplete="off" class="mono" />
+        <mat-hint>Orden de compra, contrato o factura.</mat-hint>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic" floatLabel="always">
+        <mat-label>Costo total</mat-label>
+        <span matTextPrefix>S/&nbsp;</span>
+        <input matInput type="number" min="0" step="0.01" formControlName="costo" class="numero" />
+      </mat-form-field>
+    </div>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Observaciones</mat-label>
+      <textarea matInput formControlName="observaciones" rows="2" maxlength="500"></textarea>
+    </mat-form-field>
+
+    <p class="atenuado nota">La clave del producto no se guarda en el sistema.</p>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Cancelar</button>
+  <button mat-flat-button type="submit" form="formulario-licencia" [disabled]="guardando()">
+    {{ guardando() ? 'Guardando…' : renovar ? 'Renovar' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

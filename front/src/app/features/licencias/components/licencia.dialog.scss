@@ -1,0 +1,76 @@
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// Espacio para que no se corten el subtítulo ni la etiqueta del primer campo.
+.contenido.mat-mdc-dialog-content {
+  padding-top: 8px;
+}
+
+.subtitulo {
+  margin-top: -8px;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.atajos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.atajo {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--inv-borde-campo);
+  border-radius: 999px;
+  background: var(--inv-superficie);
+  font: inherit;
+  font-size: 13px;
+  color: var(--inv-tinta);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--inv-primario);
+    color: var(--inv-primario);
+  }
+}
+
+.numero {
+  text-align: right;
+}
+
+.error {
+  color: var(--inv-mal);
+  font-size: 12px;
+}
+
+.nota {
+  margin: 0;
+  font-size: 12px;
+}

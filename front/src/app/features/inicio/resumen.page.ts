@@ -15,6 +15,7 @@ import { aErrorApi } from '../../core/http/error-api';
 import { SedeSeleccionadaStore } from '../../core/layout/sede-seleccionada.store';
 import { AvisoComponent } from '../../shared/ui/aviso.component';
 import { aNumero, textoAtencion, tonoAtencion } from '../activos/data/textos-activo';
+import { AlertasLicenciasComponent } from '../licencias/components/alertas-licencias.component';
 import { abrirEstablecimientosSinActivos } from './establecimientos-sin-activos.dialog';
 import {
   FilaRed,
@@ -41,7 +42,7 @@ const MAXIMO_TIPOS = 8;
  */
 @Component({
   selector: 'app-resumen',
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressBarModule, AvisoComponent, SiTienePermisoDirective],
+  imports: [RouterLink, MatButtonModule, MatIconModule, MatProgressBarModule, AvisoComponent, SiTienePermisoDirective, AlertasLicenciasComponent],
   templateUrl: './resumen.page.html',
   styleUrl: './resumen.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +61,10 @@ export class ResumenPage {
   /** Sin Activos.Ver no hay nada que resumir (por ejemplo, un usuario que solo gestiona usuarios). */
   protected readonly puedeVer = computed(() => this.sesion.tienePermiso(Permisos.Activos.Ver));
   private readonly esSuperAdmin = this.sesion.esSuperAdmin;
+
+  /** Avisos de licencias (D54) en "Requieren atención", con Licencias.Ver. */
+  protected readonly verLicencias = this.sesion.tienePermiso(Permisos.Licencias.Ver);
+  protected readonly sedeLicencias = computed(() => (this.esSuperAdmin() ? this.sedeSeleccionada.sedeId() : null));
 
   protected readonly recurso = resource({
     params: () =>

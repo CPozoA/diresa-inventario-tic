@@ -1,0 +1,303 @@
+// Ancho desde el que la lista de equipos es una tabla.
+$ancho-tabla: 784px;
+
+.volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-weight: 500;
+  text-decoration: none;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}
+
+.tarjeta {
+  background: var(--inv-superficie);
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+.cabecera {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 20px;
+}
+
+.icono-licencia {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--inv-info-fondo);
+  color: var(--inv-primario);
+  display: grid;
+  place-items: center;
+
+  mat-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 28px;
+  }
+}
+
+.identidad {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  .pastilla {
+    margin-left: 0;
+  }
+}
+
+.lugar {
+  color: #3a464e;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.cuenta {
+  font-weight: 400;
+}
+
+.columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  // En pantallas angostas los datos (puestos ocupados) van antes que la lista de equipos.
+  grid-template-areas:
+    'datos'
+    'equipos';
+  gap: 16px;
+  align-items: start;
+}
+
+.equipos {
+  grid-area: equipos;
+}
+
+.datos {
+  grid-area: datos;
+}
+
+@media (min-width: 1100px) {
+  .columnas {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-areas: 'equipos datos';
+  }
+}
+
+.encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.equipos {
+  padding-bottom: 8px;
+
+  .tabla-contenedor {
+    margin: 0 -20px;
+  }
+}
+
+.dos-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .atenuado {
+    font-size: 12px;
+  }
+}
+
+.codigo {
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.lugar-equipo {
+  white-space: nowrap;
+}
+
+tr.de-baja td {
+  background: #fdf3f2;
+}
+
+.fecha {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.accion {
+  text-align: end;
+}
+
+.sin-equipos {
+  margin: 0 0 12px;
+}
+
+.vista-tarjetas {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tarjeta-equipo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--inv-borde);
+  border-radius: 10px;
+
+  .cabecera-equipo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+  }
+
+  .quitar {
+    margin-left: auto;
+  }
+
+  .atenuado {
+    font-size: 13px;
+  }
+
+}
+
+.vista-tabla {
+  display: none;
+}
+
+@media (min-width: $ancho-tabla) {
+  .vista-tabla {
+    display: block;
+  }
+
+  .vista-tarjetas {
+    display: none;
+  }
+}
+
+// ---------- Datos ----------
+
+.uso {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--inv-fondo);
+
+  .atenuado {
+    font-size: 13px;
+  }
+}
+
+.barra {
+  display: block;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #e1e5e2;
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--inv-primario);
+  }
+
+  &.excedida span {
+    background: var(--inv-mal);
+  }
+}
+
+.texto-mal {
+  color: var(--inv-mal);
+  font-weight: 500;
+}
+
+.filas {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  dt {
+    color: var(--inv-atenuado);
+  }
+
+  dd {
+    margin: 0;
+    text-align: end;
+  }
+}
+
+.observaciones {
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid #eef0ee;
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.registro {
+  font-size: 12px;
+}

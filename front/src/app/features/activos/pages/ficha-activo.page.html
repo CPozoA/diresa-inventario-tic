@@ -202,6 +202,11 @@
         <app-mantenimiento-activo class="mantenimiento" [ficha]="f" [puedeGestionar]="puedeGestionarMantenimiento" (cambio)="recurso.reload()" />
       }
 
+      <!-- Licencias de software instaladas (D54). -->
+      @if (puedeVerLicencias) {
+        <app-licencias-activo class="licencias" [ficha]="f" [puedeGestionar]="puedeGestionarLicencias" />
+      }
+
       <div class="columna lateral">
         @if (ciclo(); as c) {
           <section class="tarjeta">

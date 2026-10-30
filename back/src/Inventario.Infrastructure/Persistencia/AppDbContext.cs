@@ -6,6 +6,7 @@ using Inventario.Domain.Asignaciones;
 using Inventario.Domain.Catalogos;
 using Inventario.Domain.Common;
 using Inventario.Domain.Establecimientos;
+using Inventario.Domain.Licencias;
 using Inventario.Domain.Mantenimientos;
 using Inventario.Domain.Personal;
 using Inventario.Domain.Sedes;
@@ -48,6 +49,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, IUsuari
     public DbSet<Asignacion> Asignaciones => Set<Asignacion>();
 
     public DbSet<Mantenimiento> Mantenimientos => Set<Mantenimiento>();
+
+    public DbSet<Licencia> Licencias => Set<Licencia>();
 
     public DbSet<Area> Areas => Set<Area>();
 

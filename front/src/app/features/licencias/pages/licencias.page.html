@@ -1,0 +1,173 @@
+<div class="pagina">
+  <header class="pagina-encabezado">
+    <div class="pagina-titulo">
+      <h1>Licencias</h1>
+      <span class="atenuado">Suscripciones de software de {{ ambito() }}</span>
+    </div>
+    @if (puedeGestionar) {
+      <button mat-flat-button type="button" (click)="nueva()"><mat-icon>add</mat-icon> Nueva licencia</button>
+    }
+  </header>
+
+  <!-- Cifras: cada tarjeta filtra la lista (otra vez, quita el filtro). -->
+  <section class="cifras" aria-label="Cifras de licencias">
+    <button type="button" class="cifra azul" [class.actual]="filtros().filtro === 'Vigentes'" [attr.aria-pressed]="filtros().filtro === 'Vigentes'" (click)="filtrar('Vigentes')">
+      <span class="icono" aria-hidden="true"><mat-icon>verified</mat-icon></span>
+      <span class="cifra-textos">
+        <span class="cifra-titulo">Vigentes</span>
+        <span class="cifra-valor">{{ vigentes() }}</span>
+        <span class="cifra-detalle">{{ libres() === 1 ? '1 puesto libre' : libres() + ' puestos libres' }}</span>
+      </span>
+    </button>
+    <button type="button" class="cifra ambar" [class.actual]="filtros().filtro === 'PorVencer'" [attr.aria-pressed]="filtros().filtro === 'PorVencer'" (click)="filtrar('PorVencer')">
+      <span class="icono" aria-hidden="true"><mat-icon>event</mat-icon></span>
+      <span class="cifra-textos">
+        <span class="cifra-titulo">Por vencer</span>
+        <span class="cifra-valor">{{ porVencer() }}</span>
+        <span class="cifra-detalle">En los próximos {{ dias() }} días</span>
+      </span>
+    </button>
+    <button type="button" class="cifra rojo" [class.actual]="filtros().filtro === 'Vencidas'" [attr.aria-pressed]="filtros().filtro === 'Vencidas'" (click)="filtrar('Vencidas')">
+      <span class="icono" aria-hidden="true"><mat-icon>event_busy</mat-icon></span>
+      <span class="cifra-textos">
+        <span class="cifra-titulo">Vencidas</span>
+        <span class="cifra-valor">{{ vencidas() }}</span>
+        <span class="cifra-detalle">Renovar o archivar</span>
+      </span>
+    </button>
+    <button type="button" class="cifra naranja" [class.actual]="filtros().filtro === 'Excedidas'" [attr.aria-pressed]="filtros().filtro === 'Excedidas'" (click)="filtrar('Excedidas')">
+      <span class="icono" aria-hidden="true"><mat-icon>group_add</mat-icon></span>
+      <span class="cifra-textos">
+        <span class="cifra-titulo">Equipos de más</span>
+        <span class="cifra-valor">{{ excedidas() }}</span>
+        <span class="cifra-detalle">Más equipos que puestos</span>
+      </span>
+    </button>
+  </section>
+
+  <div class="filtros">
+    <mat-form-field subscriptSizing="dynamic" floatLabel="always" class="buscador">
+      <mat-icon matPrefix aria-hidden="true">search</mat-icon>
+      <mat-label>Buscar</mat-label>
+      <input
+        matInput
+        autocomplete="off"
+        placeholder="Producto, proveedor, documento o código de un equipo"
+        [formControl]="busqueda"
+        (keydown.escape)="limpiarBusqueda()"
+      />
+      @if (busqueda.value) {
+        <button matSuffix mat-icon-button type="button" aria-label="Limpiar la búsqueda" (click)="limpiarBusqueda()">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+    <mat-form-field subscriptSizing="dynamic" class="filtro" floatLabel="always">
+      <mat-label>Mostrar</mat-label>
+      <mat-select [value]="filtros().filtro" placeholder="Todas (sin archivadas)" (selectionChange)="elegirFiltro($event.value)">
+        @for (o of opciones; track o.valor) {
+          <mat-option [value]="o.valor">{{ o.texto }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  @if (error(); as e) {
+    <app-aviso>{{ e }}</app-aviso>
+  }
+
+  <section class="tarjeta-tabla">
+    @if (lista.isLoading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    @if (filas().length > 0) {
+      <div class="tabla-contenedor vista-tabla">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th scope="col">Producto</th>
+              <th scope="col">Puestos</th>
+              <th scope="col">Vigencia</th>
+              <th scope="col">Documento</th>
+              @if (todasLasSedes()) {
+                <th scope="col">Red</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of filas(); track l.id) {
+              <tr>
+                <td>
+                  <span class="dos-lineas">
+                    <a class="producto" [routerLink]="['/licencias', l.id]" [state]="volverAqui()">{{ l.producto }}</a>
+                    @if (l.proveedor) {
+                      <span class="atenuado">{{ l.proveedor }}</span>
+                    }
+                  </span>
+                </td>
+                <td class="celda-puestos">
+                  <span class="dos-lineas">
+                    <span>{{ textoPuestos(l.equipos, l.puestos) }}</span>
+                    <span class="barra" [class.excedida]="l.excedida" aria-hidden="true">
+                      <span [style.width.%]="porcentajeUso(l.equipos, l.puestos)"></span>
+                    </span>
+                    <span class="atenuado" [class.texto-mal]="l.excedida">{{ textoLibres(l.equipos, l.puestos) }}</span>
+                  </span>
+                </td>
+                <td>
+                  <span class="dos-lineas">
+                    <span class="fecha">{{ formatoFecha(l.fechaInicio) }} – {{ formatoFecha(l.fechaFin) }}</span>
+                    <span><span class="pastilla" [class]="tonoVigencia(l.vigencia)">{{ textoVigencia(l.vigencia, l.diasRestantes) }}</span></span>
+                  </span>
+                </td>
+                <td class="mono">{{ l.documentoCompra ?? '—' }}</td>
+                @if (todasLasSedes()) {
+                  <td>{{ l.sedeNombre }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="vista-tarjetas" aria-label="Licencias">
+        @for (l of filas(); track l.id) {
+          <li>
+            <a class="tarjeta-licencia" [routerLink]="['/licencias', l.id]" [state]="volverAqui()">
+              <span class="cabecera">
+                <span class="producto">{{ l.producto }}</span>
+                <span class="pastilla" [class]="tonoVigencia(l.vigencia)">{{ textoVigencia(l.vigencia, l.diasRestantes) }}</span>
+              </span>
+              <span class="atenuado">
+                Vence el {{ formatoFecha(l.fechaFin) }}
+                @if (l.proveedor) {
+                  · {{ l.proveedor }}
+                }
+                @if (todasLasSedes()) {
+                  · {{ l.sedeNombre }}
+                }
+              </span>
+              <span class="barra" [class.excedida]="l.excedida" aria-hidden="true">
+                <span [style.width.%]="porcentajeUso(l.equipos, l.puestos)"></span>
+              </span>
+              <span class="atenuado" [class.texto-mal]="l.excedida">{{ textoPuestos(l.equipos, l.puestos) }} · {{ textoLibres(l.equipos, l.puestos) }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    } @else if (!lista.isLoading() && !error()) {
+      <div class="vacio">
+        @if (conFiltros()) {
+          <p>Ninguna licencia coincide con la búsqueda.</p>
+          <button mat-stroked-button type="button" (click)="quitarFiltros()">Quitar filtros</button>
+        } @else {
+          <p>Todavía no hay licencias registradas. Registre cada suscripción con sus puestos y su vencimiento para recibir los avisos de renovación.</p>
+          @if (puedeGestionar) {
+            <button mat-flat-button type="button" (click)="nueva()"><mat-icon>add</mat-icon> Registrar la primera</button>
+          }
+        }
+      </div>
+    }
+  </section>
+</div>

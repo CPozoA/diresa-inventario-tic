@@ -770,6 +770,84 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.ToTable("Establecimientos", "organizacion");
                 });
 
+            modelBuilder.Entity("Inventario.Domain.Licencias.EquipoLicencia", b =>
+                {
+                    b.Property<Guid>("LicenciaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ActivoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("AsignadoEn")
+                        .HasColumnType("date");
+
+                    b.HasKey("LicenciaId", "ActivoId");
+
+                    b.HasIndex("ActivoId");
+
+                    b.ToTable("EquiposLicencia", "inventario");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Licencias.Licencia", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Archivada")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("Costo")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("CreadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DocumentoCompra")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateOnly>("FechaFin")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("FechaInicio")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("ModificadoEn")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ModificadoPor")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Producto")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Proveedor")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("Puestos")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SedeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SedeId", "Archivada", "FechaFin");
+
+                    b.ToTable("Licencias", "inventario");
+                });
+
             modelBuilder.Entity("Inventario.Domain.Mantenimientos.Mantenimiento", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1360,6 +1438,30 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Inventario.Domain.Licencias.EquipoLicencia", b =>
+                {
+                    b.HasOne("Inventario.Domain.Activos.Activo", null)
+                        .WithMany()
+                        .HasForeignKey("ActivoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Inventario.Domain.Licencias.Licencia", null)
+                        .WithMany("Equipos")
+                        .HasForeignKey("LicenciaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Licencias.Licencia", b =>
+                {
+                    b.HasOne("Inventario.Domain.Sedes.Sede", null)
+                        .WithMany()
+                        .HasForeignKey("SedeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Inventario.Domain.Mantenimientos.Mantenimiento", b =>
                 {
                     b.HasOne("Inventario.Domain.Activos.Activo", null)
@@ -1482,6 +1584,11 @@ namespace Inventario.Infrastructure.Persistencia.Migraciones
                     b.Navigation("Discos");
 
                     b.Navigation("ModulosRam");
+                });
+
+            modelBuilder.Entity("Inventario.Domain.Licencias.Licencia", b =>
+                {
+                    b.Navigation("Equipos");
                 });
 
             modelBuilder.Entity("Inventario.Domain.Seguridad.Rol", b =>

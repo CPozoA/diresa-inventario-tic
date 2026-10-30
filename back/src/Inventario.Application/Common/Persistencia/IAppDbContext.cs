@@ -2,6 +2,7 @@ using Inventario.Domain.Activos;
 using Inventario.Domain.Asignaciones;
 using Inventario.Domain.Catalogos;
 using Inventario.Domain.Establecimientos;
+using Inventario.Domain.Licencias;
 using Inventario.Domain.Mantenimientos;
 using Inventario.Domain.Personal;
 using Inventario.Domain.Sedes;
@@ -35,6 +36,8 @@ public interface IAppDbContext
     DbSet<Asignacion> Asignaciones { get; }
 
     DbSet<Mantenimiento> Mantenimientos { get; }
+
+    DbSet<Licencia> Licencias { get; }
 
     // Catálogos de cada sede.
     DbSet<Area> Areas { get; }

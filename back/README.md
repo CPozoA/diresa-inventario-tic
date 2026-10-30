@@ -421,6 +421,30 @@ dotnet ef database update --project src/Inventario.Infrastructure --startup-proj
 El resumen y `GET /api/activos?atencion=` tienen el motivo nuevo `MantenimientoVencido` (preventivo vencido sin
 mantenimiento en curso).
 
+## Paso 11: licencias de software (D54)
+
+Este paso **cambia el modelo**: agrega las tablas `inventario.Licencias` e `inventario.EquiposLicencia`. Desde `back`,
+con la API detenida:
+
+```powershell
+dotnet ef migrations add Licencias --project src/Inventario.Infrastructure --startup-project src/Inventario.Api --output-dir Persistencia/Migraciones
+dotnet ef database update --project src/Inventario.Infrastructure --startup-project src/Inventario.Api
+```
+
+| Endpoint | Permiso | Qué hace |
+|---|---|---|
+| `GET /api/licencias?filtro=&buscar=&sedeId=` | `Licencias.Ver` | Lista, la que vence antes primero. `filtro`: `Vigentes`, `PorVencer`, `Vencidas`, `Excedidas`, `Archivadas` (sin filtro, todas menos las archivadas) |
+| `GET /api/licencias/cifras?sedeId=` | `Licencias.Ver` | Vigentes, por vencer (30 días), vencidas, excedidas y puestos libres |
+| `GET /api/licencias/{id}` | `Licencias.Ver` | Ficha con sus equipos |
+| `GET /api/activos/{id}/licencias` | `Licencias.Ver` | Licencias (no archivadas) del activo |
+| `GET /api/licencias/productos` | `Licencias.Gestionar` | Productos ya registrados (sugerencias) |
+| `POST /api/licencias` | `Licencias.Gestionar` | `{ sedeId?, producto, proveedor, puestos, fechaInicio, fechaFin, documentoCompra, costo, observaciones }`. Sin clave del producto |
+| `PUT /api/licencias/{id}` | `Licencias.Gestionar` | Lo mismo (sin `sedeId`); también para renovar |
+| `DELETE /api/licencias/{id}` | `Licencias.Gestionar` | Solo para registros por error |
+| `POST /api/licencias/{id}/archivar`, `/reactivar` | `Licencias.Gestionar` | Archivar (no se renovó: sale de los avisos y libera sus equipos) o reactivar |
+| `POST /api/licencias/{id}/equipos` | `Licencias.Gestionar` | `{ activoIds: [...] }`, todos o ninguno, hasta los puestos libres |
+| `DELETE /api/licencias/{id}/equipos/{activoId}` | `Licencias.Gestionar` | Libera el puesto |
+
 ### Correo en producción
 
 En el servidor se configura `Correo:Modo = Smtp` y los datos del SMTP (`Servidor`, `Puerto`, `Remitente`, `Usuario`,

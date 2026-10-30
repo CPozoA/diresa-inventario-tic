@@ -1,0 +1,204 @@
+<div class="pagina">
+  <a class="volver" [href]="urlDeLista()" (click)="volver($event)"><mat-icon aria-hidden="true">arrow_back</mat-icon> Volver a licencias</a>
+
+  @if (recurso.isLoading() && !licencia()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando la licencia" />
+  }
+
+  @if (error(); as e) {
+    <app-aviso>{{ e }}</app-aviso>
+  }
+
+  @if (licencia(); as l) {
+    <section class="tarjeta cabecera">
+      <span class="icono-licencia" aria-hidden="true"><mat-icon>key</mat-icon></span>
+      <div class="identidad">
+        <div class="titulo">
+          <h1>{{ l.producto }}</h1>
+          <span class="pastilla" [class]="tonoVigencia(l.vigencia)">{{ textoVigencia(l.vigencia, l.diasRestantes) }}</span>
+          @if (deMas() > 0) {
+            <span class="pastilla mal">{{ deMas() === 1 ? '1 equipo de más' : deMas() + ' equipos de más' }}</span>
+          }
+        </div>
+        <span class="lugar">
+          {{ formatoFecha(l.fechaInicio) }} – {{ formatoFecha(l.fechaFin) }}
+          @if (l.proveedor) {
+            · {{ l.proveedor }}
+          }
+          @if (esSuperAdmin()) {
+            · {{ l.sedeNombre }}
+          }
+        </span>
+      </div>
+      @if (puedeGestionar) {
+        <div class="acciones">
+          @if (archivada()) {
+            <button mat-flat-button type="button" [disabled]="trabajando()" (click)="reactivar(l)">Reactivar</button>
+          } @else {
+            @if (renovarPrimero()) {
+              <button mat-flat-button type="button" (click)="editar(l, true)"><mat-icon>autorenew</mat-icon> Renovar</button>
+            } @else {
+              <button mat-stroked-button type="button" (click)="editar(l, true)"><mat-icon>autorenew</mat-icon> Renovar</button>
+            }
+            <button mat-stroked-button type="button" (click)="editar(l)"><mat-icon>edit</mat-icon> Editar</button>
+          }
+          <button mat-icon-button type="button" aria-label="Más acciones" [matMenuTriggerFor]="mas"><mat-icon>more_vert</mat-icon></button>
+          <mat-menu #mas="matMenu" xPosition="before">
+            @if (!archivada()) {
+              <button mat-menu-item type="button" (click)="archivar(l)"><mat-icon>inventory_2</mat-icon> Archivar (no se renovó)</button>
+            }
+            <button mat-menu-item type="button" class="texto-peligro" (click)="eliminar(l)"><mat-icon>delete</mat-icon> Eliminar</button>
+          </mat-menu>
+        </div>
+      }
+    </section>
+
+    @if (vencida()) {
+      <app-aviso tono="mal">
+        Venció el {{ formatoFecha(l.fechaFin) }}. Renuévela con las fechas del nuevo periodo o archívela si no se renovará.
+      </app-aviso>
+    }
+    @if (archivada()) {
+      <app-aviso tono="info">Licencia archivada: no cuenta en los avisos ni admite equipos.</app-aviso>
+    }
+    @if (deMas() > 0) {
+      <app-aviso tono="alerta">
+        Tiene {{ equipos().length }} equipos y {{ puestos() }} {{ puestos() === 1 ? 'puesto' : 'puestos' }}: quite
+        {{ deMas() === 1 ? '1 equipo' : deMas() + ' equipos' }} o aumente los puestos.
+      </app-aviso>
+    }
+    @if (deBaja() > 0) {
+      <app-aviso tono="alerta">
+        {{ deBaja() === 1 ? '1 equipo de baja ocupa' : deBaja() + ' equipos de baja ocupan' }} un puesto. Quítelos para liberarlos.
+      </app-aviso>
+    }
+
+    <div class="columnas">
+      <section class="tarjeta equipos" aria-labelledby="titulo-equipos">
+        <div class="encabezado">
+          <h2 id="titulo-equipos">Equipos <span class="atenuado cuenta">· {{ equipos().length }}</span></h2>
+          @if (puedeGestionar && !archivada() && !vencida()) {
+            <button mat-flat-button type="button" [disabled]="libres() === 0" (click)="asignar(l)"><mat-icon>add</mat-icon> Asignar equipos</button>
+          }
+        </div>
+
+        @if (equipos().length > 0) {
+          <div class="tabla-contenedor vista-tabla">
+            <table class="tabla">
+              <thead>
+                <tr>
+                  <th scope="col">Activo</th>
+                  <th scope="col">Establecimiento y responsable</th>
+                  <th scope="col">Desde</th>
+                  @if (puedeGestionar) {
+                    <th scope="col"><span class="visualmente-oculto">Acciones</span></th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of equipos(); track e.activoId) {
+                  <tr [class.de-baja]="e.grupoEstado === 'DeBaja'">
+                    <td>
+                      <span class="dos-lineas">
+                        <span>
+                          <a class="codigo mono" [routerLink]="['/inventario', e.activoId]">{{ e.codigoPatrimonial }}</a>
+                          @if (e.grupoEstado === 'DeBaja') {
+                            <span class="pastilla mal">De baja</span>
+                          }
+                        </span>
+                        <span class="atenuado">
+                          {{ equipo(e) }}
+                          @if (e.nombreEquipo) {
+                            · <span class="mono">{{ e.nombreEquipo }}</span>
+                          }
+                        </span>
+                      </span>
+                    </td>
+                    <td class="lugar-equipo">
+                      <span class="dos-lineas">
+                        <span>{{ e.establecimiento }}</span>
+                        @if (e.responsable) {
+                          <span class="atenuado">{{ e.responsable }}</span>
+                        }
+                      </span>
+                    </td>
+                    <td class="fecha">{{ formatoFecha(e.asignadoEn) }}</td>
+                    @if (puedeGestionar) {
+                      <td class="accion">
+                        <button mat-button type="button" [disabled]="trabajando()" (click)="quitar(l, e)">Quitar</button>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <ul class="vista-tarjetas" aria-label="Equipos con esta licencia">
+            @for (e of equipos(); track e.activoId) {
+              <li class="tarjeta-equipo">
+                <span class="cabecera-equipo">
+                  <a class="codigo mono" [routerLink]="['/inventario', e.activoId]">{{ e.codigoPatrimonial }}</a>
+                  @if (e.grupoEstado === 'DeBaja') {
+                    <span class="pastilla mal">De baja</span>
+                  }
+                  @if (puedeGestionar) {
+                    <button mat-button type="button" class="quitar" [disabled]="trabajando()" (click)="quitar(l, e)">Quitar</button>
+                  }
+                </span>
+                <span>{{ equipo(e) }}</span>
+                <span class="atenuado">
+                  {{ e.establecimiento }}
+                  @if (e.responsable) {
+                    · {{ e.responsable }}
+                  }
+                </span>
+                <span class="atenuado">
+                  @if (e.nombreEquipo) {
+                    <span class="mono">{{ e.nombreEquipo }}</span> ·
+                  }
+                  desde el {{ formatoFecha(e.asignadoEn) }}
+                </span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="atenuado sin-equipos">
+            @if (archivada()) {
+              Al archivarla se quitó de sus equipos.
+            } @else {
+              Todavía no se asignó a ningún equipo.
+            }
+          </p>
+        }
+      </section>
+
+      <section class="tarjeta datos" aria-labelledby="titulo-datos">
+        <h2 id="titulo-datos">Datos</h2>
+        <div class="uso">
+          <span class="uso-texto"><strong>{{ textoPuestos(equipos().length, puestos()) }}</strong> ocupados</span>
+          <span class="barra" [class.excedida]="deMas() > 0" aria-hidden="true">
+            <span [style.width.%]="porcentajeUso(equipos().length, puestos())"></span>
+          </span>
+          <span class="atenuado" [class.texto-mal]="deMas() > 0">{{ textoLibres(equipos().length, puestos()) }}</span>
+        </div>
+        <dl class="filas">
+          <div><dt>Desde</dt><dd>{{ formatoFecha(l.fechaInicio) }}</dd></div>
+          <div><dt>Vence el</dt><dd>{{ formatoFecha(l.fechaFin) }}</dd></div>
+          <div><dt>Proveedor</dt><dd>{{ l.proveedor ?? '—' }}</dd></div>
+          <div><dt>Documento de compra</dt><dd class="mono">{{ l.documentoCompra ?? '—' }}</dd></div>
+          <div><dt>Costo total</dt><dd>{{ costo(l) }}</dd></div>
+        </dl>
+        @if (l.observaciones) {
+          <p class="observaciones">{{ l.observaciones }}</p>
+        }
+        <span class="atenuado registro">
+          Registrada el {{ formatoFecha(l.creadoEn) }}
+          @if (l.modificadoEn) {
+            · modificada el {{ formatoFecha(l.modificadoEn) }}
+          }
+        </span>
+      </section>
+    </div>
+  }
+</div>
